@@ -1,6 +1,6 @@
 package com.no1project.reservation.repository;
-import com.no1project.reservation.model.User;
 
+import com.no1project.reservation.model.User;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
@@ -20,16 +20,23 @@ public class UserRepository {
         this.jdbcTemplate = jdbcTemplate;
     }
 
-    // 获取所有用户
+    // 全ユーザー取得
     public List<User> findAll() {
         String sql = "SELECT * FROM users";
         return jdbcTemplate.query(sql, new UserRowMapper());
     }
 
-    // 根据ID获取单个用户
+    // IDで取得
     public User findById(int id) {
         String sql = "SELECT * FROM users WHERE user_id = ?";
         List<User> users = jdbcTemplate.query(sql, new UserRowMapper(), id);
+        return users.isEmpty() ? null : users.get(0);
+    }
+
+    // ★ 追加：emailで取得（ログイン用）
+    public User findByEmail(String email) {
+        String sql = "SELECT * FROM users WHERE email = ?";
+        List<User> users = jdbcTemplate.query(sql, new UserRowMapper(), email);
         return users.isEmpty() ? null : users.get(0);
     }
 

@@ -1,6 +1,6 @@
 package com.no1project.reservation.security;
 
-import com.no1project.reservation.model.User;
+import com.no1project.reservation.model.SampleUser;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
@@ -9,9 +9,9 @@ import java.util.List;
 
 public class CustomUserDetails implements UserDetails {
 
-    private final User user;
+    private final SampleUser user;
 
-    public CustomUserDetails(User user) {
+    public CustomUserDetails(SampleUser user) {
         this.user = user;
     }
 

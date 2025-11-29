@@ -2,10 +2,9 @@ package com.no1project.reservation.model;
 
 public class Reservation {
     private int reservationId;
+    private String reservationDate;
     private int userId;
-    private String reservedDate; // "2025-11-20" みたいな文字列
-    private String reservedTime; // "18:00" みたいな文字列
-    private String memo;
+    private int eventId;
 
     public int getReservationId() {
         return reservationId;
@@ -13,6 +12,14 @@ public class Reservation {
 
     public void setReservationId(int reservationId) {
         this.reservationId = reservationId;
+    }
+
+    public String getReservationDate() {
+        return reservationDate;
+    }
+
+    public void setReservationDate(String reservationDate) {
+        this.reservationDate = reservationDate;
     }
 
     public int getUserId() {
@@ -23,27 +30,11 @@ public class Reservation {
         this.userId = userId;
     }
 
-    public String getReservedDate() {
-        return reservedDate;
+    public int getEventId() {
+        return eventId;
     }
 
-    public void setReservedDate(String reservedDate) {
-        this.reservedDate = reservedDate;
-    }
-
-    public String getReservedTime() {
-        return reservedTime;
-    }
-
-    public void setReservedTime(String reservedTime) {
-        this.reservedTime = reservedTime;
-    }
-
-    public String getMemo() {
-        return memo;
-    }
-
-    public void setMemo(String memo) {
-        this.memo = memo;
+    public void setEventId(int eventId) {
+        this.eventId = eventId;
     }
 }

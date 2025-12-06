@@ -31,8 +31,30 @@ public class EventRepository {
             r.setItem(rs.getString("item"));
             r.setCompanyId(rs.getInt("company_id"));
             r.setNote(rs.getString("note"));
+            r.setCompanyName(rs.getString("name"));
             return r;
         }
     }
 
+     /** page は 0 始まり、size は 1ページの件数（今回は10） */
+    public List<Event> findPage(int page, int size) {
+        int offset = page * size;
+
+        String sql = """
+        SELECT e.event_id, e.date, e.place, e.item, e.company_id, e.note, c.name
+        FROM Event e
+        JOIN Company c ON e.company_id = c.company_id
+        ORDER BY e.date ASC
+        LIMIT ? OFFSET ?
+        """;
+
+        return jdbcTemplate.query(sql, new EventRowMapper(), size, offset);
+    }
+
+    /** 総件数 */
+    public int countAll() {
+        String sql = "SELECT COUNT(*) FROM Event";
+        Integer count = jdbcTemplate.queryForObject(sql, Integer.class);
+        return count != null ? count : 0;
+    }
 }

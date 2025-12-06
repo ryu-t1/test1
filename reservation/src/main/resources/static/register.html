@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>学生用新規登録</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #fafafa;
+    }
+
+    /* 上部メニュー（一覧ページと揃えるイメージ） */
+    header {
+      border-bottom: 1px solid #ccc;
+      padding: 16px 40px;
+      display: flex;
+      justify-content: center;
+      gap: 80px;
+      font-size: 14px;
+      background-color: #fff;
+    }
+
+    header a {
+      text-decoration: none;
+      color: #333;
+      cursor: pointer;
+    }
+
+    main {
+      max-width: 500px;
+      margin: 40px auto;
+      padding: 0 16px 40px;
+    }
+
+    h1 {
+      text-align: center;
+      font-size: 20px;
+      margin-bottom: 24px;
+    }
+
+    .form-card {
+      background-color: #fff;
+      border: 1px solid #333;
+      padding: 24px 24px 20px;
+      box-sizing: border-box;
+    }
+
+    .form-group {
+      margin-bottom: 14px;
+    }
+
+    .form-group label {
+      display: block;
+      font-size: 14px;
+      margin-bottom: 4px;
+    }
+
+    .form-group input,
+    .form-group select {
+      width: 100%;
+      padding: 6px 8px;
+      box-sizing: border-box;
+      font-size: 14px;
+    }
+
+    .note {
+      font-size: 12px;
+      color: #666;
+      margin-top: 2px;
+    }
+
+    .error {
+      color: #c00;
+      font-size: 13px;
+      margin-top: 4px;
+    }
+
+    .success {
+      color: #080;
+      font-size: 13px;
+      margin-top: 4px;
+    }
+
+    .btn-area {
+      text-align: center;
+      margin-top: 18px;
+    }
+
+    button {
+      padding: 8px 18px;
+      cursor: pointer;
+      font-size: 14px;
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <!-- href は実際のファイル名に合わせて変えてください -->
+  <a href="/index.html">説明会一覧</a>
+  <a href="/login.html">ログイン</a>
+  <a href="/register.html">新規登録</a>
+  <a href="/account.html">アカウント</a>
+</header>
+
+<main>
+  <h1>学生用アカウント新規登録</h1>
+
+  <div class="form-card">
+    <div id="message"></div>
+
+    <div class="form-group">
+      <label for="name">氏名</label>
+      <input id="name" type="text" autocomplete="name">
+    </div>
+
+    <div class="form-group">
+      <label for="email">メールアドレス</label>
+      <input id="email" type="email" autocomplete="email">
+    </div>
+
+    <div class="form-group">
+      <label for="password">パスワード</label>
+      <input id="password" type="password" autocomplete="new-password">
+      <div class="note">※ 卒制なので簡単なものでOK（本番なら英数字8文字以上など）</div>
+    </div>
+
+    <div class="form-group">
+      <label for="grade">学年</label>
+      <select id="grade">
+        <option value="">選択してください</option>
+        <option value="1">1年</option>
+        <option value="2">2年</option>
+        <option value="3">3年</option>
+        <option value="4">4年</option>
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label for="myClass">クラス</label>
+      <input id="myClass" type="text" placeholder="例）A, B など">
+    </div>
+
+    <div class="form-group">
+      <label for="number">出席番号</label>
+      <input id="number" type="number" min="1">
+    </div>
+
+    <div class="btn-area">
+      <button id="registerBtn">登録する</button>
+    </div>
+  </div>
+</main>
+
+<script>
+  const API_BASE = "http://localhost:8080"; // バックエンドURL
+
+  function showMessage(text, isError) {
+    const msg = document.getElementById("message");
+    msg.textContent = text;
+    msg.className = isError ? "error" : "success";
+  }
+
+  async function registerStudent() {
+    const name = document.getElementById("name").value.trim();
+    const email = document.getElementById("email").value.trim();
+    const password = document.getElementById("password").value;
+    const grade = document.getElementById("grade").value;
+    const myClass = document.getElementById("myClass").value.trim();
+    const number = document.getElementById("number").value;
+
+    // 簡易バリデーション
+    if (!name || !email || !password || !grade || !myClass || !number) {
+      showMessage("未入力の項目があります。", true);
+      return;
+    }
+
+    const payload = {
+      name: name,
+      email: email,
+      password: password,
+      grade: parseInt(grade, 10),
+      myClass: myClass,
+      number: parseInt(number, 10)
+    };
+
+    try {
+      const res = await fetch(`${API_BASE}/auth/register/student`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(payload)
+      });
+
+      if (!res.ok) {
+        // サーバがメッセージを返していれば表示（なければ共通メッセージ）
+        let text = "登録に失敗しました。メールアドレス重複などを確認してください。";
+        try {
+          const body = await res.text();
+          if (body) text = body;
+        } catch (_) {}
+        showMessage(text, true);
+        return;
+      }
+
+      showMessage("登録が完了しました。ログイン画面へ移動します。", false);
+
+      // 少し待ってからログイン画面へ遷移（パスは実際のログインページに合わせる）
+      setTimeout(() => {
+        window.location.href = "/login.html";
+      }, 1200);
+
+    } catch (err) {
+      console.error(err);
+      showMessage("サーバーへの接続に失敗しました。バックエンドを確認してください。", true);
+    }
+  }
+
+  document.getElementById("registerBtn").addEventListener("click", registerStudent);
+</script>
+
+</body>
+</html>

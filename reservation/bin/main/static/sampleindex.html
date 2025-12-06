@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>ログイン & 予約一覧</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 40px; }
+    h1, h2, h3 { color: #333; }
+    table { border-collapse: collapse; width: 100%; margin-top: 20px; }
+    th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
+    th { background-color: #f0f0f0; }
+    form { margin-top: 20px; }
+    label { display: block; margin-top: 10px; }
+    input, textarea { padding: 4px; }
+    button { margin-top: 10px; padding: 6px 12px; cursor: pointer; }
+    #loginStatus { margin-top: 10px; font-weight: bold; }
+    .hidden { display: none; }
+    .error { color: red; }
+    .success { color: green; }
+    .section { border: 1px solid #ddd; padding: 16px; margin-top: 24px; border-radius: 8px; }
+  </style>
+</head>
+<body>
+  <h1>予約システム</h1>
+
+  <!-- ログインセクション -->
+  <div class="section">
+    <h2>ログイン</h2>
+    <form id="loginForm">
+      <label>
+        メールアドレス:
+        <input type="email" id="loginEmail" required>
+      </label>
+      <label>
+        パスワード:
+        <input type="password" id="loginPassword" required>
+      </label>
+      <button type="submit">ログイン</button>
+      <button type="button" id="logoutButton">ログアウト</button>
+    </form>
+    <div id="loginStatus"></div>
+  </div>
+
+  <!-- ログインユーザー情報 -->
+  <div class="section" id="userInfoSection">
+    <h2>ログイン中のユーザー</h2>
+    <p id="currentUser">未ログイン</p>
+  </div>
+
+  <!-- 予約一覧 + 登録（※ログインしているときだけ触る想定） -->
+  <div class="section" id="reservationSection">
+    <h2>予約一覧</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>ユーザーID</th>
+          <th>日付</th>
+          <th>時間</th>
+          <th>メモ</th>
+          <th>操作</th>
+        </tr>
+      </thead>
+      <tbody id="reservationBody"></tbody>
+    </table>
+
+    <h3>新規予約登録</h3>
+    <form id="reservationForm">
+      <label>
+        日付 (YYYY-MM-DD):
+        <input type="date" id="dateInput" required>
+      </label>
+      <label>
+        時間 (HH:MM):
+        <input type="time" id="timeInput" required>
+      </label>
+      <label>
+        メモ:
+        <textarea id="memoInput" rows="3"></textarea>
+      </label>
+      <button type="submit">予約登録</button>
+    </form>
+  </div>
+
+  <script>
+    const API_BASE = "http://localhost:8080";
+
+    // ===== JWT トークンの管理 =====
+
+    function getToken() {
+      return localStorage.getItem("jwtToken");
+    }
+
+    function setToken(token) {
+      localStorage.setItem("jwtToken", token);
+    }
+
+    function clearToken() {
+      localStorage.removeItem("jwtToken");
+      localStorage.removeItem("loginUser");
+    }
+
+    function getLoginUser() {
+      const json = localStorage.getItem("loginUser");
+      if (!json) return null;
+      try {
+        return JSON.parse(json);
+      } catch (e) {
+        return null;
+      }
+    }
+
+    function setLoginUser(userInfo) {
+      localStorage.setItem("loginUser", JSON.stringify(userInfo));
+    }
+
+    // 認証付き fetch 共通関数
+    function authFetch(url, options = {}) {
+      const token = getToken();
+      if (!options.headers) {
+        options.headers = {};
+      }
+      if (token) {
+        options.headers["Authorization"] = "Bearer " + token;
+      }
+      return fetch(url, options);
+    }
+
+    // ===== 画面更新関連 =====
+
+    function updateLoginStatus() {
+      const statusEl = document.getElementById("loginStatus");
+      const userInfoEl = document.getElementById("currentUser");
+      const user = getLoginUser();
+      const token = getToken();
+
+      if (user && token) {
+        statusEl.textContent = "ログイン中";
+        statusEl.className = "success";
+        userInfoEl.textContent =
+          `ユーザーID: ${user.userId} / 名前: ${user.name} / メール: ${user.email}`;
+      } else {
+        statusEl.textContent = "未ログイン";
+        statusEl.className = "error";
+        userInfoEl.textContent = "未ログイン";
+      }
+    }
+
+    // ===== ログイン処理 =====
+
+    const loginForm = document.getElementById("loginForm");
+    loginForm.addEventListener("submit", (event) => {
+      event.preventDefault();
+
+      const email = document.getElementById("loginEmail").value;
+      const password = document.getElementById("loginPassword").value;
+      const statusEl = document.getElementById("loginStatus");
+
+      statusEl.textContent = "ログイン中...";
+      statusEl.className = "";
+
+      fetch(`${API_BASE}/auth/login`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ email, password })
+      })
+        .then(response => {
+          if (!response.ok) {
+            throw new Error("ログイン失敗: " + response.status);
+          }
+          return response.json();
+        })
+        .then(data => {
+          // data: { token, userId, email, name }
+          setToken(data.token);
+          setLoginUser({
+            userId: data.userId,
+            email: data.email,
+            name: data.name
+          });
+
+          statusEl.textContent = "ログイン成功";
+          statusEl.className = "success";
+
+          updateLoginStatus();
+          loadReservations(); // ログイン後に予約一覧を取得
+        })
+        .catch(error => {
+          console.error("ログインエラー:", error);
+          clearToken();
+          statusEl.textContent = "ログインに失敗しました";
+          statusEl.className = "error";
+          updateLoginStatus();
+        });
+    });
+
+    // ===== ログアウト処理 =====
+
+    const logoutButton = document.getElementById("logoutButton");
+    logoutButton.addEventListener("click", () => {
+      clearToken();
+      updateLoginStatus();
+      const tbody = document.getElementById("reservationBody");
+      if (tbody) {
+        tbody.innerHTML = "";
+      }
+    });
+
+    // ===== 予約一覧取得 =====
+
+    function loadReservations() {
+      authFetch(`${API_BASE}/reservations`)
+        .then(response => {
+          if (response.status === 401 || response.status === 403) {
+            throw new Error("認証エラー: " + response.status);
+          }
+          if (!response.ok) {
+            throw new Error("サーバーエラー: " + response.status);
+          }
+          return response.json();
+        })
+        .then(reservations => {
+          const tbody = document.getElementById("reservationBody");
+          tbody.innerHTML = "";
+
+          const loginUser = getLoginUser(); // ★ ログイン中ユーザー情報を取得
+
+          reservations.forEach(r => {
+            const tr = document.createElement("tr");
+
+            // ★ 自分の予約だけ削除ボタンを出す
+            let actionCellHtml = "";
+            if (loginUser && r.userId === loginUser.userId) {
+              actionCellHtml = `<button data-id="${r.reservationId}">削除</button>`;
+            } else {
+              actionCellHtml = ""; // 何も表示しない（または '−' などでもOK）
+            }
+
+            tr.innerHTML = `
+              <td>${r.reservationId}</td>
+              <td>${r.userId}</td>
+              <td>${r.reservedDate}</td>
+              <td>${r.reservedTime}</td>
+              <td>${r.memo ?? ""}</td>
+              <td>${actionCellHtml}</td>
+            `;
+
+            const btn = tr.querySelector("button");
+            if (btn) {
+              btn.addEventListener("click", () => deleteReservation(r.reservationId));
+            }
+
+            tbody.appendChild(tr);
+          });
+        })
+        .catch(error => {
+          console.error("予約取得エラー:", error);
+          const tbody = document.getElementById("reservationBody");
+          tbody.innerHTML =
+            `<tr><td colspan="6">予約取得に失敗しました（ログインしているか確認してください）</td></tr>`;
+        });
+    }
+
+    // ===== 予約削除 =====
+
+    function deleteReservation(id) {
+      if (!confirm(`予約ID ${id} を削除しますか？`)) {
+        return;
+      }
+      authFetch(`${API_BASE}/reservations/${id}`, {
+        method: "DELETE"
+      })
+        .then(response => {
+          if (!response.ok) {
+            throw new Error("削除失敗: " + response.status);
+          }
+          loadReservations();
+        })
+        .catch(error => {
+          console.error("削除エラー:", error);
+          alert("削除に失敗しました（権限 or 認証エラーの可能性）");
+        });
+    }
+
+    // ===== 予約登録 =====
+
+    const reservationForm = document.getElementById("reservationForm");
+    reservationForm.addEventListener("submit", (event) => {
+      event.preventDefault();
+
+      const date = document.getElementById("dateInput").value;
+      const time = document.getElementById("timeInput").value;
+      const memo = document.getElementById("memoInput").value;
+
+      const data = {
+        reservedDate: date,
+        reservedTime: time,
+        memo: memo
+      };
+
+      authFetch(`${API_BASE}/reservations`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(data)
+      })
+        .then(response => {
+          if (!response.ok) {
+            throw new Error("登録失敗: " + response.status);
+          }
+          reservationForm.reset();
+          loadReservations();
+        })
+        .catch(error => {
+          console.error("予約登録エラー:", error);
+          alert("予約登録に失敗しました（ログイン状態や権限を確認してください）");
+        });
+    });
+
+    // ===== 初期表示 =====
+
+    window.addEventListener("load", () => {
+      updateLoginStatus();
+      if (getToken()) {
+        loadReservations();
+      }
+    });
+  </script>
+</body>
+</html>

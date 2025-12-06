@@ -7,6 +7,7 @@ public class Event {
     private String item;
     private int companyId;
     private String note;
+    private String companyName;
 
     public int getEventId() {
         return eventId;
@@ -54,6 +55,14 @@ public class Event {
 
     public void setNote(String note) {
         this.note = note;
+    }
+    
+        public String getCompanyName() {
+        return companyName;
+    }
+
+    public void setCompanyName(String companyName) {
+        this.companyName = companyName;
     }
 
 }

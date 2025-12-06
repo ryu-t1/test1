@@ -1,6 +1,6 @@
 package com.no1project.reservation.security;
 
-import com.no1project.reservation.security.JwtAuthenticationToken;
+// import com.no1project.reservation.security.JwtAuthenticationToken;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -20,6 +20,14 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         this.authenticationManager = authenticationManager;
     }
 
+    @Override
+    protected boolean shouldNotFilter(HttpServletRequest request) {
+        String path = request.getServletPath();
+
+        // 認証不要なAPI
+        return path.equals("/auth/login")
+            || path.startsWith("/events");
+    }
     @Override
     protected void doFilterInternal(HttpServletRequest request,
                                     HttpServletResponse response,

@@ -20,62 +20,67 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 @EnableWebSecurity
 public class SecurityConfig {
 
-    private final UserDetailsService userDetailsService;
-    private final JwtAuthenticationProvider jwtAuthenticationProvider;
+        private final UserDetailsService userDetailsService;
+        private final JwtAuthenticationProvider jwtAuthenticationProvider;
 
-    public SecurityConfig(UserDetailsService userDetailsService,
-                          JwtAuthenticationProvider jwtAuthenticationProvider) {
-        this.userDetailsService = userDetailsService;
-        this.jwtAuthenticationProvider = jwtAuthenticationProvider;
-    }
+        public SecurityConfig(UserDetailsService userDetailsService,
+                        JwtAuthenticationProvider jwtAuthenticationProvider) {
+                this.userDetailsService = userDetailsService;
+                this.jwtAuthenticationProvider = jwtAuthenticationProvider;
+        }
 
-    @Bean
-    public PasswordEncoder passwordEncoder() {
-        // ★ とりあえず平文用（卒業制作の後半で BCrypt に差し替える想定）
-        return NoOpPasswordEncoder.getInstance();
-        // ちゃんとやるなら:
-        // return new BCryptPasswordEncoder();
-    }
+        @Bean
+        public PasswordEncoder passwordEncoder() {
+                // ★ とりあえず平文用（卒業制作の後半で BCrypt に差し替える想定）
+                return NoOpPasswordEncoder.getInstance();
+                // ちゃんとやるなら:
+                // return new BCryptPasswordEncoder();
+        }
 
-    @Bean
-    public AuthenticationManager authenticationManager(HttpSecurity http) throws Exception {
-        AuthenticationManagerBuilder builder =
-                http.getSharedObject(AuthenticationManagerBuilder.class);
+        @Bean
+        public AuthenticationManager authenticationManager(HttpSecurity http) throws Exception {
+                AuthenticationManagerBuilder builder = http.getSharedObject(AuthenticationManagerBuilder.class);
 
-        // Provider②: DaoAuthenticationProvider（ID/PW用）
-        builder
-                .userDetailsService(userDetailsService)
-                .passwordEncoder(passwordEncoder());
+                // Provider②: DaoAuthenticationProvider（ID/PW用）
+                builder
+                                .userDetailsService(userDetailsService)
+                                .passwordEncoder(passwordEncoder());
 
-        // Provider①: JWT用カスタムProvider
-        builder.authenticationProvider(jwtAuthenticationProvider);
+                // Provider①: JWT用カスタムProvider
+                builder.authenticationProvider(jwtAuthenticationProvider);
 
-        return builder.build();
-    }
+                return builder.build();
+        }
 
-    @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http,
-                                                   AuthenticationManager authenticationManager) throws Exception {
+        @Bean
+        public SecurityFilterChain securityFilterChain(HttpSecurity http,
+                        AuthenticationManager authenticationManager) throws Exception {
 
-        JwtAuthenticationFilter jwtFilter = new JwtAuthenticationFilter(authenticationManager);
+                // JwtAuthenticationFilter jwtFilter = new JwtAuthenticationFilter(authenticationManager);
 
-        http
-                .cors(cors -> {})  // 既存の CorsConfig を利用
-                .csrf(csrf -> csrf.disable())
-                .sessionManagement(sm ->
-                        sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .authorizeHttpRequests(auth -> auth
-                        // ログインAPIは誰でもOK
-                        .requestMatchers("/auth/login").permitAll()
-                        // preflight
-                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-                        // 開発中だけ /users, /reservations を一時的に解放したいならここでpermitAll
-                        // .requestMatchers("/users/**", "/reservations/**").permitAll()
-                        .anyRequest().authenticated()
-                )
-                // JWTフィルターを UsernamePasswordAuthenticationFilter より前に挿入
-                .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
+                http
+                                .cors(cors -> {
+                                }) // 既存の CorsConfig を利用
+                                .csrf(csrf -> csrf.disable())
+                                .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                                .authorizeHttpRequests(auth -> auth
+                                                // ログインAPIは誰でもOK
+                                                // .requestMatchers("/auth/login").permitAll()
+                                                // // 説明会一覧（GET）は未ログインOK
+                                                // .requestMatchers(
+                                                //                 HttpMethod.GET,
+                                                //                 "/events",
+                                                //                 "/events/**")
+                                                // .permitAll()
+                                                // // preflight
+                                                // .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+                                                // それ以外は JWT 必須
+                                                // .anyRequest().authenticated())
+                                                .anyRequest().permitAll());
+                                // JWTフィルターを UsernamePasswordAuthenticationFilter より前に挿入
+                                // .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
 
-        return http.build();
-    }
+                return http.build();
+        }
+
 }

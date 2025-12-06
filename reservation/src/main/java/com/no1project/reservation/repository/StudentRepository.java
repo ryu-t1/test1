@@ -1,7 +1,7 @@
 package com.no1project.reservation.repository;
 
 import com.no1project.reservation.model.Student;
-
+import com.no1project.reservation.dto.StudentRegisterRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
@@ -31,5 +31,16 @@ public class StudentRepository {
             r.setNumber(rs.getInt("number"));
             return r;
         }
+    }
+
+     public int insert(Student student) {
+        String sql = "INSERT INTO Student (user_id, grade, class, number) VALUES (?, ?, ?, ?)";
+        return jdbcTemplate.update(
+                sql,
+                student.getUserId(),
+                student.getGrade(),
+                student.getMyClass(),
+                student.getNumber()
+        );
     }
 }

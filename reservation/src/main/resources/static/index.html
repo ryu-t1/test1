@@ -2,332 +2,351 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
-  <title>ログイン & 予約一覧</title>
+  <title>説明会一覧（学生用）</title>
   <style>
-    body { font-family: Arial, sans-serif; margin: 40px; }
-    h1, h2, h3 { color: #333; }
-    table { border-collapse: collapse; width: 100%; margin-top: 20px; }
-    th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
-    th { background-color: #f0f0f0; }
-    form { margin-top: 20px; }
-    label { display: block; margin-top: 10px; }
-    input, textarea { padding: 4px; }
-    button { margin-top: 10px; padding: 6px 12px; cursor: pointer; }
-    #loginStatus { margin-top: 10px; font-weight: bold; }
-    .hidden { display: none; }
-    .error { color: red; }
-    .success { color: green; }
-    .section { border: 1px solid #ddd; padding: 16px; margin-top: 24px; border-radius: 8px; }
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #fafafa;
+    }
+
+    /* 上部メニュー */
+    header {
+      border-bottom: 1px solid #ccc;
+      padding: 16px 40px;
+      display: flex;
+      justify-content: center;
+      gap: 80px;
+      font-size: 14px;
+      background-color: #fff;
+    }
+
+    header a {
+      text-decoration: none;
+      color: #333;
+      cursor: pointer;
+    }
+
+    main {
+      max-width: 900px;
+      margin: 30px auto 60px;
+      padding: 0 16px;
+    }
+
+    /* 検索フォーム */
+    .search-box {
+      margin: 0 auto 30px;
+      max-width: 600px;
+      border: 1px solid #333;
+      padding: 16px;
+      text-align: center;
+      background-color: #fff;
+    }
+
+    .search-box input {
+      width: 70%;
+      padding: 6px 8px;
+      box-sizing: border-box;
+    }
+
+    .search-box button {
+      padding: 6px 12px;
+      margin-left: 8px;
+      cursor: pointer;
+    }
+
+    /* 説明会リスト */
+    #eventList {
+      margin-top: 20px;
+    }
+
+    .event-card {
+      border: 1px solid #333;
+      background-color: #fff;
+      margin-bottom: 12px;
+    }
+
+    .event-header {
+      padding: 10px 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      cursor: default;
+    }
+
+    .event-main-info {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .event-title {
+      font-weight: bold;
+    }
+
+    .event-sub {
+      font-size: 13px;
+    }
+
+    .detail-toggle-btn {
+      padding: 4px 8px;
+      cursor: pointer;
+      font-size: 12px;
+    }
+
+    .event-detail {
+      border-top: 1px solid #333;
+      padding: 10px 16px 14px;
+      display: none; /* アコーディオンなので普段は非表示 */
+      font-size: 14px;
+    }
+
+    .event-detail-title {
+      font-weight: bold;
+      margin-top: 6px;
+      margin-bottom: 4px;
+    }
+
+    .reserve-btn {
+      margin-top: 10px;
+      padding: 6px 12px;
+      cursor: pointer;
+    }
+
+    /* ページネーション */
+    #pagination {
+      text-align: center;
+      margin-top: 24px;
+      font-size: 14px;
+    }
+
+    .page-link {
+      display: inline-block;
+      margin: 0 6px;
+      cursor: pointer;
+    }
+
+    .page-link.active {
+      font-weight: bold;
+      text-decoration: underline;
+    }
+
+    .message {
+      text-align: center;
+      margin-top: 20px;
+      color: #666;
+    }
   </style>
 </head>
 <body>
-  <h1>予約システム</h1>
 
-  <!-- ログインセクション -->
-  <div class="section">
-    <h2>ログイン</h2>
-    <form id="loginForm">
-      <label>
-        メールアドレス:
-        <input type="email" id="loginEmail" required>
-      </label>
-      <label>
-        パスワード:
-        <input type="password" id="loginPassword" required>
-      </label>
-      <button type="submit">ログイン</button>
-      <button type="button" id="logoutButton">ログアウト</button>
-    </form>
-    <div id="loginStatus"></div>
+<header>
+  <a>予約確認</a>
+  <a>ログイン</a>
+  <a href="register.html">新規登録</a>
+  <a>アカウント</a>
+</header>
+
+<main>
+  <!-- 検索フォーム（見た目だけ。検索APIは後で実装） -->
+  <div class="search-box">
+    <input id="keyword" type="text" placeholder="会社名・説明会名などで検索">
+    <button id="searchBtn">検索</button>
   </div>
 
-  <!-- ログインユーザー情報 -->
-  <div class="section" id="userInfoSection">
-    <h2>ログイン中のユーザー</h2>
-    <p id="currentUser">未ログイン</p>
-  </div>
+  <!-- 説明会リスト -->
+  <div id="eventList"></div>
 
-  <!-- 予約一覧 + 登録（※ログインしているときだけ触る想定） -->
-  <div class="section" id="reservationSection">
-    <h2>予約一覧</h2>
-    <table>
-      <thead>
-        <tr>
-          <th>ID</th>
-          <th>ユーザーID</th>
-          <th>日付</th>
-          <th>時間</th>
-          <th>メモ</th>
-          <th>操作</th>
-        </tr>
-      </thead>
-      <tbody id="reservationBody"></tbody>
-    </table>
+  <!-- 件数ゼロなどのお知らせ -->
+  <div id="message" class="message"></div>
 
-    <h3>新規予約登録</h3>
-    <form id="reservationForm">
-      <label>
-        日付 (YYYY-MM-DD):
-        <input type="date" id="dateInput" required>
-      </label>
-      <label>
-        時間 (HH:MM):
-        <input type="time" id="timeInput" required>
-      </label>
-      <label>
-        メモ:
-        <textarea id="memoInput" rows="3"></textarea>
-      </label>
-      <button type="submit">予約登録</button>
-    </form>
-  </div>
+  <!-- ページネーション -->
+  <div id="pagination"></div>
+</main>
 
-  <script>
-    const API_BASE = "http://localhost:8080";
+<script>
+  // =============================
+  // 設定
+  // =============================
+  const API_BASE = "http://localhost:8080";  // Spring Boot のURL
+  const PAGE_SIZE = 10;
 
-    // ===== JWT トークンの管理 =====
+  let currentPage = 0;
+  let totalPages = 1;
 
-    function getToken() {
-      return localStorage.getItem("jwtToken");
-    }
+  // =============================
+  // API呼び出し
+  // =============================
+  async function loadEvents(page) {
+    if (page < 0) page = 0;
 
-    function setToken(token) {
-      localStorage.setItem("jwtToken", token);
-    }
-
-    function clearToken() {
-      localStorage.removeItem("jwtToken");
-      localStorage.removeItem("loginUser");
-    }
-
-    function getLoginUser() {
-      const json = localStorage.getItem("loginUser");
-      if (!json) return null;
-      try {
-        return JSON.parse(json);
-      } catch (e) {
-        return null;
-      }
-    }
-
-    function setLoginUser(userInfo) {
-      localStorage.setItem("loginUser", JSON.stringify(userInfo));
-    }
-
-    // 認証付き fetch 共通関数
-    function authFetch(url, options = {}) {
-      const token = getToken();
-      if (!options.headers) {
-        options.headers = {};
-      }
-      if (token) {
-        options.headers["Authorization"] = "Bearer " + token;
-      }
-      return fetch(url, options);
-    }
-
-    // ===== 画面更新関連 =====
-
-    function updateLoginStatus() {
-      const statusEl = document.getElementById("loginStatus");
-      const userInfoEl = document.getElementById("currentUser");
-      const user = getLoginUser();
-      const token = getToken();
-
-      if (user && token) {
-        statusEl.textContent = "ログイン中";
-        statusEl.className = "success";
-        userInfoEl.textContent =
-          `ユーザーID: ${user.userId} / 名前: ${user.name} / メール: ${user.email}`;
-      } else {
-        statusEl.textContent = "未ログイン";
-        statusEl.className = "error";
-        userInfoEl.textContent = "未ログイン";
-      }
-    }
-
-    // ===== ログイン処理 =====
-
-    const loginForm = document.getElementById("loginForm");
-    loginForm.addEventListener("submit", (event) => {
-      event.preventDefault();
-
-      const email = document.getElementById("loginEmail").value;
-      const password = document.getElementById("loginPassword").value;
-      const statusEl = document.getElementById("loginStatus");
-
-      statusEl.textContent = "ログイン中...";
-      statusEl.className = "";
-
-      fetch(`${API_BASE}/auth/login`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({ email, password })
-      })
-        .then(response => {
-          if (!response.ok) {
-            throw new Error("ログイン失敗: " + response.status);
-          }
-          return response.json();
-        })
-        .then(data => {
-          // data: { token, userId, email, name }
-          setToken(data.token);
-          setLoginUser({
-            userId: data.userId,
-            email: data.email,
-            name: data.name
-          });
-
-          statusEl.textContent = "ログイン成功";
-          statusEl.className = "success";
-
-          updateLoginStatus();
-          loadReservations(); // ログイン後に予約一覧を取得
-        })
-        .catch(error => {
-          console.error("ログインエラー:", error);
-          clearToken();
-          statusEl.textContent = "ログインに失敗しました";
-          statusEl.className = "error";
-          updateLoginStatus();
-        });
+    const params = new URLSearchParams({
+      page: page,
+      size: PAGE_SIZE
+      // 検索機能をつけるなら keyword などを追加
     });
 
-    // ===== ログアウト処理 =====
-
-    const logoutButton = document.getElementById("logoutButton");
-    logoutButton.addEventListener("click", () => {
-      clearToken();
-      updateLoginStatus();
-      const tbody = document.getElementById("reservationBody");
-      if (tbody) {
-        tbody.innerHTML = "";
+    try {
+      const res = await fetch(`${API_BASE}/events?` + params.toString());
+      if (!res.ok) {
+        throw new Error("HTTP status " + res.status);
       }
+
+      const data = await res.json();
+      currentPage = data.page;
+      totalPages = data.totalPages;
+
+      renderEvents(data.events);
+      renderPagination();
+      renderMessage(data.totalCount);
+    } catch (err) {
+      console.error(err);
+      document.getElementById("eventList").innerHTML = "";
+      document.getElementById("pagination").innerHTML = "";
+      document.getElementById("message").textContent =
+        "説明会情報の取得に失敗しました。サーバーを確認してください。";
+    }
+  }
+
+  // =============================
+  // 画面描画
+  // =============================
+
+  function renderEvents(events) {
+    const list = document.getElementById("eventList");
+    list.innerHTML = "";
+
+    events.forEach(event => {
+      const card = document.createElement("div");
+      card.className = "event-card";
+
+      // --- ヘッダー（会社名／開催日／場所） ---
+      const header = document.createElement("div");
+      header.className = "event-header";
+
+      const mainInfo = document.createElement("div");
+      mainInfo.className = "event-main-info";
+
+      // ★ タイトル：会社名
+      const title = document.createElement("div");
+      title.className = "event-title";
+      title.textContent = event.companyName ?? "会社名未設定";
+
+      const sub1 = document.createElement("div");
+      sub1.className = "event-sub";
+      sub1.textContent = `開催日：${event.date ?? "未定"}`;
+
+      const sub2 = document.createElement("div");
+      sub2.className = "event-sub";
+      sub2.textContent = `場所：${event.place ?? "未定"}`;
+
+      mainInfo.appendChild(title);
+      mainInfo.appendChild(sub1);
+      mainInfo.appendChild(sub2);
+
+      const toggleBtn = document.createElement("button");
+      toggleBtn.className = "detail-toggle-btn";
+      toggleBtn.textContent = "▽ 詳細表示";
+
+      header.appendChild(mainInfo);
+      header.appendChild(toggleBtn);
+
+      // --- アコーディオン部分 ---
+      const detail = document.createElement("div");
+      detail.className = "event-detail";
+
+      // 説明会名（元の item）
+      const itemTitle = document.createElement("div");
+      itemTitle.className = "event-detail-title";
+      itemTitle.textContent = "持ち物";
+
+      const itemBody = document.createElement("div");
+      itemBody.textContent = event.item || "持ち物情報は未登録です。";
+
+      // 説明（note）
+      const noteTitle = document.createElement("div");
+      noteTitle.className = "event-detail-title";
+      noteTitle.textContent = "説明";
+
+      const noteBody = document.createElement("div");
+      noteBody.textContent = event.note || "詳細情報は未登録です。";
+
+      const reserveBtn = document.createElement("button");
+      reserveBtn.className = "reserve-btn";
+      reserveBtn.textContent = "予約する";
+      // 予約機能は後で実装。今はダミー。
+      reserveBtn.addEventListener("click", () => {
+        alert("予約機能はまだ実装していません。");
+      });
+
+      detail.appendChild(itemTitle);
+      detail.appendChild(itemBody);
+      detail.appendChild(noteTitle);
+      detail.appendChild(noteBody);
+      detail.appendChild(reserveBtn);
+
+      // アコーディオン開閉
+      toggleBtn.addEventListener("click", () => {
+        const isOpen = detail.style.display === "block";
+        detail.style.display = isOpen ? "none" : "block";
+        toggleBtn.textContent = isOpen ? "▽ 詳細表示" : "△ 閉じる";
+      });
+
+      card.appendChild(header);
+      card.appendChild(detail);
+      list.appendChild(card);
     });
+  }
 
-    // ===== 予約一覧取得 =====
+  function renderPagination() {
+    const container = document.getElementById("pagination");
+    container.innerHTML = "";
 
-    function loadReservations() {
-      authFetch(`${API_BASE}/reservations`)
-        .then(response => {
-          if (response.status === 401 || response.status === 403) {
-            throw new Error("認証エラー: " + response.status);
-          }
-          if (!response.ok) {
-            throw new Error("サーバーエラー: " + response.status);
-          }
-          return response.json();
-        })
-        .then(reservations => {
-          const tbody = document.getElementById("reservationBody");
-          tbody.innerHTML = "";
-
-          const loginUser = getLoginUser(); // ★ ログイン中ユーザー情報を取得
-
-          reservations.forEach(r => {
-            const tr = document.createElement("tr");
-
-            // ★ 自分の予約だけ削除ボタンを出す
-            let actionCellHtml = "";
-            if (loginUser && r.userId === loginUser.userId) {
-              actionCellHtml = `<button data-id="${r.reservationId}">削除</button>`;
-            } else {
-              actionCellHtml = ""; // 何も表示しない（または '−' などでもOK）
-            }
-
-            tr.innerHTML = `
-              <td>${r.reservationId}</td>
-              <td>${r.userId}</td>
-              <td>${r.reservedDate}</td>
-              <td>${r.reservedTime}</td>
-              <td>${r.memo ?? ""}</td>
-              <td>${actionCellHtml}</td>
-            `;
-
-            const btn = tr.querySelector("button");
-            if (btn) {
-              btn.addEventListener("click", () => deleteReservation(r.reservationId));
-            }
-
-            tbody.appendChild(tr);
-          });
-        })
-        .catch(error => {
-          console.error("予約取得エラー:", error);
-          const tbody = document.getElementById("reservationBody");
-          tbody.innerHTML =
-            `<tr><td colspan="6">予約取得に失敗しました（ログインしているか確認してください）</td></tr>`;
-        });
+    if (totalPages <= 1) {
+      return; // 1ページしか無い時は何も表示しない
     }
 
-    // ===== 予約削除 =====
-
-    function deleteReservation(id) {
-      if (!confirm(`予約ID ${id} を削除しますか？`)) {
-        return;
-      }
-      authFetch(`${API_BASE}/reservations/${id}`, {
-        method: "DELETE"
-      })
-        .then(response => {
-          if (!response.ok) {
-            throw new Error("削除失敗: " + response.status);
-          }
-          loadReservations();
-        })
-        .catch(error => {
-          console.error("削除エラー:", error);
-          alert("削除に失敗しました（権限 or 認証エラーの可能性）");
-        });
+    for (let i = 0; i < totalPages; i++) {
+      const span = document.createElement("span");
+      span.className = "page-link" + (i === currentPage ? " active" : "");
+      span.textContent = (i + 1);
+      span.addEventListener("click", () => loadEvents(i));
+      container.appendChild(span);
     }
 
-    // ===== 予約登録 =====
+    if (currentPage < totalPages - 1) {
+      const next = document.createElement("span");
+      next.className = "page-link";
+      next.textContent = ">>next";
+      next.addEventListener("click", () => loadEvents(currentPage + 1));
+      container.appendChild(next);
+    }
+  }
 
-    const reservationForm = document.getElementById("reservationForm");
-    reservationForm.addEventListener("submit", (event) => {
-      event.preventDefault();
+  function renderMessage(totalCount) {
+    const msg = document.getElementById("message");
+    if (totalCount === 0) {
+      msg.textContent = "現在、表示できる説明会がありません。";
+    } else {
+      msg.textContent = "";
+    }
+  }
 
-      const date = document.getElementById("dateInput").value;
-      const time = document.getElementById("timeInput").value;
-      const memo = document.getElementById("memoInput").value;
+  // =============================
+  // 初期化
+  // =============================
+  window.addEventListener("load", () => {
+    loadEvents(0);
 
-      const data = {
-        reservedDate: date,
-        reservedTime: time,
-        memo: memo
-      };
-
-      authFetch(`${API_BASE}/reservations`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify(data)
-      })
-        .then(response => {
-          if (!response.ok) {
-            throw new Error("登録失敗: " + response.status);
-          }
-          reservationForm.reset();
-          loadReservations();
-        })
-        .catch(error => {
-          console.error("予約登録エラー:", error);
-          alert("予約登録に失敗しました（ログイン状態や権限を確認してください）");
-        });
+    // 検索ボタン（今はリロードだけ。検索APIを作ったらここを書き換える）
+    document.getElementById("searchBtn").addEventListener("click", () => {
+      // const keyword = document.getElementById("keyword").value;
+      // keyword をクエリパラメータにつけるなどしてAPI側と連携する
+      loadEvents(0);
     });
+  });
+</script>
 
-    // ===== 初期表示 =====
-
-    window.addEventListener("load", () => {
-      updateLoginStatus();
-      if (getToken()) {
-        loadReservations();
-      }
-    });
-  </script>
 </body>
 </html>

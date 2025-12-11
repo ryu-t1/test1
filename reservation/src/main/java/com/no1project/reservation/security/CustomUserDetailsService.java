@@ -1,7 +1,7 @@
 package com.no1project.reservation.security;
 
-import com.no1project.reservation.model.SampleUser;
-import com.no1project.reservation.repository.SampleUserRepository;
+import com.no1project.reservation.model.User;
+import com.no1project.reservation.repository.UserRepository;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -10,9 +10,9 @@ import org.springframework.stereotype.Service;
 @Service
 public class CustomUserDetailsService implements UserDetailsService {
 
-    private final SampleUserRepository userRepository;
+    private final UserRepository userRepository;
 
-    public CustomUserDetailsService(SampleUserRepository userRepository) {
+    public CustomUserDetailsService(UserRepository userRepository) {
         this.userRepository = userRepository;
     }
 
@@ -21,10 +21,10 @@ public class CustomUserDetailsService implements UserDetailsService {
      */
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        SampleUser user = userRepository.findByEmail(username);
-        if (user == null) {
-            throw new UsernameNotFoundException("User not found: " + username);
-        }
+        User user = userRepository.findByEmail(username)
+                .orElseThrow(() ->
+                        new UsernameNotFoundException("User not found: " + username));
+
         return new CustomUserDetails(user);
     }
 }

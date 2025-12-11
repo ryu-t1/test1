@@ -1,0 +1,202 @@
+<!-- login.html -->
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>ログイン</title>
+  <style>
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Helvetica Neue", sans-serif;
+      background-color: #f5f5f5;
+    }
+    .container {
+      width: 600px;
+      margin: 60px auto;
+      background: #fff;
+      border: 4px solid #000;
+      padding: 60px 80px;
+      box-sizing: border-box;
+    }
+    h1 {
+      text-align: center;
+      margin-bottom: 60px;
+      letter-spacing: 0.2em;
+      font-size: 28px;
+    }
+    label {
+      display: block;
+      margin-bottom: 6px;
+      font-size: 14px;
+    }
+    input[type="email"],
+    input[type="password"] {
+      width: 100%;
+      padding: 10px;
+      box-sizing: border-box;
+      border: 2px solid #000;
+      font-size: 14px;
+    }
+    .field {
+      margin-bottom: 30px;
+    }
+    .password-row {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .toggle-password {
+      border: 1px solid #000;
+      background: #fff;
+      padding: 6px 8px;
+      cursor: pointer;
+      font-size: 12px;
+    }
+    .hint {
+      font-size: 12px;
+      color: #777;
+      margin-top: 4px;
+    }
+    .error {
+      color: #d00;
+      font-size: 13px;
+      margin-top: 8px;
+    }
+    .actions {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin-top: 20px;
+    }
+    .login-button {
+      padding: 8px 24px;
+      border: 2px solid #000;
+      background: #ddd;
+      cursor: pointer;
+    }
+    .remember-row {
+      margin-top: 16px;
+      font-size: 13px;
+    }
+    .link-row {
+      margin-top: 40px;
+      text-align: center;
+      font-size: 14px;
+    }
+    .link-row a {
+      color: #000;
+    }
+  </style>
+</head>
+<body>
+<div class="container">
+  <h1>ログイン</h1>
+
+  <form id="loginForm">
+    <div class="field">
+      <label for="email">メールアドレス</label>
+      <input id="email" type="email" placeholder="メールアドレスを入力してください" required>
+    </div>
+
+    <div class="field">
+      <label for="password">パスワード</label>
+      <div class="password-row">
+        <input id="password" type="password" placeholder="パスワードを入力してください" required>
+        <button type="button" class="toggle-password">👁</button>
+      </div>
+      <div class="hint">半角英数字</div>
+    </div>
+
+    <div class="actions">
+      <span style="color:#d00; font-size:13px;">パスワードをお忘れの方</span>
+      <button type="submit" class="login-button">ログイン</button>
+    </div>
+
+    <div class="remember-row">
+      <label>
+        <input type="checkbox" id="rememberMe">
+        ログイン情報を保存する
+      </label>
+    </div>
+
+    <div id="errorMessage" class="error" style="display:none;"></div>
+
+    <div class="link-row">
+      <a href="#">新規登録はこちら</a>
+    </div>
+  </form>
+</div>
+
+<script>
+  const API_BASE = 'http://localhost:8080'; // バックエンドのURLに合わせて変更
+
+  const loginForm = document.getElementById('loginForm');
+  const errorMessage = document.getElementById('errorMessage');
+  const passwordInput = document.getElementById('password');
+  const togglePasswordBtn = document.querySelector('.toggle-password');
+
+  togglePasswordBtn.addEventListener('click', () => {
+    const type = passwordInput.type === 'password' ? 'text' : 'password';
+    passwordInput.type = type;
+  });
+
+  // 「ログイン情報を保存する」で email を残したい場合
+  window.addEventListener('DOMContentLoaded', () => {
+    const savedEmail = localStorage.getItem('savedEmail');
+    if (savedEmail) {
+      document.getElementById('email').value = savedEmail;
+      document.getElementById('rememberMe').checked = true;
+    }
+  });
+
+  loginForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    errorMessage.style.display = 'none';
+    errorMessage.textContent = '';
+
+    const email = document.getElementById('email').value.trim();
+    const password = document.getElementById('password').value;
+    const remember = document.getElementById('rememberMe').checked;
+
+    if (remember) {
+      localStorage.setItem('savedEmail', email);
+    } else {
+      localStorage.removeItem('savedEmail');
+    }
+
+    try {
+      const res = await fetch(`${API_BASE}/auth/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password })
+      });
+
+      if (!res.ok) {
+        const text = await res.text();
+        throw new Error(text || 'ログインに失敗しました');
+      }
+
+      const data = await res.json();
+      // token / role などを保存
+      localStorage.setItem('token', data.token);
+      localStorage.setItem('userId', data.userId);
+      localStorage.setItem('email', data.email);
+      localStorage.setItem('name', data.name);
+      localStorage.setItem('role', data.role); // "student" or "normal_admin"
+
+       // ★ role によって遷移先を分ける
+      if (data.role === 'normal_admin') {
+        window.location.href = 'admin.html';   // 管理者用画面（下で作る）
+      } else {
+        // 学生 or その他は学生トップへ
+        window.location.href = 'index.html';
+      }
+
+    } catch (err) {
+      console.error(err);
+      errorMessage.textContent = 'メールアドレスまたはパスワードが正しくありません。';
+      errorMessage.style.display = 'block';
+    }
+  });
+</script>
+</body>
+</html>

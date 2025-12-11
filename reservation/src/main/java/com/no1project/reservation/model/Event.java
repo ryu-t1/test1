@@ -3,6 +3,7 @@ package com.no1project.reservation.model;
 public class Event {
     private int eventId;
     private String date;
+    private String deadline;
     private String place;
     private String item;
     private int companyId;
@@ -25,6 +26,14 @@ public class Event {
         this.date = date;
     }
 
+    public String getDeadline() {
+        return deadline;
+    }
+
+    public void setDeadline(String deadline) {
+        this.deadline = deadline;
+    }
+    
     public String getPlace() {
         return place;
     }

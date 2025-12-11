@@ -27,6 +27,7 @@ public class EventRepository {
             Event r = new Event();
             r.setEventId(rs.getInt("event_id"));
             r.setDate(rs.getString("date"));
+            r.setDeadline(rs.getString("deadline"));
             r.setPlace(rs.getString("place"));
             r.setItem(rs.getString("item"));
             r.setCompanyId(rs.getInt("company_id"));
@@ -41,7 +42,7 @@ public class EventRepository {
         int offset = page * size;
 
         String sql = """
-        SELECT e.event_id, e.date, e.place, e.item, e.company_id, e.note, c.name
+        SELECT e.event_id, e.date, e.deadline, e.place, e.item, e.company_id, e.note, c.name
         FROM Event e
         JOIN Company c ON e.company_id = c.company_id
         ORDER BY e.date ASC

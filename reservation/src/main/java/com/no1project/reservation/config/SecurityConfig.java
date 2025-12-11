@@ -53,34 +53,38 @@ public class SecurityConfig {
         }
 
         @Bean
-        public SecurityFilterChain securityFilterChain(HttpSecurity http,
-                        AuthenticationManager authenticationManager) throws Exception {
+    public SecurityFilterChain securityFilterChain(
+            HttpSecurity http,
+            AuthenticationManager authenticationManager) throws Exception {
 
-                // JwtAuthenticationFilter jwtFilter = new JwtAuthenticationFilter(authenticationManager);
+        // ★ JWT フィルタを有効化
+        JwtAuthenticationFilter jwtFilter = new JwtAuthenticationFilter(authenticationManager);
 
-                http
-                                .cors(cors -> {
-                                }) // 既存の CorsConfig を利用
-                                .csrf(csrf -> csrf.disable())
-                                .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                                .authorizeHttpRequests(auth -> auth
-                                                // ログインAPIは誰でもOK
-                                                // .requestMatchers("/auth/login").permitAll()
-                                                // // 説明会一覧（GET）は未ログインOK
-                                                // .requestMatchers(
-                                                //                 HttpMethod.GET,
-                                                //                 "/events",
-                                                //                 "/events/**")
-                                                // .permitAll()
-                                                // // preflight
-                                                // .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-                                                // それ以外は JWT 必須
-                                                // .anyRequest().authenticated())
-                                                .anyRequest().permitAll());
-                                // JWTフィルターを UsernamePasswordAuthenticationFilter より前に挿入
-                                // .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
+        http
+            .cors(cors -> {})
+            .csrf(csrf -> csrf.disable())
+            .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+            .authorizeHttpRequests(auth -> auth
+                    // ログイン・新規登録は誰でもOK
+                    .requestMatchers("/auth/login", "/auth/register/**").permitAll()
 
-                return http.build();
+                    // 説明会一覧（GET）は未ログインOK
+                    .requestMatchers(HttpMethod.GET, "/events", "/events/**").permitAll()
+
+                    // 予約APIは学生のみ
+                    .requestMatchers(HttpMethod.POST, "/events/*/reservations")
+                        .hasRole("STUDENT")
+
+                    // preflight
+                    .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+
+                    // それ以外は認証必須
+                    .anyRequest().authenticated()
+            )
+            // ★ JWT フィルタを UsernamePasswordAuthenticationFilter の前に挿入
+            .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
+
+        return http.build();
         }
 
 }

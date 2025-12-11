@@ -33,4 +33,18 @@ public class ReservationRepository {
         }
     }
 
+    /** すでに予約済みかチェック */
+    public boolean existsByUserIdAndEventId(int userId, int eventId) {
+        String sql = "SELECT COUNT(*) FROM Reservation WHERE user_id = ? AND event_id = ?";
+        Integer count = jdbcTemplate.queryForObject(sql, Integer.class, userId, eventId);
+        return count != null && count > 0;
+    }
+
+    /** 予約レコードを追加 */
+    public void insert(int userId, int eventId) {
+        String sql = "INSERT INTO Reservation (reservation_date, user_id, event_id) " +
+                     "VALUES (NOW(), ?, ?)";
+        jdbcTemplate.update(sql, userId, eventId);
+    }
+
 }

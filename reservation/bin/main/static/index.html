@@ -143,7 +143,7 @@
 
 <header>
   <a>予約確認</a>
-  <a>ログイン</a>
+  <a href="login.html">ログイン</a>
   <a href="register.html">新規登録</a>
   <a>アカウント</a>
 </header>
@@ -256,6 +256,13 @@
       const detail = document.createElement("div");
       detail.className = "event-detail";
 
+       const deadlineTitle = document.createElement("div");
+      deadlineTitle.className = "event-detail-title";
+      deadlineTitle.textContent = "締切";
+
+      const deadlineBody = document.createElement("div");
+      deadlineBody.textContent = event.deadline || "締切は未設定です。";
+
       // 説明会名（元の item）
       const itemTitle = document.createElement("div");
       itemTitle.className = "event-detail-title";
@@ -279,7 +286,9 @@
       reserveBtn.addEventListener("click", () => {
         alert("予約機能はまだ実装していません。");
       });
-
+      
+      detail.appendChild(deadlineTitle);
+      detail.appendChild(deadlineBody);
       detail.appendChild(itemTitle);
       detail.appendChild(itemBody);
       detail.appendChild(noteTitle);

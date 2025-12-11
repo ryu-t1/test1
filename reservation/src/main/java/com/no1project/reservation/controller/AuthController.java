@@ -46,12 +46,14 @@ public class AuthController {
         public int userId;
         public String email;
         public String name;
+        public String role;
 
-        public LoginResponse(String token, int userId, String email, String name) {
+        public LoginResponse(String token, int userId, String email, String name, String role) {
             this.token = token;
             this.userId = userId;
             this.email = email;
             this.name = name;
+            this.role = role;
         }
     }
 
@@ -64,13 +66,14 @@ public class AuthController {
         Authentication authResult = authenticationManager.authenticate(authRequest);
 
         CustomUserDetails userDetails = (CustomUserDetails) authResult.getPrincipal();
-        String token = jwtUtil.generateToken(userDetails.getUsername());
+        String token = jwtUtil.generateToken(userDetails);
 
         return new LoginResponse(
                 token,
                 userDetails.getUserId(),
                 userDetails.getEmail(),
-                userDetails.getName()
+                userDetails.getName(),
+                userDetails.getRole()
         );
         
     }

@@ -1,0 +1,173 @@
+<!-- admin.html : 管理者 / 教師用 仮画面 -->
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>説明会管理（管理者用・仮）</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #fafafa;
+    }
+
+    header {
+      border-bottom: 1px solid #ccc;
+      padding: 16px 40px;
+      display: flex;
+      justify-content: center;
+      gap: 80px;
+      font-size: 14px;
+      background-color: #fff;
+    }
+
+    header a {
+      text-decoration: none;
+      color: #333;
+      cursor: pointer;
+    }
+
+    main {
+      max-width: 900px;
+      margin: 30px auto 60px;
+      padding: 0 16px;
+    }
+
+    h1 {
+      font-size: 22px;
+      margin-bottom: 8px;
+    }
+
+    .sub {
+      color: #666;
+      margin-bottom: 24px;
+    }
+
+    .info {
+      margin-bottom: 20px;
+    }
+
+    .panel {
+      background-color: #fff;
+      border: 1px solid #333;
+      padding: 16px;
+      margin-bottom: 16px;
+    }
+
+    .panel-title {
+      font-weight: bold;
+      margin-bottom: 8px;
+    }
+
+    button {
+      padding: 6px 12px;
+      margin-right: 8px;
+      cursor: pointer;
+    }
+
+    .token-box {
+      margin-top: 12px;
+      padding: 8px;
+      border: 1px dashed #999;
+      background: #fafafa;
+      font-size: 12px;
+      word-break: break-all;
+    }
+
+    .danger {
+      color: #c00;
+      font-size: 13px;
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <a href="index.html">学生画面トップへ</a>
+  <a href="login.html">ログイン</a>
+  <a href="#">新規登録</a>
+  <a href="#" id="logoutLink">ログアウト</a>
+</header>
+
+<main>
+  <h1>説明会管理ダッシュボード（仮）</h1>
+  <div class="sub">管理者アカウント専用画面です。ここに説明会の登録・編集・予約一覧などを配置する予定。</div>
+
+  <div class="info" id="adminInfo"></div>
+
+  <div class="panel">
+    <div class="panel-title">サンプル：JWT 付きで API を呼んでみる</div>
+    <p>例えば「管理者専用API /admin/events」などを叩いて、バックエンド側の Authorization 設定を確認できます。</p>
+    <button id="callApiButton">管理者API呼び出し（ダミー）</button>
+    <div id="apiResult" style="margin-top:10px; font-size:13px;"></div>
+    <div class="token-box">
+      <div>現在のJWT（テスト用表示）：</div>
+      <div id="tokenText"></div>
+    </div>
+  </div>
+
+  <p class="danger" id="warn"></p>
+</main>
+
+<script>
+  const API_BASE = 'http://localhost:8080';
+
+  function initAdminPage() {
+    const token = localStorage.getItem('token');
+    const role = localStorage.getItem('role');
+    const name = localStorage.getItem('name');
+    const email = localStorage.getItem('email');
+
+    // 未ログイン → ログイン画面へ
+    if (!token) {
+      window.location.href = 'login.html';
+      return;
+    }
+
+    // 管理者以外 → 学生トップへ
+    if (role !== 'normal_admin') {
+      window.location.href = 'index.html';
+      return;
+    }
+
+    document.getElementById('adminInfo').textContent =
+      `${name || '管理者'} さん (${email || ''}) としてログイン中 / role=${role}`;
+
+    document.getElementById('tokenText').textContent = token;
+  }
+
+  document.getElementById('logoutLink').addEventListener('click', (e) => {
+    e.preventDefault();
+    localStorage.removeItem('token');
+    localStorage.removeItem('userId');
+    localStorage.removeItem('email');
+    localStorage.removeItem('name');
+    localStorage.removeItem('role');
+    window.location.href = 'index.html';
+  });
+
+  document.getElementById('callApiButton').addEventListener('click', async () => {
+    const token = localStorage.getItem('token');
+    const resultDiv = document.getElementById('apiResult');
+    resultDiv.textContent = 'API呼び出し中…';
+
+    try {
+      // 実際には /admin/events など、管理者専用エンドポイントに変更
+      const res = await fetch(`${API_BASE}/admin/sample`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      const text = await res.text();
+      resultDiv.textContent = `ステータス: ${res.status}\nレスポンス: ${text}`;
+    } catch (e) {
+      resultDiv.textContent = 'API呼び出しに失敗しました: ' + e.message;
+    }
+  });
+
+  window.addEventListener('load', initAdminPage);
+</script>
+
+</body>
+</html>

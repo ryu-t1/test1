@@ -359,18 +359,18 @@ function setupHeaderByLoginStatus() {
       // --- 締切＆roleによる制御 ---
       const deadlineOver = isDeadlineOver(event.deadline);
 
-      if (!isStudent) {
-        // 学生アカウント以外 → 予約できない
-        reserveBtn.disabled = true;
-        reserveBtn.style.backgroundColor = "#ccc";
-        reserveBtn.style.cursor = "not-allowed";
-        reserveBtn.textContent = "学生のみ予約可";
-      } else if (deadlineOver) {
+       if (deadlineOver) {
         // 締切日を過ぎている場合 → ボタンはグレーで押せない
         reserveBtn.disabled = true;
         reserveBtn.style.backgroundColor = "#ccc";
         reserveBtn.style.cursor = "not-allowed";
         reserveBtn.textContent = "締切済み";
+      } else if (!isStudent) {
+        // 学生アカウント以外 → 予約できない
+        reserveBtn.disabled = true;
+        reserveBtn.style.backgroundColor = "#ccc";
+        reserveBtn.style.cursor = "not-allowed";
+        reserveBtn.textContent = "学生のみ予約可";
       } else {
         // 学生 かつ 締切前 → 予約可能
         reserveBtn.addEventListener("click", async () => {

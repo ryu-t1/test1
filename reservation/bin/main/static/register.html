@@ -206,11 +206,11 @@
         return;
       }
 
-      showMessage("登録が完了しました。ログイン画面へ移動します。", false);
+      showMessage("登録が完了しました。トップページへ移動します。", false);
 
       // 少し待ってからログイン画面へ遷移（パスは実際のログインページに合わせる）
       setTimeout(() => {
-        window.location.href = "/login.html";
+        window.location.href = "index.html";
       }, 1200);
 
     } catch (err) {

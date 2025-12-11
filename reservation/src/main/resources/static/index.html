@@ -1,9 +1,9 @@
 <!DOCTYPE html>
 <html lang="ja">
-<head>
-  <meta charset="UTF-8">
-  <title>説明会一覧（学生用）</title>
-  <style>
+  <head>
+    <meta charset="UTF-8">
+    <title>説明会一覧（学生用）</title>
+    <style>
     body {
       font-family: Arial, sans-serif;
       margin: 0;
@@ -138,34 +138,34 @@
       color: #666;
     }
   </style>
-</head>
-<body>
+  </head>
+  <body>
 
-<header>
-  <a>予約確認</a>
-  <a href="login.html">ログイン</a>
-  <a href="register.html">新規登録</a>
-  <a>アカウント</a>
-</header>
+    <header>
+      <a>予約確認</a>
+      <a id="loginLink" href="login.html">ログイン</a>
+      <a id="registerLink" href="register.html">新規登録</a>
+      <a>アカウント</a>
+    </header>
 
-<main>
-  <!-- 検索フォーム（見た目だけ。検索APIは後で実装） -->
-  <div class="search-box">
-    <input id="keyword" type="text" placeholder="会社名・説明会名などで検索">
-    <button id="searchBtn">検索</button>
-  </div>
+    <main>
+      <!-- 検索フォーム（見た目だけ。検索APIは後で実装） -->
+      <div class="search-box">
+        <input id="keyword" type="text" placeholder="会社名・説明会名などで検索">
+        <button id="searchBtn">検索</button>
+      </div>
 
-  <!-- 説明会リスト -->
-  <div id="eventList"></div>
+      <!-- 説明会リスト -->
+      <div id="eventList"></div>
 
-  <!-- 件数ゼロなどのお知らせ -->
-  <div id="message" class="message"></div>
+      <!-- 件数ゼロなどのお知らせ -->
+      <div id="message" class="message"></div>
 
-  <!-- ページネーション -->
-  <div id="pagination"></div>
-</main>
+      <!-- ページネーション -->
+      <div id="pagination"></div>
+    </main>
 
-<script>
+    <script>
   // =============================
   // 設定
   // =============================
@@ -174,6 +174,76 @@
 
   let currentPage = 0;
   let totalPages = 1;
+
+  // ログイン情報取得（login.html 側で localStorage に保存している前提）
+  function getLoginInfo() {
+    const token = localStorage.getItem("token");
+    const roleRaw = localStorage.getItem("role"); // "student" / "STUDENT" を想定
+    const role = roleRaw ? roleRaw.toUpperCase() : null;
+
+    return { token, role };
+  }
+
+  // 締切日が過ぎているか判定（event.deadline は "2025-12-20" 形式を想定）
+  function isDeadlineOver(deadlineStr) {
+    if (!deadlineStr) return false;
+    const d = new Date(deadlineStr);
+    if (Number.isNaN(d.getTime())) return false; // パースできない場合は締切なし扱い
+
+    const today = new Date();
+    d.setHours(0,0,0,0);
+    today.setHours(0,0,0,0);
+
+    return d < today;
+  }
+
+  // ヘッダーの「ログイン」を「ログアウト」に差し替え
+function setupHeaderByLoginStatus() {
+  const loginLink = document.getElementById("loginLink");
+  const registerLink = document.getElementById("registerLink");
+  const { token } = getLoginInfo();
+
+  if (!loginLink) return;
+
+  if (token) {
+    // ★ ログイン済み → ログアウト表示に変更
+    loginLink.textContent = "ログアウト";
+    loginLink.href = "#";
+
+    // 既存のイベントを消しておく（念のため）
+    loginLink.replaceWith(loginLink.cloneNode(true));
+    const newLoginLink = document.getElementById("loginLink");
+
+    newLoginLink.addEventListener("click", (e) => {
+      e.preventDefault();
+
+      // localStorage をクリア（savedEmail は残したければ残してOK）
+      localStorage.removeItem("token");
+      localStorage.removeItem("userId");
+      localStorage.removeItem("email");
+      localStorage.removeItem("name");
+      localStorage.removeItem("role");
+
+      alert("ログアウトしました。");
+
+      // index.html画面へ移動
+      window.location.href = "index.html";
+    });
+
+    // お好み：ログイン済みなら「新規登録」を隠す
+    if (registerLink) {
+      registerLink.style.display = "none";
+    }
+  } else {
+    // ★ 未ログイン → 通常のログインリンク
+    loginLink.textContent = "ログイン";
+    loginLink.href = "login.html";
+
+    if (registerLink) {
+      registerLink.style.display = "inline";
+    }
+  }
+}
 
   // =============================
   // API呼び出し
@@ -216,6 +286,9 @@
   function renderEvents(events) {
     const list = document.getElementById("eventList");
     list.innerHTML = "";
+
+    const loginInfo = getLoginInfo();
+    const isStudent = loginInfo.role === "STUDENT";
 
     events.forEach(event => {
       const card = document.createElement("div");
@@ -282,10 +355,69 @@
       const reserveBtn = document.createElement("button");
       reserveBtn.className = "reserve-btn";
       reserveBtn.textContent = "予約する";
-      // 予約機能は後で実装。今はダミー。
-      reserveBtn.addEventListener("click", () => {
-        alert("予約機能はまだ実装していません。");
-      });
+      //予約機能
+      // --- 締切＆roleによる制御 ---
+      const deadlineOver = isDeadlineOver(event.deadline);
+
+      if (!isStudent) {
+        // 学生アカウント以外 → 予約できない
+        reserveBtn.disabled = true;
+        reserveBtn.style.backgroundColor = "#ccc";
+        reserveBtn.style.cursor = "not-allowed";
+        reserveBtn.textContent = "学生のみ予約可";
+      } else if (deadlineOver) {
+        // 締切日を過ぎている場合 → ボタンはグレーで押せない
+        reserveBtn.disabled = true;
+        reserveBtn.style.backgroundColor = "#ccc";
+        reserveBtn.style.cursor = "not-allowed";
+        reserveBtn.textContent = "締切済み";
+      } else {
+        // 学生 かつ 締切前 → 予約可能
+        reserveBtn.addEventListener("click", async () => {
+          // ★ ここで確認ダイアログを出す
+          const ok = window.confirm(
+            `この説明会を予約しますか？\n\n` +
+            `会社名：${event.companyName ?? "会社名未設定"}\n` +
+            `開催日：${event.date ?? "未定"}\n` +
+            `場所：${event.place ?? "未定"}`
+          );
+          if (!ok) {
+           // 「キャンセル」が押されたら何もしない
+            return;
+          }
+          const token = loginInfo.token;
+          if (!token) {
+            alert("予約にはログインが必要です。ログイン画面から再度ログインしてください。");
+            // location.href = "login.html"; // 必要ならリダイレクト
+            return;
+          }
+
+          try {
+            // eventId はバックエンドの Event DTO が持っている前提
+            const res = await fetch(`${API_BASE}/events/${event.eventId}/reservations`, {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                "Authorization": "Bearer " + token
+              }
+            });
+
+            if (res.ok) {
+              alert("予約が完了しました。");
+            } else if (res.status === 400 || res.status === 409) {
+              const msg = await res.text();
+              alert("予約に失敗しました: " + msg);
+            } else if (res.status === 401 || res.status === 403) {
+              alert("権限がありません。学生アカウントでログインしてください。");
+            } else {
+              alert("予期しないエラーが発生しました。");
+            }
+          } catch (e) {
+            console.error(e);
+            alert("サーバーとの通信に失敗しました。");
+          }
+        });
+      }
       
       detail.appendChild(deadlineTitle);
       detail.appendChild(deadlineBody);
@@ -346,6 +478,7 @@
   // 初期化
   // =============================
   window.addEventListener("load", () => {
+    setupHeaderByLoginStatus();
     loadEvents(0);
 
     // 検索ボタン（今はリロードだけ。検索APIを作ったらここを書き換える）
@@ -357,5 +490,5 @@
   });
 </script>
 
-</body>
+  </body>
 </html>

@@ -20,14 +20,14 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         this.authenticationManager = authenticationManager;
     }
 
-    @Override
-    protected boolean shouldNotFilter(HttpServletRequest request) {
-        String path = request.getServletPath();
+    // @Override
+    // protected boolean shouldNotFilter(HttpServletRequest request) {
+    //     String path = request.getServletPath();
 
-        // 認証不要なAPI
-        return path.equals("/auth/login")
-            || path.startsWith("/events");
-    }
+    //     // 認証不要なAPI
+    //     return path.equals("/auth/login")
+    //         || path.startsWith("/events");
+    // }
     @Override
     protected void doFilterInternal(HttpServletRequest request,
                                     HttpServletResponse response,

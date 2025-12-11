@@ -58,4 +58,20 @@ public class EventRepository {
         Integer count = jdbcTemplate.queryForObject(sql, Integer.class);
         return count != null ? count : 0;
     }
+
+        /** イベント1件取得（予約時の締切チェックなどで使用） */
+    public Event findById(int eventId) {
+        String sql = """
+            SELECT e.event_id, e.date, e.deadline, e.place, e.item, 
+                   e.company_id, e.note, c.name
+            FROM Event e
+            JOIN Company c ON e.company_id = c.company_id
+            WHERE e.event_id = ?
+        """;
+
+        List<Event> list = jdbcTemplate.query(sql, new EventRowMapper(), eventId);
+
+        return list.isEmpty() ? null : list.get(0);
+    }
+
 }

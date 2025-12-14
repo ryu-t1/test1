@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <title>予約確認</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin:0; background:#fafafa; }
+
+    /* 上部メニュー（index.html と合わせる） */
+    header {
+      border-bottom: 1px solid #ccc;
+      padding: 16px 40px;
+      display: flex;
+      justify-content: center;
+      gap: 80px;
+      font-size: 14px;
+      background-color: #fff;
+    }
+    header a { text-decoration:none; color:#333; cursor:pointer; }
+
+    main { max-width: 900px; margin: 30px auto 60px; padding: 0 16px; }
+
+    h2 { margin: 0 0 14px; }
+
+    /* タブ */
+    .tabs { display:flex; gap:10px; margin: 12px 0 16px; }
+    .tab {
+      padding: 10px 14px;
+      border: 1px solid #333;
+      background:#fff;
+      cursor:pointer;
+      font-size: 14px;
+    }
+    .tab.active { background:#333; color:#fff; }
+
+    /* セクションメッセージ */
+    .message {
+      text-align: center;
+      margin-top: 14px;
+      color: #666;
+    }
+
+    /* カード */
+    .card {
+      border: 1px solid #333;
+      background: #fff;
+      margin-bottom: 12px;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    .card-head {
+      padding: 12px 16px;
+      display:flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      border-bottom: 1px solid #eee;
+    }
+
+    .title {
+      font-weight: bold;
+      font-size: 16px;
+      margin-bottom: 4px;
+    }
+    .sub { font-size: 13px; color:#333; }
+
+    .badge {
+      font-size: 12px;
+      padding: 4px 10px;
+      border: 1px solid #999;
+      border-radius: 999px;
+      white-space: nowrap;
+    }
+    .badge.upcoming { border-color: #2a7; }
+    .badge.past { opacity: 0.7; }
+
+    .label { font-weight: bold; margin-top: 6px; }
+    .muted { color:#666; }
+
+    /* 過去は少し薄く */
+    .pastCard { opacity: 0.85; }
+
+    /* エラーボックス */
+    .box {
+      border: 1px dashed #aaa;
+      background:#fff;
+      padding: 16px;
+      border-radius: 8px;
+      color:#555;
+      text-align: center;
+    }
+
+    /* アコーディオン */
+    .acc-toggle-btn {
+      padding: 4px 8px;
+      cursor: pointer;
+      font-size: 12px;
+    }
+
+    .acc-body {
+      display: none; /* 初期は閉じる */
+      border-top: 1px solid #333;
+      padding: 12px 16px;
+    }
+
+    .cancel-btn {
+      margin-top: 10px;
+      padding: 6px 12px;
+      cursor: pointer;
+    }
+    .cancel-btn.danger {
+      background: #f2dede;
+      border: 1px solid #a94442;
+    }
+    .cancel-btn[disabled] {
+      background: #eee;
+      border: 1px solid #bbb;
+      color: #666;
+      cursor: not-allowed;
+    }
+  </style>
+</head>
+
+<body>
+<header>
+  <a href="index.html">説明会一覧</a>
+  <a href="reservations.html">予約確認</a>
+  <a id="loginLink" href="login.html">ログイン</a>
+  <a id="registerLink" href="register.html">新規登録</a>
+  <a href="account.html">アカウント</a>
+</header>
+
+<main>
+  <h2>予約確認</h2>
+
+  <div class="tabs">
+    <button id="tab-upcoming" class="tab active">これから（開催前）</button>
+    <button id="tab-past" class="tab">過去（開催済み）</button>
+  </div>
+
+  <div id="list"></div>
+  <div id="message" class="message"></div>
+</main>
+
+<script>
+  const API_BASE = "http://localhost:8080";
+
+  function getLoginInfo() {
+    const token = localStorage.getItem("token");
+    const roleRaw = localStorage.getItem("role"); // "student" / "normal_admin" etc
+    const role = roleRaw ? roleRaw.toUpperCase() : null;
+    return { token, role };
+  }
+
+  // index.html と同じログアウト挙動
+  function setupHeaderByLoginStatus() {
+    const loginLink = document.getElementById("loginLink");
+    const registerLink = document.getElementById("registerLink");
+    const { token } = getLoginInfo();
+
+    if (!loginLink) return;
+
+    if (token) {
+      loginLink.textContent = "ログアウト";
+      loginLink.href = "#";
+
+      loginLink.replaceWith(loginLink.cloneNode(true));
+      const newLoginLink = document.getElementById("loginLink");
+
+      newLoginLink.addEventListener("click", (e) => {
+        e.preventDefault();
+        localStorage.removeItem("token");
+        localStorage.removeItem("userId");
+        localStorage.removeItem("email");
+        localStorage.removeItem("name");
+        localStorage.removeItem("role");
+
+        alert("ログアウトしました。");
+        window.location.href = "index.html";
+      });
+
+      if (registerLink) registerLink.style.display = "none";
+    } else {
+      loginLink.textContent = "ログイン";
+      loginLink.href = "login.html";
+      if (registerLink) registerLink.style.display = "inline";
+    }
+  }
+
+  // "yyyy-MM-dd HH:mm:ss" を見やすく
+  function fmt(dtStr) {
+    if (!dtStr) return "未定";
+    return String(dtStr).replace("T", " ").slice(0, 19);
+  }
+
+  function escapeHtml(str) {
+    return String(str ?? "")
+      .replaceAll("&", "&amp;")
+      .replaceAll("<", "&lt;")
+      .replaceAll(">", "&gt;")
+      .replaceAll('"', "&quot;")
+      .replaceAll("'", "&#039;");
+  }
+
+  // 締切を過ぎているか（時刻まで厳密）
+  // DB: "yyyy-MM-dd HH:mm:ss" 想定 → "yyyy-MM-ddTHH:mm:ss" にして Date に食わせる
+  function isDeadlineOver(deadlineStr) {
+    if (!deadlineStr) return false;
+    const iso = String(deadlineStr).replace(" ", "T");
+    const d = new Date(iso);
+    if (Number.isNaN(d.getTime())) return false;
+    return d < new Date();
+  }
+
+  // 画面状態
+  let data = { upcoming: [], past: [] };
+  let current = "upcoming";
+
+  const listEl = document.getElementById("list");
+  const msgEl = document.getElementById("message");
+  const tabUpcoming = document.getElementById("tab-upcoming");
+  const tabPast = document.getElementById("tab-past");
+
+  tabUpcoming.addEventListener("click", () => { current = "upcoming"; render(); });
+  tabPast.addEventListener("click", () => { current = "past"; render(); });
+
+  function render() {
+    tabUpcoming.classList.toggle("active", current === "upcoming");
+    tabPast.classList.toggle("active", current === "past");
+
+    const items = data[current] || [];
+    if (items.length === 0) {
+      listEl.innerHTML =
+        `<div class="box">${current === "upcoming" ? "これからの予約はありません。" : "過去の予約はありません。"}</div>`;
+      msgEl.textContent = "";
+      return;
+    }
+
+    // まずHTMLを描画（アコーディオンは閉じた状態）
+    listEl.innerHTML = items.map((r, idx) => {
+      const deadlineOver = isDeadlineOver(r.deadline);
+
+      // upcoming の時だけ「取消」表示。ただし締切過ぎは disabled
+      let cancelHtml = "";
+      if (current === "upcoming") {
+        if (deadlineOver) {
+          cancelHtml = `
+            <button class="cancel-btn" disabled>
+              締切済み（取消不可）
+            </button>
+          `;
+        } else {
+          cancelHtml = `
+            <button class="cancel-btn danger" data-reservation-id="${r.reservationId}">
+              予約を取消
+            </button>
+          `;
+        }
+      }
+
+      return `
+        <div class="card ${current === "past" ? "pastCard" : ""}">
+          <div class="card-head">
+            <div>
+              <div class="title">${escapeHtml(r.companyName || "会社名未設定")}</div>
+              <div class="sub">開催日：${escapeHtml(fmt(r.eventDate))}</div>
+              <div class="sub">場所：${escapeHtml(r.place || "未定")}</div>
+            </div>
+
+            <div style="display:flex; align-items:center; gap:10px;">
+              <div class="badge ${current}">
+                ${current === "upcoming" ? "開催前" : "開催済み"}
+              </div>
+              <button class="acc-toggle-btn" data-idx="${idx}">▽ 詳細表示</button>
+            </div>
+          </div>
+
+          <div class="acc-body" id="acc-${idx}">
+            <div class="label">締切</div>
+            <div class="muted">${escapeHtml(fmt(r.deadline))}</div>
+
+            <div class="label">持ち物</div>
+            <div>${escapeHtml(r.item || "未登録")}</div>
+
+            <div class="label">説明</div>
+            <div>${escapeHtml(r.note || "未登録")}</div>
+
+            <div class="label">予約日</div>
+            <div class="muted">${escapeHtml(fmt(r.reservationDate))}</div>
+
+            ${cancelHtml}
+          </div>
+        </div>
+      `;
+    }).join("");
+
+    // アコーディオン開閉
+    document.querySelectorAll(".acc-toggle-btn").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const idx = btn.getAttribute("data-idx");
+        const body = document.getElementById(`acc-${idx}`);
+        const isOpen = body.style.display === "block";
+
+        body.style.display = isOpen ? "none" : "block";
+        btn.textContent = isOpen ? "▽ 詳細表示" : "△ 閉じる";
+      });
+    });
+
+    // 取消（disabled には付かないが念のため）
+    document.querySelectorAll(".cancel-btn.danger").forEach(btn => {
+      btn.addEventListener("click", async () => {
+        const reservationId = btn.getAttribute("data-reservation-id");
+        const ok = window.confirm("この予約を取り消しますか？");
+        if (!ok) return;
+
+        const { token } = getLoginInfo();
+        if (!token) {
+          alert("ログインが必要です。");
+          window.location.href = "login.html";
+          return;
+        }
+
+        try {
+          const res = await fetch(`${API_BASE}/reservations/${reservationId}`, {
+            method: "DELETE",
+            headers: { "Authorization": "Bearer " + token }
+          });
+
+          if (res.ok) {
+            alert("予約を取り消しました。");
+            await loadMyReservations(); // 再取得して画面更新
+          } else if (res.status === 409) {
+            // サーバ側で「締切過ぎ」などをブロックしたケース
+            const text = await res.text();
+            alert(text || "締切を過ぎているため取消できません。");
+            await loadMyReservations();
+          } else if (res.status === 401) {
+            alert("ログイン情報が無効です。再ログインしてください。");
+            window.location.href = "login.html";
+          } else if (res.status === 403) {
+            alert("権限がありません（学生のみ / または他人の予約）。");
+          } else {
+            const text = await res.text();
+            alert("取消に失敗しました: " + (text || `HTTP ${res.status}`));
+          }
+        } catch (e) {
+          console.error(e);
+          alert("サーバーとの通信に失敗しました。");
+        }
+      });
+    });
+
+    msgEl.textContent = "";
+  }
+
+  async function loadMyReservations() {
+    const { token, role } = getLoginInfo();
+
+    // 未ログイン
+    if (!token) {
+      listEl.innerHTML = `<div class="box">予約確認にはログインが必要です。</div>`;
+      msgEl.textContent = "";
+      return;
+    }
+
+    // フロント側でも学生以外はブロック（※最終的にはサーバ側の権限が本命）
+    if (role !== "STUDENT") {
+      listEl.innerHTML = `<div class="box">この機能は学生アカウントのみ利用できます。</div>`;
+      msgEl.textContent = "";
+      return;
+    }
+
+    try {
+      const res = await fetch(`${API_BASE}/reservations/me`, {
+        headers: { "Authorization": "Bearer " + token }
+      });
+
+      if (res.status === 401) {
+        listEl.innerHTML = `<div class="box">ログイン情報が無効です。再ログインしてください。</div>`;
+        return;
+      }
+
+      if (res.status === 403) {
+        listEl.innerHTML = `<div class="box">権限がありません（学生のみ）。</div>`;
+        return;
+      }
+
+      if (!res.ok) {
+        listEl.innerHTML = `<div class="box">取得に失敗しました（HTTP ${res.status}）</div>`;
+        return;
+      }
+
+      data = await res.json();
+      current = "upcoming";
+      render();
+
+    } catch (e) {
+      console.error(e);
+      listEl.innerHTML = `<div class="box">サーバーとの通信に失敗しました。</div>`;
+    }
+  }
+
+  window.addEventListener("load", () => {
+    setupHeaderByLoginStatus();
+    loadMyReservations();
+  });
+</script>
+</body>
+</html>

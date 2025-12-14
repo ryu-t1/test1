@@ -74,7 +74,11 @@ public class SecurityConfig {
                     // 予約APIは学生のみ
                     .requestMatchers(HttpMethod.POST, "/events/*/reservations")
                         .hasRole("STUDENT")
-
+                    //予約閲覧
+                    .requestMatchers(HttpMethod.GET, "/reservations/me").hasRole("STUDENT")
+                    //予約削除
+                    .requestMatchers(HttpMethod.DELETE, "/reservations/*").hasRole("STUDENT")
+                    
                     // preflight
                     .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
 

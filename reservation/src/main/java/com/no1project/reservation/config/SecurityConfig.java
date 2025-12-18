@@ -65,6 +65,7 @@ public class SecurityConfig {
             .csrf(csrf -> csrf.disable())
             .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
+                
                     // ログイン・新規登録は誰でもOK
                     .requestMatchers("/auth/login", "/auth/register/**").permitAll()
 
@@ -80,6 +81,11 @@ public class SecurityConfig {
                     .requestMatchers(HttpMethod.DELETE, "/reservations/*").hasRole("STUDENT")
                     // 管理者API（会社/説明会 管理）は管理者のみ
                     .requestMatchers("/api/admin/**").hasRole("NORMAL_ADMIN")
+
+                    //フロントエンド
+                    .requestMatchers("/index.html", "admincompanies.html", 
+                    "adminevents.html", "login.html", "register.html", "reservations.html", 
+                    "teacherRegister.html").permitAll()
                     
                     // preflight
                     .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()

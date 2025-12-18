@@ -17,7 +17,11 @@ public class CorsConfig {
         // 許可するフロントのURL（Live ServerやViteなどのポート）
         config.setAllowedOrigins(List.of(
             "http://127.0.0.1:5500",
-            "http://localhost:5500"
+            "http://localhost:5500",
+            "http://127.0.0.1:8080",
+            "http://localhost:8080",
+            "http://45.76.55.162:8080"
+
         ));
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         config.setAllowedHeaders(List.of("*"));

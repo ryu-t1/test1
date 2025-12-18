@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>説明会情報管理（管理者）</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin:0; padding:0; background:#fafafa; color:#111; }
+
+    header{
+      border-bottom:1px solid #ccc;
+      padding:16px 40px;
+      display:flex;
+      justify-content:center;
+      gap:80px;
+      font-size:14px;
+      background:#fff;
+    }
+    header a{ text-decoration:none; color:#333; cursor:pointer; }
+
+    main{ max-width:900px; margin:30px auto 60px; padding:0 16px; }
+
+    .toolbar{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+      margin: 12px 0 10px;
+    }
+
+    .btn{
+      padding:10px 14px;
+      border:1px solid #333;
+      background:#fff;
+      cursor:pointer;
+      font-size: 13px;
+    }
+    .btn:disabled { opacity:0.5; cursor:not-allowed; }
+
+    .search-box{
+      margin: 0 auto 20px;
+      max-width: 600px;
+      border: 1px solid #333;
+      padding: 16px;
+      text-align: center;
+      background-color: #fff;
+    }
+    .search-box input{
+      width: 70%;
+      padding: 6px 8px;
+      box-sizing: border-box;
+    }
+    .search-box button{
+      padding: 6px 12px;
+      margin-left: 8px;
+      cursor: pointer;
+    }
+
+    .hint{ font-size:12px; color:#333; margin: 6px 0 14px; }
+
+    #eventList{ margin-top: 10px; }
+    .event-card{ border:1px solid #333; background:#fff; margin-bottom:12px; }
+
+    .event-header{
+      padding:10px 16px;
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      cursor: default;
+    }
+
+    .event-main-info{
+      display:flex;
+      flex-direction:column;
+      gap:4px;
+    }
+
+    .event-title{ font-weight:bold; }
+    .event-sub{ font-size:13px; }
+
+    .detail-toggle-btn{
+      padding:4px 8px;
+      cursor:pointer;
+      font-size:12px;
+      border:1px solid #333;
+      background:#fff;
+    }
+
+    .event-detail{
+      border-top:1px solid #333;
+      padding:10px 16px 14px;
+      display:none;
+      font-size:14px;
+    }
+
+    .event-detail-title{
+      font-weight:bold;
+      margin-top:6px;
+      margin-bottom:4px;
+    }
+
+    #pagination{
+      text-align:center;
+      margin-top:24px;
+      font-size:14px;
+    }
+    .page-link{
+      display:inline-block;
+      margin:0 6px;
+      cursor:pointer;
+    }
+    .page-link.active{
+      font-weight:bold;
+      text-decoration:underline;
+    }
+
+    .message{
+      text-align:center;
+      margin-top:20px;
+      color:#666;
+    }
+
+    /* modal */
+    .backdrop { position:fixed; inset:0; background:rgba(0,0,0,0.35); display:none; }
+    .modal { width:560px; max-width: calc(100vw - 32px); background:#fff; margin: 90px auto; padding:16px; border-radius:8px; border:1px solid #333; }
+    .modal h2 { margin:0 0 12px; font-size: 16px; }
+    .field { margin: 10px 0; }
+    .field label { display:block; font-size:12px; color:#222; margin-bottom:4px; }
+    .field input, .field select, .field textarea {
+      width:100%; padding:10px; border:1px solid #ccc; box-sizing:border-box;
+      font-family: inherit;
+    }
+    .field textarea { min-height: 90px; resize: vertical; }
+    .actions { display:flex; gap:10px; justify-content:flex-end; margin-top:12px; }
+    .error { color:#c00; font-size:12px; margin-top:8px; }
+    .muted { color:#666; font-size:12px; margin-top:10px; }
+  </style>
+</head>
+<body>
+
+<header>
+  <a href="adminevents.html">説明会情報管理</a>
+  <a href="admincompanies.html">会社情報管理</a>
+  <a href="#" id="logoutLink">ログアウト</a>
+  <a href="#" id="accountLink">アカウント</a>
+</header>
+
+<main>
+  <div class="toolbar">
+    <button class="btn" id="openModalBtn">説明会新規登録ボタン</button>
+  </div>
+
+  <div class="search-box">
+    <input id="keyword" type="text" placeholder="会社名・説明会名などで検索（後で実装）">
+    <button id="searchBtn">検索</button>
+  </div>
+
+  <div class="hint">＊ 登録・閲覧・編集・画面はポップアップBOXで表示</div>
+
+  <div id="eventList"></div>
+  <div id="message" class="message"></div>
+  <div id="pagination"></div>
+</main>
+
+<!-- Modal（新規登録） -->
+<div class="backdrop" id="backdrop">
+  <div class="modal">
+    <h2>説明会新規登録</h2>
+
+    <div class="field">
+      <label>会社（必須）</label>
+      <select id="m_company">
+        <option value="">読み込み中...</option>
+      </select>
+      <div class="muted">※ 会社情報管理で登録した会社が表示されます</div>
+    </div>
+
+    <div class="field">
+      <label>開催日（必須）</label>
+      <input id="m_date" type="datetime-local" />
+    </div>
+
+    <div class="field">
+      <label>締切（必須）</label>
+      <input id="m_deadline" type="datetime-local" />
+    </div>
+
+    <div class="field">
+      <label>場所（必須）</label>
+      <input id="m_place" placeholder="例：E2602" />
+    </div>
+
+    <div class="field">
+      <label>持ち物</label>
+      <input id="m_item" placeholder="例：履歴書・筆記用具" />
+    </div>
+
+    <div class="field">
+      <label>説明（備考）</label>
+      <textarea id="m_note" placeholder="例：服装自由、受付開始は30分前など"></textarea>
+    </div>
+
+    <div class="actions">
+      <button class="btn" id="closeModalBtn">キャンセル</button>
+      <button class="btn" id="saveBtn">登録</button>
+    </div>
+
+    <div class="error" id="modalMsg"></div>
+  </div>
+</div>
+
+<script>
+  const API_BASE = "http://localhost:8080";
+  const token = localStorage.getItem("token");
+
+  const eventListEl = document.getElementById("eventList");
+  const messageEl = document.getElementById("message");
+  const paginationEl = document.getElementById("pagination");
+
+  const backdrop = document.getElementById("backdrop");
+  const openModalBtn = document.getElementById("openModalBtn");
+  const closeModalBtn = document.getElementById("closeModalBtn");
+  const saveBtn = document.getElementById("saveBtn");
+  const modalMsg = document.getElementById("modalMsg");
+
+  const companySelect = document.getElementById("m_company");
+
+  const PAGE_SIZE = 10;
+  let currentPage = 0;
+  let totalPages = 1;
+
+  if (!token) {
+    messageEl.textContent = "JWTトークンがありません。先に管理者でログインしてください。";
+  }
+
+  // ログアウト
+  document.getElementById("logoutLink").addEventListener("click", (e) => {
+    e.preventDefault();
+    localStorage.removeItem("token");
+    localStorage.removeItem("userId");
+    localStorage.removeItem("email");
+    localStorage.removeItem("name");
+    localStorage.removeItem("role");
+    alert("ログアウトしました。");
+    window.location.href = "login.html";
+  });
+
+  // ========= 会社一覧（select用） =========
+  async function loadCompanyOptions() {
+    companySelect.innerHTML = `<option value="">読み込み中...</option>`;
+
+    try {
+      // まずは既存ページングAPIを流用（会社が少ない想定で size を大きめ）
+      const res = await fetch(`${API_BASE}/api/admin/companies?page=1&size=1000`, {
+        headers: { "Authorization": `Bearer ${token}` }
+      });
+      if (!res.ok) throw new Error("HTTP status " + res.status);
+
+      const data = await res.json(); // {items,...}
+      const items = data.items ?? data.companies ?? [];
+
+      if (!items.length) {
+        companySelect.innerHTML = `<option value="">会社がありません（先に会社登録してください）</option>`;
+        return;
+      }
+
+      companySelect.innerHTML = `<option value="">会社を選択してください</option>`;
+      for (const c of items) {
+        const opt = document.createElement("option");
+        opt.value = String(c.companyId);
+        opt.textContent = c.name ?? `(ID:${c.companyId})`;
+        companySelect.appendChild(opt);
+      }
+    } catch (e) {
+      console.error(e);
+      companySelect.innerHTML = `<option value="">会社の取得に失敗（サーバ確認）</option>`;
+    }
+  }
+
+  // ========= モーダル open/close =========
+  openModalBtn.onclick = async () => {
+    modalMsg.textContent = "";
+    document.getElementById("m_date").value = "";
+    document.getElementById("m_deadline").value = "";
+    document.getElementById("m_place").value = "";
+    document.getElementById("m_item").value = "";
+    document.getElementById("m_note").value = "";
+
+    backdrop.style.display = "block";
+    await loadCompanyOptions(); // 開くたびに最新の会社を読み込み
+  };
+
+  closeModalBtn.onclick = () => backdrop.style.display = "none";
+  backdrop.addEventListener("click", (e) => {
+    if (e.target === backdrop) backdrop.style.display = "none";
+  });
+
+  // ========= 新規登録（POST） =========
+  saveBtn.onclick = async () => {
+    modalMsg.textContent = "";
+    saveBtn.disabled = true;
+
+    const companyId = companySelect.value ? Number(companySelect.value) : 0;
+    const dateLocal = document.getElementById("m_date").value;
+    const deadlineLocal = document.getElementById("m_deadline").value;
+
+    const payload = {
+      companyId: companyId,
+      // datetime-local は "YYYY-MM-DDTHH:mm" で入る → DBがDATETIMEならそのままでも通りやすい
+      // もしバックエンドで "YYYY-MM-DD HH:mm:ss" を要求するなら変換が必要（後で調整可）
+      date: dateLocal,
+      deadline: deadlineLocal,
+      place: document.getElementById("m_place").value.trim(),
+      item: document.getElementById("m_item").value.trim(),
+      note: document.getElementById("m_note").value.trim()
+    };
+
+    // 必須チェック（フロント側）
+    if (!payload.companyId) { modalMsg.textContent = "会社を選択してください"; saveBtn.disabled = false; return; }
+    if (!payload.date)      { modalMsg.textContent = "開催日は必須です"; saveBtn.disabled = false; return; }
+    if (!payload.deadline)  { modalMsg.textContent = "締切は必須です"; saveBtn.disabled = false; return; }
+    if (!payload.place)     { modalMsg.textContent = "場所は必須です"; saveBtn.disabled = false; return; }
+
+    try {
+      const res = await fetch(`${API_BASE}/api/admin/events`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
+        },
+        body: JSON.stringify(payload)
+      });
+
+      if (!res.ok) {
+        let msg = "";
+        try {
+          const err = await res.json();
+          msg = err.message ?? JSON.stringify(err);
+        } catch {
+          msg = await res.text();
+        }
+        modalMsg.textContent = `登録失敗: ${res.status} ${msg}`;
+        saveBtn.disabled = false;
+        return;
+      }
+
+      alert("説明会を登録しました。");
+      backdrop.style.display = "none";
+      saveBtn.disabled = false;
+
+      // 一覧も更新したい場合はここで loadEvents(0) を呼ぶ（下に実装あり）
+      await loadEvents(0);
+
+    } catch (e) {
+      console.error(e);
+      modalMsg.textContent = "通信に失敗しました。サーバーを確認してください。";
+      saveBtn.disabled = false;
+    }
+  };
+
+  // ========= 一覧表示（既存 /events を流用：※新規登録以外は未実装） =========
+  async function loadEvents(page) {
+    if (page < 0) page = 0;
+
+    const params = new URLSearchParams({
+      page: page,
+      size: PAGE_SIZE
+    });
+
+    try {
+      const res = await fetch(`${API_BASE}/events?` + params.toString());
+      if (!res.ok) throw new Error("HTTP status " + res.status);
+
+      const data = await res.json();
+      currentPage = data.page;
+      totalPages = data.totalPages;
+
+      renderEvents(data.events ?? []);
+      renderPagination();
+      renderMessage(data.totalCount ?? 0);
+    } catch (err) {
+      console.error(err);
+      eventListEl.innerHTML = "";
+      paginationEl.innerHTML = "";
+      messageEl.textContent = "説明会情報の取得に失敗しました。サーバーを確認してください。";
+    }
+  }
+
+  function renderEvents(events) {
+    eventListEl.innerHTML = "";
+    if (!events.length) return;
+
+    for (const e of events) {
+      const card = document.createElement("div");
+      card.className = "event-card";
+
+      const header = document.createElement("div");
+      header.className = "event-header";
+
+      const mainInfo = document.createElement("div");
+      mainInfo.className = "event-main-info";
+
+      const title = document.createElement("div");
+      title.className = "event-title";
+      title.textContent = e.companyName ?? "会社名未設定";
+
+      const sub1 = document.createElement("div");
+      sub1.className = "event-sub";
+      sub1.textContent = `開催日：${e.date ?? "未定"}`;
+
+      mainInfo.appendChild(title);
+      mainInfo.appendChild(sub1);
+
+      const toggleBtn = document.createElement("button");
+      toggleBtn.className = "detail-toggle-btn";
+      toggleBtn.textContent = "▽ 詳細表示";
+
+      header.appendChild(mainInfo);
+      header.appendChild(toggleBtn);
+
+      const detail = document.createElement("div");
+      detail.className = "event-detail";
+
+      detail.innerHTML = `
+        <div class="event-detail-title">締切</div>
+        <div>${escapeHtml(e.deadline ?? "未設定")}</div>
+
+        <div class="event-detail-title">場所</div>
+        <div>${escapeHtml(e.place ?? "未設定")}</div>
+
+        <div class="event-detail-title">持ち物</div>
+        <div>${escapeHtml(e.item ?? "未設定")}</div>
+
+        <div class="event-detail-title">説明</div>
+        <div>${escapeHtml(e.note ?? "未設定")}</div>
+      `;
+
+      toggleBtn.addEventListener("click", () => {
+        const isOpen = detail.style.display === "block";
+        detail.style.display = isOpen ? "none" : "block";
+        toggleBtn.textContent = isOpen ? "▽ 詳細表示" : "△ 閉じる";
+      });
+
+      card.appendChild(header);
+      card.appendChild(detail);
+      eventListEl.appendChild(card);
+    }
+  }
+
+  function renderPagination() {
+    paginationEl.innerHTML = "";
+    if (totalPages <= 1) return;
+
+    for (let i = 0; i < totalPages; i++) {
+      const span = document.createElement("span");
+      span.className = "page-link" + (i === currentPage ? " active" : "");
+      span.textContent = String(i + 1);
+      span.addEventListener("click", () => loadEvents(i));
+      paginationEl.appendChild(span);
+    }
+
+    if (currentPage < totalPages - 1) {
+      const next = document.createElement("span");
+      next.className = "page-link";
+      next.textContent = ">>next";
+      next.addEventListener("click", () => loadEvents(currentPage + 1));
+      paginationEl.appendChild(next);
+    }
+  }
+
+  function renderMessage(totalCount) {
+    if (!totalCount) {
+      messageEl.textContent = "現在、表示できる説明会がありません。";
+    } else {
+      messageEl.textContent = "";
+    }
+  }
+
+  function escapeHtml(str) {
+    return String(str)
+      .replaceAll("&", "&amp;")
+      .replaceAll("<", "&lt;")
+      .replaceAll(">", "&gt;")
+      .replaceAll('"', "&quot;")
+      .replaceAll("'", "&#039;");
+  }
+
+  // 検索はまだ未実装：押したら1ページ目を再表示するだけ
+  document.getElementById("searchBtn").addEventListener("click", () => loadEvents(0));
+
+  // 初期表示
+  window.addEventListener("load", () => {
+    loadEvents(0);
+  });
+</script>
+
+</body>
+</html>

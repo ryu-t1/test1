@@ -6,10 +6,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Repository;
+import org.springframework.jdbc.support.GeneratedKeyHolder;
+import org.springframework.jdbc.support.KeyHolder;
 
-import java.sql.ResultSet;
-import java.sql.SQLException;
+import java.sql.*;
 import java.util.List;
+import java.util.Objects;
 
 @Repository
 public class CompanyRepository {
@@ -32,4 +34,41 @@ public class CompanyRepository {
             return r;
         }
     }
+
+    // ★新規登録（AUTO_INCREMENT の company_id を返す）
+    public int insert(Company company) {
+        String sql = "INSERT INTO Company (name, address, website) VALUES (?, ?, ?)";
+
+        KeyHolder keyHolder = new GeneratedKeyHolder();
+
+        jdbcTemplate.update(con -> {
+            PreparedStatement ps = con.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
+            ps.setString(1, company.getName());
+            ps.setString(2, company.getAddress());
+            ps.setString(3, company.getWebsite());
+            return ps;
+        }, keyHolder);
+
+        Number key = Objects.requireNonNull(keyHolder.getKey(), "generated key is null");
+        return key.intValue();
+    }
+
+    // 10件ずつ取得（offset は (page-1)*size）
+    public List<Company> findPage(int limit, int offset) {
+        String sql = """
+                    SELECT company_id, name, address, website
+                    FROM Company
+                    ORDER BY company_id DESC
+                    LIMIT ? OFFSET ?
+                """;
+        return jdbcTemplate.query(sql, new CompanyRowMapper(), limit, offset);
+    }
+
+    // 全件数
+    public int countAll() {
+        String sql = "SELECT COUNT(*) FROM Company";
+        Integer count = jdbcTemplate.queryForObject(sql, Integer.class);
+        return count == null ? 0 : count;
+    }
+
 }

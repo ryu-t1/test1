@@ -78,6 +78,8 @@ public class SecurityConfig {
                     .requestMatchers(HttpMethod.GET, "/reservations/me").hasRole("STUDENT")
                     //予約削除
                     .requestMatchers(HttpMethod.DELETE, "/reservations/*").hasRole("STUDENT")
+                    // 管理者API（会社/説明会 管理）は管理者のみ
+                    .requestMatchers("/api/admin/**").hasRole("NORMAL_ADMIN")
                     
                     // preflight
                     .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()

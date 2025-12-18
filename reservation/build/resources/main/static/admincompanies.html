@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <title>会社情報管理（管理者）</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin:0; padding:0; background:#fafafa; color:#111; }
+
+    /* 上部メニュー */
+    header{
+      border-bottom:1px solid #ccc;
+      padding:16px 40px;
+      display:flex;
+      justify-content:center;
+      gap:80px;
+      font-size:14px;
+      background:#fff;
+    }
+    header a{ text-decoration:none; color:#333; cursor:pointer; }
+
+    main{ max-width:900px; margin:30px auto 60px; padding:0 16px; }
+
+    /* 検索フォーム */
+    .search-box{
+      margin: 0 auto 20px;
+      max-width: 600px;
+      border: 1px solid #333;
+      padding: 16px;
+      text-align: center;
+      background-color: #fff;
+    }
+    .search-box input{
+      width: 70%;
+      padding: 6px 8px;
+      box-sizing: border-box;
+    }
+    .search-box button{
+      padding: 6px 12px;
+      margin-left: 8px;
+      cursor: pointer;
+    }
+
+    /* 新規登録ボタン */
+    .top-actions{
+      display:flex;
+      align-items:center;
+      gap:12px;
+      margin: 12px 0 10px;
+    }
+    .btn{
+      padding:10px 14px;
+      border:1px solid #333;
+      background:#fff;
+      cursor:pointer;
+      font-size: 13px;
+    }
+    .btn:disabled { opacity:0.5; cursor:not-allowed; }
+
+    .hint{
+      font-size:12px;
+      color:#333;
+      margin: 6px 0 14px;
+    }
+
+    /* 会社リスト（card） */
+    #companyList{ margin-top: 10px; }
+
+    .company-card{
+      border:1px solid #333;
+      background:#fff;
+      margin-bottom:12px;
+    }
+
+    /* ヘッダー：会社名だけ表示 + 開閉ボタン */
+    .company-header{
+      padding:10px 16px;
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      cursor: default;
+    }
+    .company-title{
+      font-weight:bold;
+      font-size: 16px;
+      line-height: 1.4;
+    }
+    .toggle-btn{
+      padding:4px 8px;
+      cursor:pointer;
+      font-size:12px;
+      border:1px solid #333;
+      background:#fff;
+    }
+
+    /* アコーディオン内 */
+    .company-detail{
+      border-top:1px solid #333;
+      padding:10px 16px 14px;
+      display:none;
+      font-size:14px;
+    }
+
+    /* 見出し（左）＋値（右） */
+    .kv{
+      display:grid;
+      grid-template-columns: 90px 1fr;
+      row-gap:10px;
+      column-gap:14px;
+      margin-top: 6px;
+    }
+    .kv .k{ font-weight:bold; }
+    .kv .v{ word-break: break-word; }
+
+    /* 編集/削除（アコーディオン内） */
+    .admin-actions{
+      margin-top: 14px;
+      display:flex;
+      gap:10px;
+      justify-content:flex-end;
+    }
+
+    /* ページネーション */
+    #pagination{
+      text-align:center;
+      margin-top:24px;
+      font-size:14px;
+    }
+    .page-link{
+      display:inline-block;
+      margin:0 6px;
+      cursor:pointer;
+    }
+    .page-link.active{
+      font-weight:bold;
+      text-decoration:underline;
+    }
+
+    .message{
+      text-align:center;
+      margin-top:20px;
+      color:#666;
+    }
+
+    /* modal */
+    .backdrop { position:fixed; inset:0; background:rgba(0,0,0,0.35); display:none; }
+    .modal { width:520px; max-width: calc(100vw - 32px); background:#fff; margin: 90px auto; padding:16px; border-radius:8px; border:1px solid #333; }
+    .modal h2 { margin:0 0 12px; font-size: 16px; }
+    .field { margin: 10px 0; }
+    .field label { display:block; font-size:12px; color:#222; margin-bottom:4px; }
+    .field input { width:100%; padding:10px; border:1px solid #ccc; }
+    .actions { display:flex; gap:10px; justify-content:flex-end; margin-top:12px; }
+    .error { color:#c00; font-size:12px; margin-top:8px; }
+  </style>
+</head>
+<body>
+
+<header>
+  <a href="adminevents.html">説明会情報管理</a>
+  <a href="admincompanies.html">会社情報管理</a>
+  <a href="#" id="logoutLink">ログアウト</a>
+  <a href="#" id="accountLink">アカウント</a>
+</header>
+
+<main>
+  <div class="top-actions">
+    <button class="btn" id="openModalBtn">会社新規登録ボタン</button>
+  </div>
+
+  <div class="search-box">
+    <input id="keyword" type="text" placeholder="検索フォーム">
+    <button id="searchBtn">検索</button>
+  </div>
+
+  <div class="hint">＊ 登録・閲覧・編集・画面はポップアップBOXで表示</div>
+
+  <div id="companyList"></div>
+  <div id="message" class="message"></div>
+  <div id="pagination"></div>
+</main>
+
+<!-- Modal（新規登録） -->
+<div class="backdrop" id="backdrop">
+  <div class="modal">
+    <h2>会社新規登録</h2>
+
+    <div class="field">
+      <label>会社名（必須）</label>
+      <input id="m_name" />
+    </div>
+
+    <div class="field">
+      <label>所在地</label>
+      <input id="m_address" />
+    </div>
+
+    <div class="field">
+      <label>公式サイト</label>
+      <input id="m_website" placeholder="https://..." />
+    </div>
+
+    <div class="actions">
+      <button class="btn" id="closeModalBtn">キャンセル</button>
+      <button class="btn" id="saveBtn">登録</button>
+    </div>
+
+    <div class="error" id="modalMsg"></div>
+  </div>
+</div>
+
+<script>
+  const API_BASE = "http://localhost:8080";
+  const token = localStorage.getItem("token");
+
+  const listEl = document.getElementById("companyList");
+  const msgEl = document.getElementById("message");
+  const paginationEl = document.getElementById("pagination");
+
+  const keywordEl = document.getElementById("keyword");
+  const searchBtn = document.getElementById("searchBtn");
+
+  const backdrop = document.getElementById("backdrop");
+  const openModalBtn = document.getElementById("openModalBtn");
+  const closeModalBtn = document.getElementById("closeModalBtn");
+  const saveBtn = document.getElementById("saveBtn");
+  const modalMsg = document.getElementById("modalMsg");
+
+  const PAGE_SIZE = 10;
+  let currentPage = 1;
+  let totalPages = 1;
+
+  if (!token) {
+    msgEl.textContent = "JWTトークンがありません。先に管理者でログインしてください。";
+  }
+
+  document.getElementById("logoutLink").addEventListener("click", (e) => {
+    e.preventDefault();
+    localStorage.removeItem("token");
+    localStorage.removeItem("userId");
+    localStorage.removeItem("email");
+    localStorage.removeItem("name");
+    localStorage.removeItem("role");
+    alert("ログアウトしました。");
+    window.location.href = "login.html";
+  });
+
+  // modal open/close
+  openModalBtn.onclick = () => {
+    modalMsg.textContent = "";
+    document.getElementById("m_name").value = "";
+    document.getElementById("m_address").value = "";
+    document.getElementById("m_website").value = "";
+    backdrop.style.display = "block";
+  };
+  closeModalBtn.onclick = () => backdrop.style.display = "none";
+  backdrop.addEventListener("click", (e) => {
+    if (e.target === backdrop) backdrop.style.display = "none";
+  });
+
+  searchBtn.onclick = () => loadCompanies(1);
+  keywordEl.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") loadCompanies(1);
+  });
+
+  async function loadCompanies(page) {
+    if (page < 1) page = 1;
+
+    const keyword = keywordEl.value.trim();
+    const qs = new URLSearchParams({ page: String(page), size: String(PAGE_SIZE) });
+    if (keyword) qs.set("keyword", keyword);
+
+    try {
+      const res = await fetch(`${API_BASE}/api/admin/companies?${qs.toString()}`, {
+        headers: { "Authorization": `Bearer ${token}` }
+      });
+      if (!res.ok) throw new Error("HTTP status " + res.status);
+
+      const data = await res.json();
+      const items = data.items ?? data.companies ?? [];
+      currentPage = data.page ?? page;
+      totalPages = data.totalPages ?? 1;
+
+      renderCompanies(items);
+      renderPagination();
+      renderMessage(data.totalItems ?? items.length);
+    } catch (err) {
+      console.error(err);
+      listEl.innerHTML = "";
+      paginationEl.innerHTML = "";
+      msgEl.textContent = "会社情報の取得に失敗しました。サーバーを確認してください。";
+    }
+  }
+
+  function renderCompanies(companies) {
+    listEl.innerHTML = "";
+    if (!companies || companies.length === 0) return;
+
+    for (const c of companies) {
+      const card = document.createElement("div");
+      card.className = "company-card";
+
+      // --- header（会社名だけ） ---
+      const header = document.createElement("div");
+      header.className = "company-header";
+
+      const title = document.createElement("div");
+      title.className = "company-title";
+      title.textContent = c.name ?? "会社名未設定";
+
+      const toggleBtn = document.createElement("button");
+      toggleBtn.className = "toggle-btn";
+      toggleBtn.textContent = "▽ 詳細表示";
+
+      header.appendChild(title);
+      header.appendChild(toggleBtn);
+
+      // --- detail（所在地/サイト/編集削除） ---
+      const detail = document.createElement("div");
+      detail.className = "company-detail";
+
+      detail.innerHTML = `
+        <div class="kv">
+          <div class="k">所在地</div><div class="v">${escapeHtml(c.address ?? "未設定")}</div>
+          <div class="k">公式サイト</div><div class="v">${escapeHtml(c.website ?? "未設定")}</div>
+        </div>
+        <div class="admin-actions">
+          <button class="btn" disabled>編集（後で実装）</button>
+          <button class="btn" disabled>削除（後で実装）</button>
+        </div>
+      `;
+
+      toggleBtn.addEventListener("click", () => {
+        const isOpen = detail.style.display === "block";
+        detail.style.display = isOpen ? "none" : "block";
+        toggleBtn.textContent = isOpen ? "▽ 詳細表示" : "△ 閉じる";
+      });
+
+      card.appendChild(header);
+      card.appendChild(detail);
+      listEl.appendChild(card);
+    }
+  }
+
+  function renderPagination() {
+    paginationEl.innerHTML = "";
+    if (totalPages <= 1) return;
+
+    for (let i = 1; i <= totalPages; i++) {
+      const span = document.createElement("span");
+      span.className = "page-link" + (i === currentPage ? " active" : "");
+      span.textContent = String(i);
+      span.addEventListener("click", () => loadCompanies(i));
+      paginationEl.appendChild(span);
+    }
+
+    if (currentPage < totalPages) {
+      const next = document.createElement("span");
+      next.className = "page-link";
+      next.textContent = ">>next";
+      next.addEventListener("click", () => loadCompanies(currentPage + 1));
+      paginationEl.appendChild(next);
+    }
+  }
+
+  function renderMessage(totalItems) {
+    if (!totalItems || totalItems === 0) {
+      msgEl.textContent = "現在、表示できる会社情報がありません。";
+    } else {
+      msgEl.textContent = "";
+    }
+  }
+
+  // create company
+  saveBtn.onclick = async () => {
+    modalMsg.textContent = "";
+    saveBtn.disabled = true;
+
+    const payload = {
+      name: document.getElementById("m_name").value.trim(),
+      address: document.getElementById("m_address").value.trim(),
+      website: document.getElementById("m_website").value.trim()
+    };
+
+    if (!payload.name) {
+      modalMsg.textContent = "会社名は必須です";
+      saveBtn.disabled = false;
+      return;
+    }
+
+    try {
+      const res = await fetch(`${API_BASE}/api/admin/companies`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
+        },
+        body: JSON.stringify(payload)
+      });
+
+      if (!res.ok) {
+        let msg = "";
+        try {
+          const err = await res.json();
+          msg = err.message ?? JSON.stringify(err);
+        } catch {
+          msg = await res.text();
+        }
+        modalMsg.textContent = `登録失敗: ${res.status} ${msg}`;
+        saveBtn.disabled = false;
+        return;
+      }
+
+      backdrop.style.display = "none";
+      saveBtn.disabled = false;
+      loadCompanies(1);
+    } catch (e) {
+      console.error(e);
+      modalMsg.textContent = "通信に失敗しました。サーバーを確認してください。";
+      saveBtn.disabled = false;
+    }
+  };
+
+  function escapeHtml(str) {
+    return String(str)
+      .replaceAll("&", "&amp;")
+      .replaceAll("<", "&lt;")
+      .replaceAll(">", "&gt;")
+      .replaceAll('"', "&quot;")
+      .replaceAll("'", "&#039;");
+  }
+
+  window.addEventListener("load", () => loadCompanies(1));
+</script>
+
+</body>
+</html>

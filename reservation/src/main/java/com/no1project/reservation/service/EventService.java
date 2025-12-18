@@ -17,7 +17,8 @@ public class EventService {
 
     public EventPage getEventPage(int page, int size) {
         // マイナス指定が来たときの保険
-        if (page < 0) page = 0;
+        if (page < 0)
+            page = 0;
 
         List<Event> events = eventRepository.findPage(page, size);
         int totalCount = eventRepository.countAll();
@@ -35,7 +36,7 @@ public class EventService {
         private int totalPages;
 
         public EventPage(List<Event> events, int page, int size,
-                         int totalCount, int totalPages) {
+                int totalCount, int totalPages) {
             this.events = events;
             this.page = page;
             this.size = size;
@@ -43,10 +44,41 @@ public class EventService {
             this.totalPages = totalPages;
         }
 
-        public List<Event> getEvents() { return events; }
-        public int getPage() { return page; }
-        public int getSize() { return size; }
-        public int getTotalCount() { return totalCount; }
-        public int getTotalPages() { return totalPages; }
+        public List<Event> getEvents() {
+            return events;
+        }
+
+        public int getPage() {
+            return page;
+        }
+
+        public int getSize() {
+            return size;
+        }
+
+        public int getTotalCount() {
+            return totalCount;
+        }
+
+        public int getTotalPages() {
+            return totalPages;
+        }
     }
+
+    // EventService に追記
+    public Event create(Event e) {
+        if (e.getCompanyId() <= 0)
+            throw new IllegalArgumentException("会社は必須です");
+        if (e.getDate() == null || e.getDate().isBlank())
+            throw new IllegalArgumentException("開催日は必須です");
+        if (e.getDeadline() == null || e.getDeadline().isBlank())
+            throw new IllegalArgumentException("締切は必須です");
+        if (e.getPlace() == null || e.getPlace().isBlank())
+            throw new IllegalArgumentException("場所は必須です");
+
+        int newId = eventRepository.insert(e);
+        e.setEventId(newId);
+        return e;
+    }
+
 }

@@ -98,6 +98,13 @@
       margin-bottom:4px;
     }
 
+    .admin-actions{
+      margin-top: 12px;
+      display:flex;
+      gap:10px;
+      justify-content:flex-end;
+    }
+
     #pagination{
       text-align:center;
       margin-top:24px;
@@ -133,6 +140,8 @@
     .actions { display:flex; gap:10px; justify-content:flex-end; margin-top:12px; }
     .error { color:#c00; font-size:12px; margin-top:8px; }
     .muted { color:#666; font-size:12px; margin-top:10px; }
+
+    .danger { border-color:#c00; }
   </style>
 </head>
 <body>
@@ -208,28 +217,135 @@
   </div>
 </div>
 
+<!-- Modal（編集） -->
+<div class="backdrop" id="editBackdrop">
+  <div class="modal">
+    <h2>説明会 編集</h2>
+
+    <div class="field">
+      <label>会社（必須）</label>
+      <select id="e_company">
+        <option value="">読み込み中...</option>
+      </select>
+    </div>
+
+    <div class="field">
+      <label>開催日（必須）</label>
+      <input id="e_date" type="datetime-local" />
+    </div>
+
+    <div class="field">
+      <label>締切（必須）</label>
+      <input id="e_deadline" type="datetime-local" />
+    </div>
+
+    <div class="field">
+      <label>場所（必須）</label>
+      <input id="e_place" placeholder="例：E2602" />
+    </div>
+
+    <div class="field">
+      <label>持ち物</label>
+      <input id="e_item" placeholder="例：履歴書・筆記用具" />
+    </div>
+
+    <div class="field">
+      <label>説明（備考）</label>
+      <textarea id="e_note" placeholder="例：服装自由、受付開始は30分前など"></textarea>
+    </div>
+
+    <div class="actions">
+      <button class="btn" id="editCancelBtn">キャンセル</button>
+      <button class="btn" id="editSaveBtn">更新</button>
+    </div>
+
+    <div class="error" id="editMsg"></div>
+  </div>
+</div>
+
+<!-- Modal（削除確認） -->
+<div class="backdrop" id="deleteBackdrop">
+  <div class="modal">
+    <h2>削除確認</h2>
+
+    <div id="deleteText" style="font-size:14px; line-height:1.6;"></div>
+
+    <div class="actions">
+      <button class="btn" id="deleteCancelBtn">キャンセル</button>
+      <button class="btn danger" id="deleteOkBtn">削除する</button>
+    </div>
+
+    <div class="error" id="deleteMsg"></div>
+  </div>
+</div>
+
 <script>
   const API_BASE = "http://localhost:8080";
+  //  const API_BASE = "http://45.76.55.162:8080"; //外部公開用のURL
   const token = localStorage.getItem("token");
+  const role = localStorage.getItem("role"); // "normal_admin" など想定
+  const isAdmin = (role && role.toUpperCase() === "NORMAL_ADMIN");
 
   const eventListEl = document.getElementById("eventList");
   const messageEl = document.getElementById("message");
   const paginationEl = document.getElementById("pagination");
 
+  // 新規登録
   const backdrop = document.getElementById("backdrop");
   const openModalBtn = document.getElementById("openModalBtn");
   const closeModalBtn = document.getElementById("closeModalBtn");
   const saveBtn = document.getElementById("saveBtn");
   const modalMsg = document.getElementById("modalMsg");
-
   const companySelect = document.getElementById("m_company");
+
+  // 編集
+  const editBackdrop = document.getElementById("editBackdrop");
+  const eCompany = document.getElementById("e_company");
+  const eDate = document.getElementById("e_date");
+  const eDeadline = document.getElementById("e_deadline");
+  const ePlace = document.getElementById("e_place");
+  const eItem = document.getElementById("e_item");
+  const eNote = document.getElementById("e_note");
+  const editCancelBtn = document.getElementById("editCancelBtn");
+  const editSaveBtn = document.getElementById("editSaveBtn");
+  const editMsg = document.getElementById("editMsg");
+
+  // 削除
+  const deleteBackdrop = document.getElementById("deleteBackdrop");
+  const deleteText = document.getElementById("deleteText");
+  const deleteCancelBtn = document.getElementById("deleteCancelBtn");
+  const deleteOkBtn = document.getElementById("deleteOkBtn");
+  const deleteMsg = document.getElementById("deleteMsg");
 
   const PAGE_SIZE = 10;
   let currentPage = 0;
   let totalPages = 1;
 
+  let editingEventId = null;
+  let deletingEventId = null;
+
+  // ======== 重要：レスポンス本文を「必ず1回だけ」読む ========
+  async function readErrorMessageOnce(res) {
+    const raw = await res.text(); // ★ これで body stream already read が消える
+    if (!raw) return "";
+    try {
+      const obj = JSON.parse(raw);
+      return obj.message ?? JSON.stringify(obj);
+    } catch {
+      return raw;
+    }
+  }
+
   if (!token) {
     messageEl.textContent = "JWTトークンがありません。先に管理者でログインしてください。";
+    // 事故防止
+    openModalBtn.disabled = true;
+    openModalBtn.title = "ログインが必要です";
+  }
+  if (!isAdmin) {
+    // ボタンは隠す（サーバ側で弾くのが本命）
+    openModalBtn.disabled = true;
+    openModalBtn.title = "管理者のみ操作できます";
   }
 
   // ログアウト
@@ -244,12 +360,11 @@
     window.location.href = "login.html";
   });
 
-  // ========= 会社一覧（select用） =========
-  async function loadCompanyOptions() {
-    companySelect.innerHTML = `<option value="">読み込み中...</option>`;
+  // ========= 会社一覧（selectへ流し込み） =========
+  async function loadCompanyOptionsTo(selectEl) {
+    selectEl.innerHTML = `<option value="">読み込み中...</option>`;
 
     try {
-      // まずは既存ページングAPIを流用（会社が少ない想定で size を大きめ）
       const res = await fetch(`${API_BASE}/api/admin/companies?page=1&size=1000`, {
         headers: { "Authorization": `Bearer ${token}` }
       });
@@ -259,25 +374,31 @@
       const items = data.items ?? data.companies ?? [];
 
       if (!items.length) {
-        companySelect.innerHTML = `<option value="">会社がありません（先に会社登録してください）</option>`;
+        selectEl.innerHTML = `<option value="">会社がありません（先に会社登録してください）</option>`;
         return;
       }
 
-      companySelect.innerHTML = `<option value="">会社を選択してください</option>`;
+      selectEl.innerHTML = `<option value="">会社を選択してください</option>`;
       for (const c of items) {
         const opt = document.createElement("option");
         opt.value = String(c.companyId);
         opt.textContent = c.name ?? `(ID:${c.companyId})`;
-        companySelect.appendChild(opt);
+        selectEl.appendChild(opt);
       }
     } catch (e) {
       console.error(e);
-      companySelect.innerHTML = `<option value="">会社の取得に失敗（サーバ確認）</option>`;
+      selectEl.innerHTML = `<option value="">会社の取得に失敗（サーバ確認）</option>`;
     }
+  }
+
+  async function loadCompanyOptions() {
+    return loadCompanyOptionsTo(companySelect);
   }
 
   // ========= モーダル open/close =========
   openModalBtn.onclick = async () => {
+    if (!isAdmin || !token) return;
+
     modalMsg.textContent = "";
     document.getElementById("m_date").value = "";
     document.getElementById("m_deadline").value = "";
@@ -294,8 +415,27 @@
     if (e.target === backdrop) backdrop.style.display = "none";
   });
 
+  editCancelBtn.onclick = () => editBackdrop.style.display = "none";
+  editBackdrop.addEventListener("click", (e) => {
+    if (e.target === editBackdrop) editBackdrop.style.display = "none";
+  });
+
+  deleteCancelBtn.onclick = () => deleteBackdrop.style.display = "none";
+  deleteBackdrop.addEventListener("click", (e) => {
+    if (e.target === deleteBackdrop) deleteBackdrop.style.display = "none";
+  });
+
+  // ========= datetime-local 変換 =========
+  function toDatetimeLocalValue(s) {
+    if (!s) return "";
+    const t = String(s).trim().replace(" ", "T");
+    return t.length >= 16 ? t.slice(0, 16) : t;
+  }
+
   // ========= 新規登録（POST） =========
   saveBtn.onclick = async () => {
+    if (!isAdmin || !token) return;
+
     modalMsg.textContent = "";
     saveBtn.disabled = true;
 
@@ -305,8 +445,6 @@
 
     const payload = {
       companyId: companyId,
-      // datetime-local は "YYYY-MM-DDTHH:mm" で入る → DBがDATETIMEならそのままでも通りやすい
-      // もしバックエンドで "YYYY-MM-DD HH:mm:ss" を要求するなら変換が必要（後で調整可）
       date: dateLocal,
       deadline: deadlineLocal,
       place: document.getElementById("m_place").value.trim(),
@@ -331,13 +469,7 @@
       });
 
       if (!res.ok) {
-        let msg = "";
-        try {
-          const err = await res.json();
-          msg = err.message ?? JSON.stringify(err);
-        } catch {
-          msg = await res.text();
-        }
+        const msg = await readErrorMessageOnce(res);
         modalMsg.textContent = `登録失敗: ${res.status} ${msg}`;
         saveBtn.disabled = false;
         return;
@@ -347,7 +479,6 @@
       backdrop.style.display = "none";
       saveBtn.disabled = false;
 
-      // 一覧も更新したい場合はここで loadEvents(0) を呼ぶ（下に実装あり）
       await loadEvents(0);
 
     } catch (e) {
@@ -357,7 +488,130 @@
     }
   };
 
-  // ========= 一覧表示（既存 /events を流用：※新規登録以外は未実装） =========
+  // ========= 編集モーダル open =========
+  async function openEditModal(event) {
+    if (!isAdmin || !token) return;
+
+    editMsg.textContent = "";
+    editingEventId = event.eventId;
+
+    editBackdrop.style.display = "block";
+    await loadCompanyOptionsTo(eCompany);
+
+    // もともとの値を入れる
+    eCompany.value = String(event.companyId ?? "");
+    eDate.value = toDatetimeLocalValue(event.date);
+    eDeadline.value = toDatetimeLocalValue(event.deadline);
+    ePlace.value = event.place ?? "";
+    eItem.value = event.item ?? "";
+    eNote.value = event.note ?? "";
+  }
+
+  // ========= 編集（PUT） =========
+  editSaveBtn.onclick = async () => {
+    if (!isAdmin || !token) return;
+
+    editMsg.textContent = "";
+    editSaveBtn.disabled = true;
+
+    const payload = {
+      companyId: eCompany.value ? Number(eCompany.value) : 0,
+      date: eDate.value,
+      deadline: eDeadline.value,
+      place: ePlace.value.trim(),
+      item: eItem.value.trim(),
+      note: eNote.value.trim()
+    };
+
+    if (!payload.companyId) { editMsg.textContent = "会社を選択してください"; editSaveBtn.disabled = false; return; }
+    if (!payload.date)      { editMsg.textContent = "開催日は必須です"; editSaveBtn.disabled = false; return; }
+    if (!payload.deadline)  { editMsg.textContent = "締切は必須です"; editSaveBtn.disabled = false; return; }
+    if (!payload.place)     { editMsg.textContent = "場所は必須です"; editSaveBtn.disabled = false; return; }
+
+    try {
+      const res = await fetch(`${API_BASE}/api/admin/events/${editingEventId}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
+        },
+        body: JSON.stringify(payload)
+      });
+
+      if (!res.ok) {
+        const msg = await readErrorMessageOnce(res);
+        editMsg.textContent = `更新失敗: ${res.status} ${msg}`;
+        editSaveBtn.disabled = false;
+        return;
+      }
+
+      alert("更新しました。");
+      editBackdrop.style.display = "none";
+      editSaveBtn.disabled = false;
+
+      await loadEvents(currentPage);
+
+    } catch (e) {
+      console.error(e);
+      editMsg.textContent = "通信に失敗しました。サーバーを確認してください。";
+      editSaveBtn.disabled = false;
+    }
+  };
+
+  // ========= 削除モーダル open =========
+  function openDeleteModal(event) {
+    if (!isAdmin || !token) return;
+
+    deleteMsg.textContent = "";
+    deletingEventId = event.eventId;
+
+    deleteText.innerHTML = `
+      <div>この説明会を削除します。よろしいですか？</div>
+      <div style="margin-top:10px;">
+        <div><b>会社：</b>${escapeHtml(event.companyName ?? "")}</div>
+        <div><b>開催日：</b>${escapeHtml(event.date ?? "")}</div>
+        <div><b>場所：</b>${escapeHtml(event.place ?? "")}</div>
+      </div>
+    `;
+
+    deleteBackdrop.style.display = "block";
+  }
+
+  // ========= 削除（DELETE） =========
+  deleteOkBtn.onclick = async () => {
+    if (!isAdmin || !token) return;
+
+    deleteMsg.textContent = "";
+    deleteOkBtn.disabled = true;
+
+    try {
+      const res = await fetch(`${API_BASE}/api/admin/events/${deletingEventId}`, {
+        method: "DELETE",
+        headers: { "Authorization": `Bearer ${token}` }
+      });
+
+      if (!res.ok) {
+        const msg = await readErrorMessageOnce(res);
+        deleteMsg.textContent = `削除失敗: ${res.status} ${msg}`;
+        deleteOkBtn.disabled = false;
+        return;
+      }
+
+      alert("削除しました。");
+      deleteBackdrop.style.display = "none";
+      deleteOkBtn.disabled = false;
+
+      // 削除でページが空になる場合もあるので、とりあえず今のページを読み直す
+      await loadEvents(currentPage);
+
+    } catch (e) {
+      console.error(e);
+      deleteMsg.textContent = "通信に失敗しました。サーバーを確認してください。";
+      deleteOkBtn.disabled = false;
+    }
+  };
+
+  // ========= 一覧表示（/events を流用） =========
   async function loadEvents(page) {
     if (page < 0) page = 0;
 
@@ -433,6 +687,26 @@
         <div class="event-detail-title">説明</div>
         <div>${escapeHtml(e.note ?? "未設定")}</div>
       `;
+
+      // 管理者のみ：編集/削除ボタンをアコーディオン内に表示
+      if (isAdmin && token) {
+        const actions = document.createElement("div");
+        actions.className = "admin-actions";
+
+        const editBtn = document.createElement("button");
+        editBtn.className = "btn";
+        editBtn.textContent = "編集";
+        editBtn.addEventListener("click", async () => openEditModal(e));
+
+        const delBtn = document.createElement("button");
+        delBtn.className = "btn danger";
+        delBtn.textContent = "削除";
+        delBtn.addEventListener("click", () => openDeleteModal(e));
+
+        actions.appendChild(editBtn);
+        actions.appendChild(delBtn);
+        detail.appendChild(actions);
+      }
 
       toggleBtn.addEventListener("click", () => {
         const isOpen = detail.style.display === "block";

@@ -65,7 +65,7 @@ public class EventService {
         }
     }
 
-    // EventService に追記
+    // 説明会追加
     public Event create(Event e) {
         if (e.getCompanyId() <= 0)
             throw new IllegalArgumentException("会社は必須です");
@@ -80,5 +80,39 @@ public class EventService {
         e.setEventId(newId);
         return e;
     }
+
+    // 説明会情報更新
+
+    public Event update(Event e) {
+        if (e.getEventId() <= 0)
+            throw new IllegalArgumentException("eventId は必須です");
+        if (e.getCompanyId() <= 0)
+            throw new IllegalArgumentException("会社は必須です");
+        if (e.getDate() == null || e.getDate().isBlank())
+            throw new IllegalArgumentException("開催日は必須です");
+        if (e.getDeadline() == null || e.getDeadline().isBlank())
+            throw new IllegalArgumentException("締切は必須です");
+        if (e.getPlace() == null || e.getPlace().isBlank())
+            throw new IllegalArgumentException("場所は必須です");
+
+        int updated = eventRepository.update(e);
+        if (updated == 0)
+            throw new IllegalArgumentException("対象の説明会が見つかりません");
+
+        // JOINして companyName も返したいなら findById を取り直す
+        return eventRepository.findById(e.getEventId());
+    }
+
+    //説明会削除
+   public void delete(int eventId) {
+    int cnt = eventRepository.countReservationsByEventId(eventId);
+    if (cnt > 0) {
+        throw new IllegalStateException("この説明会は予約されています（" + cnt + "件）。削除できません。");
+    }
+
+    int deleted = eventRepository.deleteById(eventId);
+    if (deleted == 0)
+        throw new IllegalArgumentException("対象の説明会が見つかりません");
+}
 
 }

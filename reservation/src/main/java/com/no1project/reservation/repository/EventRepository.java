@@ -16,7 +16,6 @@ import java.util.List;
 import java.util.Objects;
 import java.sql.Statement;
 
-
 @Repository
 public class EventRepository {
 
@@ -79,7 +78,7 @@ public class EventRepository {
 
         return list.isEmpty() ? null : list.get(0);
     }
-
+    //説明会追加
     public int insert(Event e) {
         String sql = """
                     INSERT INTO Event (date, deadline, place, item, company_id, note)
@@ -102,4 +101,33 @@ public class EventRepository {
         Number key = Objects.requireNonNull(keyHolder.getKey(), "generated key is null");
         return key.intValue();
     }
+    //説明会情報更新
+    public int update(Event e) {
+        String sql = """
+                    UPDATE Event
+                    SET date = ?, deadline = ?, place = ?, item = ?, company_id = ?, note = ?
+                    WHERE event_id = ?
+                """;
+
+        return jdbcTemplate.update(sql,
+                e.getDate(),
+                e.getDeadline(),
+                e.getPlace(),
+                e.getItem(),
+                e.getCompanyId(),
+                e.getNote(),
+                e.getEventId());
+    }
+    //説明会削除
+    public int deleteById(int eventId) {
+        String sql = "DELETE FROM Event WHERE event_id = ?";
+        return jdbcTemplate.update(sql, eventId);
+    }
+
+    //予約件数チェック
+    public int countReservationsByEventId(int eventId) {
+    String sql = "SELECT COUNT(*) FROM Reservation WHERE event_id = ?";
+    Integer count = jdbcTemplate.queryForObject(sql, Integer.class, eventId);
+    return count == null ? 0 : count;
+}
 }

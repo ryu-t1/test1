@@ -71,4 +71,42 @@ public class CompanyRepository {
         return count == null ? 0 : count;
     }
 
+    // ★1件取得（編集後に返すなどで利用）
+    public Company findById(int companyId) {
+        String sql = """
+                    SELECT company_id, name, address, website
+                    FROM Company
+                    WHERE company_id = ?
+                """;
+        List<Company> list = jdbcTemplate.query(sql, new CompanyRowMapper(), companyId);
+        return list.isEmpty() ? null : list.get(0);
+    }
+
+    // ★更新
+    public int update(Company c) {
+        String sql = """
+                    UPDATE Company
+                    SET name = ?, address = ?, website = ?
+                    WHERE company_id = ?
+                """;
+        return jdbcTemplate.update(sql,
+                c.getName(),
+                c.getAddress(),
+                c.getWebsite(),
+                c.getCompanyId());
+    }
+
+    // ★削除（紐づきチェックは Service でやる）
+    public int deleteById(int companyId) {
+        String sql = "DELETE FROM Company WHERE company_id = ?";
+        return jdbcTemplate.update(sql, companyId);
+    }
+
+    // ★その会社に紐づく説明会件数（Eventテーブル）
+    public int countEventsByCompanyId(int companyId) {
+        String sql = "SELECT COUNT(*) FROM Event WHERE company_id = ?";
+        Integer count = jdbcTemplate.queryForObject(sql, Integer.class, companyId);
+        return count == null ? 0 : count;
+    }
+
 }

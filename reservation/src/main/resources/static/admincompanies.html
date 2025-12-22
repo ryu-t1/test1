@@ -6,7 +6,6 @@
   <style>
     body { font-family: Arial, sans-serif; margin:0; padding:0; background:#fafafa; color:#111; }
 
-    /* 上部メニュー */
     header{
       border-bottom:1px solid #ccc;
       padding:16px 40px;
@@ -20,7 +19,6 @@
 
     main{ max-width:900px; margin:30px auto 60px; padding:0 16px; }
 
-    /* 検索フォーム */
     .search-box{
       margin: 0 auto 20px;
       max-width: 600px;
@@ -40,7 +38,6 @@
       cursor: pointer;
     }
 
-    /* 新規登録ボタン */
     .top-actions{
       display:flex;
       align-items:center;
@@ -55,6 +52,7 @@
       font-size: 13px;
     }
     .btn:disabled { opacity:0.5; cursor:not-allowed; }
+    .danger { border-color:#c00; }
 
     .hint{
       font-size:12px;
@@ -62,7 +60,6 @@
       margin: 6px 0 14px;
     }
 
-    /* 会社リスト（card） */
     #companyList{ margin-top: 10px; }
 
     .company-card{
@@ -71,7 +68,6 @@
       margin-bottom:12px;
     }
 
-    /* ヘッダー：会社名だけ表示 + 開閉ボタン */
     .company-header{
       padding:10px 16px;
       display:flex;
@@ -92,7 +88,6 @@
       background:#fff;
     }
 
-    /* アコーディオン内 */
     .company-detail{
       border-top:1px solid #333;
       padding:10px 16px 14px;
@@ -100,7 +95,6 @@
       font-size:14px;
     }
 
-    /* 見出し（左）＋値（右） */
     .kv{
       display:grid;
       grid-template-columns: 90px 1fr;
@@ -111,7 +105,6 @@
     .kv .k{ font-weight:bold; }
     .kv .v{ word-break: break-word; }
 
-    /* 編集/削除（アコーディオン内） */
     .admin-actions{
       margin-top: 14px;
       display:flex;
@@ -119,7 +112,6 @@
       justify-content:flex-end;
     }
 
-    /* ページネーション */
     #pagination{
       text-align:center;
       margin-top:24px;
@@ -147,7 +139,7 @@
     .modal h2 { margin:0 0 12px; font-size: 16px; }
     .field { margin: 10px 0; }
     .field label { display:block; font-size:12px; color:#222; margin-bottom:4px; }
-    .field input { width:100%; padding:10px; border:1px solid #ccc; }
+    .field input { width:100%; padding:10px; border:1px solid #ccc; box-sizing:border-box; }
     .actions { display:flex; gap:10px; justify-content:flex-end; margin-top:12px; }
     .error { color:#c00; font-size:12px; margin-top:8px; }
   </style>
@@ -167,7 +159,7 @@
   </div>
 
   <div class="search-box">
-    <input id="keyword" type="text" placeholder="検索フォーム">
+    <input id="keyword" type="text" placeholder="検索フォーム（未実装）">
     <button id="searchBtn">検索</button>
   </div>
 
@@ -207,9 +199,56 @@
   </div>
 </div>
 
+<!-- Modal（編集） -->
+<div class="backdrop" id="editBackdrop">
+  <div class="modal">
+    <h2>会社情報 編集</h2>
+
+    <div class="field">
+      <label>会社名（必須）</label>
+      <input id="e_name" />
+    </div>
+
+    <div class="field">
+      <label>所在地</label>
+      <input id="e_address" />
+    </div>
+
+    <div class="field">
+      <label>公式サイト</label>
+      <input id="e_website" placeholder="https://..." />
+    </div>
+
+    <div class="actions">
+      <button class="btn" id="editCancelBtn">キャンセル</button>
+      <button class="btn" id="editSaveBtn">更新</button>
+    </div>
+
+    <div class="error" id="editMsg"></div>
+  </div>
+</div>
+
+<!-- Modal（削除確認） -->
+<div class="backdrop" id="deleteBackdrop">
+  <div class="modal">
+    <h2>削除確認</h2>
+    <div id="deleteText" style="font-size:14px; line-height:1.6;"></div>
+
+    <div class="actions">
+      <button class="btn" id="deleteCancelBtn">キャンセル</button>
+      <button class="btn danger" id="deleteOkBtn">削除する</button>
+    </div>
+
+    <div class="error" id="deleteMsg"></div>
+  </div>
+</div>
+
 <script>
   const API_BASE = "http://localhost:8080";
+  //  const API_BASE = "http://45.76.55.162:8080"; //外部公開用のURL
   const token = localStorage.getItem("token");
+  const role = localStorage.getItem("role");
+  const isAdmin = (role && role.toUpperCase() === "NORMAL_ADMIN");
 
   const listEl = document.getElementById("companyList");
   const msgEl = document.getElementById("message");
@@ -218,18 +257,47 @@
   const keywordEl = document.getElementById("keyword");
   const searchBtn = document.getElementById("searchBtn");
 
+  // 新規登録
   const backdrop = document.getElementById("backdrop");
   const openModalBtn = document.getElementById("openModalBtn");
   const closeModalBtn = document.getElementById("closeModalBtn");
   const saveBtn = document.getElementById("saveBtn");
   const modalMsg = document.getElementById("modalMsg");
 
+  // 編集
+  const editBackdrop = document.getElementById("editBackdrop");
+  const eName = document.getElementById("e_name");
+  const eAddress = document.getElementById("e_address");
+  const eWebsite = document.getElementById("e_website");
+  const editCancelBtn = document.getElementById("editCancelBtn");
+  const editSaveBtn = document.getElementById("editSaveBtn");
+  const editMsg = document.getElementById("editMsg");
+
+  // 削除
+  const deleteBackdrop = document.getElementById("deleteBackdrop");
+  const deleteText = document.getElementById("deleteText");
+  const deleteCancelBtn = document.getElementById("deleteCancelBtn");
+  const deleteOkBtn = document.getElementById("deleteOkBtn");
+  const deleteMsg = document.getElementById("deleteMsg");
+
+  // 新規入力
+  const mName = document.getElementById("m_name");
+  const mAddress = document.getElementById("m_address");
+  const mWebsite = document.getElementById("m_website");
+
   const PAGE_SIZE = 10;
   let currentPage = 1;
   let totalPages = 1;
 
+  let editingCompanyId = null;
+  let deletingCompanyId = null;
+
   if (!token) {
     msgEl.textContent = "JWTトークンがありません。先に管理者でログインしてください。";
+  }
+  if (!isAdmin) {
+    openModalBtn.disabled = true;
+    openModalBtn.title = "管理者のみ操作できます";
   }
 
   document.getElementById("logoutLink").addEventListener("click", (e) => {
@@ -243,12 +311,13 @@
     window.location.href = "login.html";
   });
 
-  // modal open/close
+  // ===== modal open/close =====
   openModalBtn.onclick = () => {
+    if (!isAdmin) return;
     modalMsg.textContent = "";
-    document.getElementById("m_name").value = "";
-    document.getElementById("m_address").value = "";
-    document.getElementById("m_website").value = "";
+    mName.value = "";
+    mAddress.value = "";
+    mWebsite.value = "";
     backdrop.style.display = "block";
   };
   closeModalBtn.onclick = () => backdrop.style.display = "none";
@@ -256,17 +325,28 @@
     if (e.target === backdrop) backdrop.style.display = "none";
   });
 
+  editCancelBtn.onclick = () => editBackdrop.style.display = "none";
+  editBackdrop.addEventListener("click", (e) => {
+    if (e.target === editBackdrop) editBackdrop.style.display = "none";
+  });
+
+  deleteCancelBtn.onclick = () => deleteBackdrop.style.display = "none";
+  deleteBackdrop.addEventListener("click", (e) => {
+    if (e.target === deleteBackdrop) deleteBackdrop.style.display = "none";
+  });
+
+  // 検索は未実装：押したら1ページ目を再表示だけ
   searchBtn.onclick = () => loadCompanies(1);
   keywordEl.addEventListener("keydown", (e) => {
     if (e.key === "Enter") loadCompanies(1);
   });
 
+  // ===== data load =====
   async function loadCompanies(page) {
     if (page < 1) page = 1;
 
-    const keyword = keywordEl.value.trim();
+    // keyword は未実装（API側に無いので今は送らない）
     const qs = new URLSearchParams({ page: String(page), size: String(PAGE_SIZE) });
-    if (keyword) qs.set("keyword", keyword);
 
     try {
       const res = await fetch(`${API_BASE}/api/admin/companies?${qs.toString()}`, {
@@ -298,7 +378,6 @@
       const card = document.createElement("div");
       card.className = "company-card";
 
-      // --- header（会社名だけ） ---
       const header = document.createElement("div");
       header.className = "company-header";
 
@@ -313,20 +392,35 @@
       header.appendChild(title);
       header.appendChild(toggleBtn);
 
-      // --- detail（所在地/サイト/編集削除） ---
       const detail = document.createElement("div");
       detail.className = "company-detail";
 
+      // アコーディオン内容
       detail.innerHTML = `
         <div class="kv">
           <div class="k">所在地</div><div class="v">${escapeHtml(c.address ?? "未設定")}</div>
           <div class="k">公式サイト</div><div class="v">${escapeHtml(c.website ?? "未設定")}</div>
         </div>
-        <div class="admin-actions">
-          <button class="btn" disabled>編集（後で実装）</button>
-          <button class="btn" disabled>削除（後で実装）</button>
-        </div>
       `;
+
+      if (isAdmin) {
+        const actions = document.createElement("div");
+        actions.className = "admin-actions";
+
+        const editBtn = document.createElement("button");
+        editBtn.className = "btn";
+        editBtn.textContent = "編集";
+        editBtn.addEventListener("click", () => openEditModal(c));
+
+        const delBtn = document.createElement("button");
+        delBtn.className = "btn danger";
+        delBtn.textContent = "削除";
+        delBtn.addEventListener("click", () => openDeleteModal(c));
+
+        actions.appendChild(editBtn);
+        actions.appendChild(delBtn);
+        detail.appendChild(actions);
+      }
 
       toggleBtn.addEventListener("click", () => {
         const isOpen = detail.style.display === "block";
@@ -369,15 +463,17 @@
     }
   }
 
-  // create company
+  // ===== create =====
   saveBtn.onclick = async () => {
+    if (!isAdmin) return;
+
     modalMsg.textContent = "";
     saveBtn.disabled = true;
 
     const payload = {
-      name: document.getElementById("m_name").value.trim(),
-      address: document.getElementById("m_address").value.trim(),
-      website: document.getElementById("m_website").value.trim()
+      name: mName.value.trim(),
+      address: mAddress.value.trim(),
+      website: mWebsite.value.trim()
     };
 
     if (!payload.name) {
@@ -411,11 +507,129 @@
 
       backdrop.style.display = "none";
       saveBtn.disabled = false;
-      loadCompanies(1);
+      await loadCompanies(1);
     } catch (e) {
       console.error(e);
       modalMsg.textContent = "通信に失敗しました。サーバーを確認してください。";
       saveBtn.disabled = false;
+    }
+  };
+
+  // ===== edit open/save =====
+  function openEditModal(company) {
+    if (!isAdmin) return;
+
+    editMsg.textContent = "";
+    editingCompanyId = company.companyId;
+
+    // 元の値を入れる
+    eName.value = company.name ?? "";
+    eAddress.value = company.address ?? "";
+    eWebsite.value = company.website ?? "";
+
+    editBackdrop.style.display = "block";
+  }
+
+  editSaveBtn.onclick = async () => {
+    if (!isAdmin) return;
+
+    editMsg.textContent = "";
+    editSaveBtn.disabled = true;
+
+    const payload = {
+      name: eName.value.trim(),
+      address: eAddress.value.trim(),
+      website: eWebsite.value.trim()
+    };
+
+    if (!payload.name) {
+      editMsg.textContent = "会社名は必須です";
+      editSaveBtn.disabled = false;
+      return;
+    }
+
+    try {
+      const res = await fetch(`${API_BASE}/api/admin/companies/${editingCompanyId}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
+        },
+        body: JSON.stringify(payload)
+      });
+
+      if (!res.ok) {
+        let msg = "";
+        try { msg = (await res.json()).message ?? ""; } catch { msg = await res.text(); }
+        editMsg.textContent = `更新失敗: ${res.status} ${msg}`;
+        editSaveBtn.disabled = false;
+        return;
+      }
+
+      alert("更新しました。");
+      editBackdrop.style.display = "none";
+      editSaveBtn.disabled = false;
+
+      await loadCompanies(currentPage);
+    } catch (e) {
+      console.error(e);
+      editMsg.textContent = "通信に失敗しました。サーバーを確認してください。";
+      editSaveBtn.disabled = false;
+    }
+  };
+
+  // ===== delete open/ok =====
+  function openDeleteModal(company) {
+    if (!isAdmin) return;
+
+    deleteMsg.textContent = "";
+    deletingCompanyId = company.companyId;
+
+    deleteText.innerHTML = `
+      <div>この会社を削除します。よろしいですか？</div>
+      <div style="margin-top:10px;">
+        <div><b>会社名：</b>${escapeHtml(company.name ?? "")}</div>
+        <div><b>所在地：</b>${escapeHtml(company.address ?? "")}</div>
+        <div><b>公式サイト：</b>${escapeHtml(company.website ?? "")}</div>
+      </div>
+      <div style="margin-top:10px; color:#666; font-size:12px;">
+        ※ 説明会に紐づいている会社は削除できません。
+      </div>
+    `;
+
+    deleteBackdrop.style.display = "block";
+  }
+
+  deleteOkBtn.onclick = async () => {
+    if (!isAdmin) return;
+
+    deleteMsg.textContent = "";
+    deleteOkBtn.disabled = true;
+
+    try {
+      const res = await fetch(`${API_BASE}/api/admin/companies/${deletingCompanyId}`, {
+        method: "DELETE",
+        headers: { "Authorization": `Bearer ${token}` }
+      });
+
+      if (!res.ok) {
+        // 409 のときもここに来る。message を出す
+        let msg = "";
+        try { msg = (await res.json()).message ?? ""; } catch { msg = await res.text(); }
+        deleteMsg.textContent = `削除失敗: ${res.status} ${msg}`;
+        deleteOkBtn.disabled = false;
+        return;
+      }
+
+      alert("削除しました。");
+      deleteBackdrop.style.display = "none";
+      deleteOkBtn.disabled = false;
+
+      await loadCompanies(currentPage);
+    } catch (e) {
+      console.error(e);
+      deleteMsg.textContent = "通信に失敗しました。サーバーを確認してください。";
+      deleteOkBtn.disabled = false;
     }
   };
 

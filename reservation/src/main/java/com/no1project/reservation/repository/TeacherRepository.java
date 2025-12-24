@@ -10,6 +10,7 @@ import org.springframework.stereotype.Repository;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public class TeacherRepository {
@@ -41,5 +42,12 @@ public class TeacherRepository {
                 teacher.getGrade(),
                 teacher.getMyClass()
         );
+    }
+
+     public Optional<Teacher> findByUserId(int userId) {
+        String sql = "SELECT user_id, grade, `class` FROM Teacher WHERE user_id = ?";
+        return jdbcTemplate.query(sql, new TeacherRowMapper(), userId)
+                .stream()
+                .findFirst();
     }
 }

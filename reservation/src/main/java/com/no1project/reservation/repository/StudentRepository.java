@@ -10,6 +10,7 @@ import org.springframework.stereotype.Repository;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public class StudentRepository {
@@ -33,14 +34,22 @@ public class StudentRepository {
         }
     }
 
-     public int insert(Student student) {
+    public int insert(Student student) {
         String sql = "INSERT INTO Student (user_id, grade, class, number) VALUES (?, ?, ?, ?)";
         return jdbcTemplate.update(
                 sql,
                 student.getUserId(),
                 student.getGrade(),
                 student.getMyClass(),
-                student.getNumber()
-        );
+                student.getNumber());
     }
+
+    // 追加: user_id で取得
+    public Optional<Student> findByUserId(int userId) {
+        String sql = "SELECT user_id, grade, `class`, number FROM Student WHERE user_id = ?";
+        return jdbcTemplate.query(sql, new StudentRowMapper(), userId)
+                .stream()
+                .findFirst();
+    }
+
 }

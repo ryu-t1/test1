@@ -1,0 +1,696 @@
+<!-- mypage.html -->
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <title>マイページ（学生）</title>
+  <style>
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Helvetica Neue", sans-serif;
+      background-color: #f5f5f5;
+      margin: 0;
+      color: #111;
+    }
+
+    /* 上部メニュー（index.html と合わせる） */
+    header {
+      border-bottom: 1px solid #ccc;
+      padding: 16px 40px;
+      display: flex;
+      justify-content: center;
+      gap: 80px;
+      font-size: 14px;
+      background-color: #fff;
+    }
+    header a {
+      text-decoration: none;
+      color: #333;
+      cursor: pointer;
+    }
+
+    .container {
+      width: 700px;
+      margin: 50px auto 80px;
+      background: #fff;
+      border: 4px solid #000;
+      padding: 50px 70px;
+      box-sizing: border-box;
+    }
+
+    h1 {
+      text-align: center;
+      margin: 0 0 40px;
+      letter-spacing: 0.2em;
+      font-size: 26px;
+    }
+
+    .section {
+      border-top: 2px solid #000;
+      padding-top: 24px;
+      margin-top: 24px;
+    }
+    .section:first-of-type {
+      border-top: none;
+      padding-top: 0;
+      margin-top: 0;
+    }
+
+    .section-title {
+      font-size: 14px;
+      font-weight: 700;
+      margin: 0 0 16px;
+      letter-spacing: 0.08em;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 160px 1fr;
+      gap: 10px 16px;
+      align-items: center;
+    }
+
+    .label {
+      font-size: 13px;
+      color: #111;
+    }
+
+    .value {
+      font-size: 14px;
+      padding: 10px;
+      border: 2px solid #000;
+      background: #fdfdfd;
+      box-sizing: border-box;
+    }
+
+    input[type="email"],
+    input[type="password"] {
+      width: 100%;
+      padding: 10px;
+      box-sizing: border-box;
+      border: 2px solid #000;
+      font-size: 14px;
+      background: #fff;
+    }
+
+    .row {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+    }
+
+    .btn {
+      padding: 10px 16px;
+      border: 2px solid #000;
+      background: #ddd;
+      cursor: pointer;
+      font-size: 14px;
+      white-space: nowrap;
+    }
+    .btn.secondary {
+      background: #fff;
+    }
+    .btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .hint {
+      font-size: 12px;
+      color: #777;
+      margin-top: 8px;
+    }
+
+    .error {
+      color: #d00;
+      font-size: 13px;
+      margin-top: 10px;
+      display: none;
+      white-space: pre-wrap;
+    }
+
+    .success {
+      color: #0a7a2f;
+      font-size: 13px;
+      margin-top: 10px;
+      display: none;
+      white-space: pre-wrap;
+    }
+
+    /* 未ログイン案内ボックス */
+    .need-login-box {
+      border: 2px solid #000;
+      background: #fff;
+      padding: 16px;
+      margin: 0 0 20px;
+    }
+    .need-login-title {
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      margin-bottom: 8px;
+      font-size: 14px;
+    }
+    .need-login-text {
+      font-size: 14px;
+      line-height: 1.7;
+    }
+    .need-login-actions {
+      margin-top: 12px;
+      font-size: 14px;
+    }
+    .need-login-actions a {
+      color: #000;
+      text-decoration: underline;
+    }
+
+    /* --- モーダル --- */
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.35);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      z-index: 9999;
+    }
+    .modal {
+      width: 520px;
+      max-width: 95vw;
+      background: #fff;
+      border: 4px solid #000;
+      padding: 26px 28px;
+      box-sizing: border-box;
+    }
+    .modal h2 {
+      margin: 0 0 16px;
+      font-size: 18px;
+      letter-spacing: 0.08em;
+    }
+    .modal .field {
+      margin-bottom: 16px;
+    }
+    .modal label {
+      display: block;
+      margin-bottom: 6px;
+      font-size: 13px;
+    }
+    .modal .actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      margin-top: 18px;
+    }
+    .password-row {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .toggle-password {
+      border: 1px solid #000;
+      background: #fff;
+      padding: 6px 8px;
+      cursor: pointer;
+      font-size: 12px;
+    }
+
+    .loading {
+      font-size: 13px;
+      color: #555;
+      text-align: center;
+      display: none;
+      margin-top: 10px;
+    }
+  </style>
+</head>
+
+<body>
+  <header>
+    <a href="index.html">説明会一覧</a>
+    <a href="reservations.html">予約確認</a>
+    <a id="loginLink" href="login.html">ログイン</a>
+    <a id="registerLink" href="register.html">新規登録</a>
+    <a href="mypage.html">アカウント</a>
+  </header>
+
+  <div class="container">
+    <h1>マイページ</h1>
+
+    <!-- 未ログイン時メッセージ（リダイレクトしない） -->
+    <div id="needLoginBox" class="need-login-box" style="display:none;">
+      <div class="need-login-title">ログインが必要です</div>
+      <div class="need-login-text">
+        アカウント情報は <b>ログイン後</b> に閲覧できます。
+      </div>
+      <div class="need-login-actions">
+        <a href="login.html">ログイン画面へ</a>
+      </div>
+    </div>
+
+    <div id="loading" class="loading">読み込み中...</div>
+    <div id="pageError" class="error"></div>
+
+    <!-- ★ログイン時に表示する領域 -->
+    <div id="authedArea" style="display:none;">
+
+      <!-- 基本情報 -->
+      <div class="section">
+        <div class="section-title">基本情報</div>
+        <div class="grid">
+          <div class="label">氏名</div>
+          <div class="value" id="vName">-</div>
+
+          <div class="label">メールアドレス</div>
+          <div class="value" id="vEmail">-</div>
+
+          <div class="label">学年</div>
+          <div class="value" id="vGrade">-</div>
+
+          <div class="label">クラス</div>
+          <div class="value" id="vClass">-</div>
+
+          <div class="label">出席番号</div>
+          <div class="value" id="vNumber">-</div>
+        </div>
+        <div class="hint">※ 学年・クラス・出席番号は管理者のみ変更できます。</div>
+      </div>
+
+      <!-- メール変更 -->
+      <div class="section">
+        <div class="section-title">メールアドレスの変更</div>
+        <div class="row">
+          <input id="newEmail" type="email" placeholder="新しいメールアドレスを入力" />
+          <button id="btnUpdateEmail" class="btn">変更する</button>
+        </div>
+        <div id="emailSuccess" class="success"></div>
+        <div id="emailError" class="error"></div>
+        <div class="hint">変更後、再ログインが必要になる場合があります。</div>
+      </div>
+
+      <!-- パスワード変更 -->
+      <div class="section">
+        <div class="section-title">パスワードの変更</div>
+        <button id="btnOpenPasswordModal" class="btn secondary">パスワードを変更する</button>
+        <div id="pwSuccess" class="success"></div>
+        <div id="pwError" class="error"></div>
+      </div>
+
+    </div><!-- /authedArea -->
+  </div>
+
+  <!-- パスワード変更モーダル -->
+  <div id="pwModalBackdrop" class="modal-backdrop" aria-hidden="true">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="pwModalTitle">
+      <h2 id="pwModalTitle">パスワード変更</h2>
+
+      <div class="field">
+        <label for="currentPassword">現在のパスワード</label>
+        <div class="password-row">
+          <input id="currentPassword" type="password" placeholder="現在のパスワード" />
+          <button type="button" class="toggle-password" data-target="currentPassword">👁</button>
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="newPassword">新しいパスワード</label>
+        <div class="password-row">
+          <input id="newPassword" type="password" placeholder="新しいパスワード" />
+          <button type="button" class="toggle-password" data-target="newPassword">👁</button>
+        </div>
+        <div class="hint">半角英数字</div>
+      </div>
+
+      <div class="field">
+        <label for="newPassword2">新しいパスワード（確認）</label>
+        <div class="password-row">
+          <input id="newPassword2" type="password" placeholder="もう一度入力" />
+          <button type="button" class="toggle-password" data-target="newPassword2">👁</button>
+        </div>
+      </div>
+
+      <div id="modalError" class="error"></div>
+
+      <div class="actions">
+        <button id="btnCloseModal" class="btn secondary">キャンセル</button>
+        <button id="btnUpdatePassword" class="btn">変更する</button>
+      </div>
+    </div>
+  </div>
+
+<script>
+  // =============================
+  // 設定（login.html と同じ）
+  // =============================
+  const API_BASE = "http://localhost:8080";
+  // const API_BASE = "http://45.76.55.162:8080";
+
+  // =============================
+  // 共通：ログイン情報
+  // =============================
+  function getLoginInfo() {
+    const token = localStorage.getItem("token");
+    const roleRaw = localStorage.getItem("role"); // "student" or "normal_admin"
+    const role = roleRaw ? roleRaw.toLowerCase() : null;
+    return { token, role };
+  }
+
+  // ヘッダーのログイン→ログアウト切り替え（index.html と同じ思想）
+  function setupHeaderByLoginStatus() {
+    const loginLink = document.getElementById("loginLink");
+    const registerLink = document.getElementById("registerLink");
+    const { token } = getLoginInfo();
+
+    if (!loginLink) return;
+
+    if (token) {
+      loginLink.textContent = "ログアウト";
+      loginLink.href = "#";
+
+      // click付け替えのためclone（あなたのindex.html方式）
+      loginLink.replaceWith(loginLink.cloneNode(true));
+      const newLoginLink = document.getElementById("loginLink");
+
+      newLoginLink.addEventListener("click", (e) => {
+        e.preventDefault();
+        localStorage.removeItem("token");
+        localStorage.removeItem("userId");
+        localStorage.removeItem("email");
+        localStorage.removeItem("name");
+        localStorage.removeItem("role");
+        alert("ログアウトしました。");
+        // このページ内に「ログイン後に閲覧できます」を表示する
+        renderAuthState();
+      });
+
+      if (registerLink) registerLink.style.display = "none";
+    } else {
+      loginLink.textContent = "ログイン";
+      loginLink.href = "login.html";
+      if (registerLink) registerLink.style.display = "inline";
+    }
+  }
+
+  // =============================
+  // 表示ヘルパー
+  // =============================
+  function show(el) { el.style.display = "block"; }
+  function hide(el) { el.style.display = "none"; }
+  function setText(id, text) { document.getElementById(id).textContent = text; }
+
+  function clearMessages() {
+    const ids = ["pageError", "emailError", "emailSuccess", "pwError", "pwSuccess", "modalError"];
+    ids.forEach(id => {
+      const el = document.getElementById(id);
+      if (!el) return;
+      el.textContent = "";
+      hide(el);
+    });
+  }
+
+  // 未ログイン時は「案内」表示／ログイン時は機能領域表示
+  function renderAuthState() {
+    const { token } = getLoginInfo();
+    const needLoginBox = document.getElementById("needLoginBox");
+    const authedArea = document.getElementById("authedArea");
+
+    clearMessages();
+
+    if (!token) {
+      show(needLoginBox);
+      hide(authedArea);
+      hide(document.getElementById("loading"));
+      return false;
+    } else {
+      hide(needLoginBox);
+      show(authedArea);
+      return true;
+    }
+  }
+
+  // =============================
+  // API
+  // =============================
+  async function apiFetch(path, options = {}) {
+    const { token } = getLoginInfo();
+    const headers = options.headers ? options.headers : {};
+    headers["Authorization"] = "Bearer " + token;
+
+    // JSON送る場合
+    if (options.jsonBody !== undefined) {
+      headers["Content-Type"] = "application/json";
+      options.body = JSON.stringify(options.jsonBody);
+      delete options.jsonBody;
+    }
+
+    const res = await fetch(API_BASE + path, { ...options, headers });
+
+    // 認証切れ/権限なし
+    if (res.status === 401 || res.status === 403) {
+      throw new Error("AUTH");
+    }
+    return res;
+  }
+
+  // =============================
+  // マイ情報取得
+  // =============================
+  async function loadMe() {
+    const loading = document.getElementById("loading");
+    show(loading);
+
+    try {
+      const res = await apiFetch("/api/me", { method: "GET" });
+      if (!res.ok) {
+        const t = await res.text();
+        throw new Error(t || ("HTTP " + res.status));
+      }
+      const me = await res.json();
+
+      setText("vName", me.name ?? "-");
+      setText("vEmail", me.email ?? "-");
+      setText("vGrade", (me.grade !== undefined && me.grade !== null) ? (me.grade + "年") : "-");
+      setText("vClass", me.myClass ?? "-");
+      setText("vNumber", (me.number !== undefined && me.number !== null) ? me.number : "-");
+
+    } catch (err) {
+      console.error(err);
+      const pageError = document.getElementById("pageError");
+
+      if (err.message === "AUTH") {
+        pageError.textContent = "ログイン情報が無効です。もう一度ログインしてください。";
+        show(pageError);
+
+        // tokenが死んでる可能性が高いので消して、ページ内で未ログイン表示へ
+        localStorage.removeItem("token");
+        renderAuthState();
+      } else {
+        pageError.textContent = "情報の取得に失敗しました。\n" + (err.message || "");
+        show(pageError);
+      }
+    } finally {
+      hide(loading);
+    }
+  }
+
+  // =============================
+  // メール更新
+  // =============================
+  async function updateEmail() {
+    clearMessages();
+    if (!renderAuthState()) return;
+
+    const input = document.getElementById("newEmail");
+    const newEmail = input.value.trim();
+
+    if (!newEmail) {
+      const e = document.getElementById("emailError");
+      e.textContent = "新しいメールアドレスを入力してください。";
+      show(e);
+      return;
+    }
+
+    const ok = confirm(
+      "メールアドレスを変更しますか？\n\n" +
+      "変更後、再ログインが必要になる場合があります。"
+    );
+    if (!ok) return;
+
+    const btn = document.getElementById("btnUpdateEmail");
+    btn.disabled = true;
+
+    try {
+      const res = await apiFetch("/api/me/email", {
+        method: "PUT",
+        jsonBody: { newEmail }
+      });
+
+      if (!res.ok) {
+        const t = await res.text();
+        throw new Error(t || ("HTTP " + res.status));
+      }
+
+      const s = document.getElementById("emailSuccess");
+      s.textContent = "メールアドレスを更新しました。";
+      show(s);
+
+      localStorage.setItem("email", newEmail);
+      input.value = "";
+
+      await loadMe();
+
+    } catch (err) {
+      console.error(err);
+      const e = document.getElementById("emailError");
+
+      if (err.message === "AUTH") {
+        e.textContent = "ログイン情報が無効です。もう一度ログインしてください。";
+        show(e);
+        localStorage.removeItem("token");
+        renderAuthState();
+      } else {
+        e.textContent = "更新に失敗しました。\n" + (err.message || "");
+        show(e);
+      }
+    } finally {
+      btn.disabled = false;
+    }
+  }
+
+  // =============================
+  // パスワード更新（モーダル）
+  // =============================
+  const backdrop = document.getElementById("pwModalBackdrop");
+
+  function openPasswordModal() {
+    clearMessages();
+    if (!renderAuthState()) return;
+
+    document.getElementById("currentPassword").value = "";
+    document.getElementById("newPassword").value = "";
+    document.getElementById("newPassword2").value = "";
+    backdrop.style.display = "flex";
+    backdrop.setAttribute("aria-hidden", "false");
+  }
+
+  function closePasswordModal() {
+    backdrop.style.display = "none";
+    backdrop.setAttribute("aria-hidden", "true");
+  }
+
+  async function updatePassword() {
+    const modalError = document.getElementById("modalError");
+    modalError.textContent = "";
+    hide(modalError);
+
+    if (!renderAuthState()) {
+      closePasswordModal();
+      return;
+    }
+
+    const currentPassword = document.getElementById("currentPassword").value;
+    const newPassword = document.getElementById("newPassword").value;
+    const newPassword2 = document.getElementById("newPassword2").value;
+
+    if (!currentPassword || !newPassword || !newPassword2) {
+      modalError.textContent = "すべて入力してください。";
+      show(modalError);
+      return;
+    }
+    if (newPassword !== newPassword2) {
+      modalError.textContent = "新しいパスワード（確認）が一致しません。";
+      show(modalError);
+      return;
+    }
+
+    const ok = confirm("パスワードを変更しますか？");
+    if (!ok) return;
+
+    const btn = document.getElementById("btnUpdatePassword");
+    btn.disabled = true;
+
+    try {
+      const res = await apiFetch("/api/me/password", {
+        method: "PUT",
+        jsonBody: { currentPassword, newPassword }
+      });
+
+      if (!res.ok) {
+        const t = await res.text();
+        throw new Error(t || ("HTTP " + res.status));
+      }
+
+      closePasswordModal();
+
+      const s = document.getElementById("pwSuccess");
+      s.textContent = "パスワードを更新しました。";
+      show(s);
+
+    } catch (err) {
+      console.error(err);
+      if (err.message === "AUTH") {
+        modalError.textContent = "ログイン情報が無効です。もう一度ログインしてください。";
+        show(modalError);
+        localStorage.removeItem("token");
+        renderAuthState();
+        closePasswordModal();
+      } else {
+        modalError.textContent = "更新に失敗しました。\n" + (err.message || "");
+        show(modalError);
+      }
+    } finally {
+      btn.disabled = false;
+    }
+  }
+
+  // パスワード表示切替
+  function setupTogglePasswords() {
+    document.querySelectorAll(".toggle-password").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const targetId = btn.getAttribute("data-target");
+        const input = document.getElementById(targetId);
+        if (!input) return;
+        input.type = (input.type === "password") ? "text" : "password";
+      });
+    });
+  }
+
+  // モーダル：背景クリックで閉じる + Escで閉じる
+  function setupModalBackdropClose() {
+    backdrop.addEventListener("click", (e) => {
+      if (e.target === backdrop) closePasswordModal();
+    });
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape" && backdrop.style.display === "flex") closePasswordModal();
+    });
+  }
+
+  // =============================
+  // 初期化
+  // =============================
+  window.addEventListener("load", async () => {
+    setupHeaderByLoginStatus();
+
+    // 未ログインなら案内表示で終了（遷移しない）
+    if (!renderAuthState()) return;
+
+    // 役割チェック（学生以外なら戻す：厳密にやりたい場合）
+    const { role } = getLoginInfo();
+    if (role && role !== "student") {
+      alert("このページは学生アカウント専用です。");
+      window.location.href = "index.html";
+      return;
+    }
+
+    setupTogglePasswords();
+    setupModalBackdropClose();
+
+    document.getElementById("btnUpdateEmail").addEventListener("click", updateEmail);
+    document.getElementById("btnOpenPasswordModal").addEventListener("click", openPasswordModal);
+    document.getElementById("btnCloseModal").addEventListener("click", closePasswordModal);
+    document.getElementById("btnUpdatePassword").addEventListener("click", updatePassword);
+
+    await loadMe();
+  });
+</script>
+
+</body>
+</html>

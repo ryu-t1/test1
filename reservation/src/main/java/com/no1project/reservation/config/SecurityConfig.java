@@ -75,6 +75,10 @@ public class SecurityConfig {
                     // 予約APIは学生のみ
                     .requestMatchers(HttpMethod.POST, "/events/*/reservations")
                         .hasRole("STUDENT")
+                    // 学生マイページ（/api/me 配下は学生のみ）
+                    .requestMatchers("/api/me/**").hasRole("STUDENT")
+                    //教師マイページ
+                    .requestMatchers("/api/teacher/me/**").hasRole("NORMAL_ADMIN")
                     //予約閲覧
                     .requestMatchers(HttpMethod.GET, "/reservations/me").hasRole("STUDENT")
                     //予約削除
@@ -85,7 +89,7 @@ public class SecurityConfig {
                     //フロントエンド
                     .requestMatchers("/index.html", "admincompanies.html", 
                     "adminevents.html", "login.html", "register.html", "reservations.html", 
-                    "teacherRegister.html").permitAll()
+                    "teacherRegister.html", "mypage.html", "teacher_mypage.html").permitAll()
                     
                     // preflight
                     .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()

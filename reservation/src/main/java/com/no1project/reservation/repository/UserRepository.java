@@ -45,8 +45,8 @@ public class UserRepository {
     public Optional<User> findByEmail(String email) {
         String sql = "SELECT * FROM Users WHERE email = ?";
         return jdbcTemplate.query(sql, new UserRowMapper(), email)
-                           .stream()
-                           .findFirst();
+                .stream()
+                .findFirst();
     }
 
     // ★ 新規登録用：INSERT して採番された user_id を User にセットして返す
@@ -58,8 +58,7 @@ public class UserRepository {
         jdbcTemplate.update(connection -> {
             PreparedStatement ps = connection.prepareStatement(
                     sql,
-                    Statement.RETURN_GENERATED_KEYS
-            );
+                    Statement.RETURN_GENERATED_KEYS);
             ps.setString(1, user.getName());
             ps.setString(2, user.getRole());
             ps.setString(3, user.getEmail());
@@ -71,7 +70,27 @@ public class UserRepository {
         if (key != null) {
             user.setUserId(key.intValue());
         }
-
         return user;
     }
+
+    // 追加: user_id で取得
+    public Optional<User> findById(int userId) {
+        String sql = "SELECT * FROM Users WHERE user_id = ?";
+        return jdbcTemplate.query(sql, new UserRowMapper(), userId)
+                .stream()
+                .findFirst();
+    }
+
+    // 追加: email 更新
+    public int updateEmail(int userId, String newEmail) {
+        String sql = "UPDATE Users SET email = ? WHERE user_id = ?";
+        return jdbcTemplate.update(sql, newEmail, userId);
+    }
+
+    // 追加: password 更新（ハッシュ済みを入れる）
+    public int updatePassword(int userId, String encodedPassword) {
+        String sql = "UPDATE Users SET password = ? WHERE user_id = ?";
+        return jdbcTemplate.update(sql, encodedPassword, userId);
+    }
+
 }

@@ -185,7 +185,7 @@
       localStorage.setItem('role', data.role); // "student" or "normal_admin"
 
        // ★ role によって遷移先を分ける
-      if (data.role === 'normal_admin') {
+      if (data.role === 'normal_admin' || data.role === 'super_admin') {
         window.location.href = 'adminevents.html';   // 管理者用画面（下で作る）
       } else {
         // 学生 or その他は学生トップへ

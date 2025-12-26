@@ -149,8 +149,13 @@
 <header>
   <a href="adminevents.html">説明会情報管理</a>
   <a href="admincompanies.html">会社情報管理</a>
+
+  <!-- ★ super_admin のときだけ表示 -->
+  <a href="adminusers.html" id="userManageLink" style="display:none;">ユーザー管理</a>
+  <a href="teacherRegister.html" id="teacherRegisterLink" style="display:none;">新規教師登録</a>
+
   <a href="#" id="logoutLink">ログアウト</a>
-  <a href="teacher_mypage.html">アカウント</a>
+  <a href="teacher_mypage.html" id="accountLink">アカウント</a>
 </header>
 
 <main>
@@ -281,10 +286,37 @@
 
 <script>
   const API_BASE = "http://localhost:8080";
-  //  const API_BASE = "http://45.76.55.162:8080"; //外部公開用のURL
+  // const API_BASE = "http://45.76.55.162:8080"; //外部公開用
+
   const token = localStorage.getItem("token");
-  const role = localStorage.getItem("role"); // "normal_admin" など想定
-  const isAdmin = (role && role.toUpperCase() === "NORMAL_ADMIN");
+  const roleRaw = localStorage.getItem("role"); // "normal_admin" / "super_admin"
+  const roleUpper = roleRaw ? roleRaw.toUpperCase() : "";
+
+  // ★ normal_admin / super_admin を「管理者」として扱う
+  const isAdmin = (roleUpper === "NORMAL_ADMIN" || roleUpper === "SUPER_ADMIN");
+  const isSuperAdmin = (roleUpper === "SUPER_ADMIN");
+
+  // ヘッダー：super_admin のときだけリンク表示
+  function setupSuperAdminHeaderLinks() {
+  const userManageLink = document.getElementById("userManageLink");
+  const teacherRegisterLink = document.getElementById("teacherRegisterLink");
+  const accountLink = document.getElementById("accountLink");
+
+  if (userManageLink) userManageLink.style.display = isSuperAdmin ? "inline" : "none";
+  if (teacherRegisterLink) teacherRegisterLink.style.display = isSuperAdmin ? "inline" : "none";
+
+  // ★ super_admin のときだけ「アカウント」リンク先を差し替え
+  if (accountLink) {
+    if (isSuperAdmin) {
+      accountLink.href = "super_admin_mypage.html";   // ←作る予定のページ
+      // accountLink.textContent = "アカウント（super_admin）"; // 表示変えたいなら任意
+    } else {
+      accountLink.href = "teacher_mypage.html";       // normal_admin は教師マイページ
+      accountLink.textContent = "アカウント";
+    }
+  }
+}
+
 
   const eventListEl = document.getElementById("eventList");
   const messageEl = document.getElementById("message");
@@ -326,7 +358,7 @@
 
   // ======== 重要：レスポンス本文を「必ず1回だけ」読む ========
   async function readErrorMessageOnce(res) {
-    const raw = await res.text(); // ★ これで body stream already read が消える
+    const raw = await res.text();
     if (!raw) return "";
     try {
       const obj = JSON.parse(raw);
@@ -338,12 +370,10 @@
 
   if (!token) {
     messageEl.textContent = "JWTトークンがありません。先に管理者でログインしてください。";
-    // 事故防止
     openModalBtn.disabled = true;
     openModalBtn.title = "ログインが必要です";
   }
   if (!isAdmin) {
-    // ボタンは隠す（サーバ側で弾くのが本命）
     openModalBtn.disabled = true;
     openModalBtn.title = "管理者のみ操作できます";
   }
@@ -370,7 +400,7 @@
       });
       if (!res.ok) throw new Error("HTTP status " + res.status);
 
-      const data = await res.json(); // {items,...}
+      const data = await res.json();
       const items = data.items ?? data.companies ?? [];
 
       if (!items.length) {
@@ -407,7 +437,7 @@
     document.getElementById("m_note").value = "";
 
     backdrop.style.display = "block";
-    await loadCompanyOptions(); // 開くたびに最新の会社を読み込み
+    await loadCompanyOptions();
   };
 
   closeModalBtn.onclick = () => backdrop.style.display = "none";
@@ -452,7 +482,6 @@
       note: document.getElementById("m_note").value.trim()
     };
 
-    // 必須チェック（フロント側）
     if (!payload.companyId) { modalMsg.textContent = "会社を選択してください"; saveBtn.disabled = false; return; }
     if (!payload.date)      { modalMsg.textContent = "開催日は必須です"; saveBtn.disabled = false; return; }
     if (!payload.deadline)  { modalMsg.textContent = "締切は必須です"; saveBtn.disabled = false; return; }
@@ -498,7 +527,6 @@
     editBackdrop.style.display = "block";
     await loadCompanyOptionsTo(eCompany);
 
-    // もともとの値を入れる
     eCompany.value = String(event.companyId ?? "");
     eDate.value = toDatetimeLocalValue(event.date);
     eDeadline.value = toDatetimeLocalValue(event.deadline);
@@ -601,7 +629,6 @@
       deleteBackdrop.style.display = "none";
       deleteOkBtn.disabled = false;
 
-      // 削除でページが空になる場合もあるので、とりあえず今のページを読み直す
       await loadEvents(currentPage);
 
     } catch (e) {
@@ -611,14 +638,11 @@
     }
   };
 
-  // ========= 一覧表示（/events を流用） =========
+  // ========= 一覧表示 =========
   async function loadEvents(page) {
     if (page < 0) page = 0;
 
-    const params = new URLSearchParams({
-      page: page,
-      size: PAGE_SIZE
-    });
+    const params = new URLSearchParams({ page: page, size: PAGE_SIZE });
 
     try {
       const res = await fetch(`${API_BASE}/events?` + params.toString());
@@ -688,7 +712,6 @@
         <div>${escapeHtml(e.note ?? "未設定")}</div>
       `;
 
-      // 管理者のみ：編集/削除ボタンをアコーディオン内に表示
       if (isAdmin && token) {
         const actions = document.createElement("div");
         actions.className = "admin-actions";
@@ -758,11 +781,10 @@
       .replaceAll("'", "&#039;");
   }
 
-  // 検索はまだ未実装：押したら1ページ目を再表示するだけ
   document.getElementById("searchBtn").addEventListener("click", () => loadEvents(0));
 
-  // 初期表示
   window.addEventListener("load", () => {
+    setupSuperAdminHeaderLinks();
     loadEvents(0);
   });
 </script>

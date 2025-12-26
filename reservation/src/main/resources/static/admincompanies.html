@@ -149,8 +149,13 @@
 <header>
   <a href="adminevents.html">説明会情報管理</a>
   <a href="admincompanies.html">会社情報管理</a>
+
+  <!-- ★ super_admin のときだけ表示 -->
+  <a href="adminusers.html" id="userManageLink" style="display:none;">ユーザー管理</a>
+  <a href="teacherRegister.html" id="teacherRegisterLink" style="display:none;">新規教師登録</a>
+
   <a href="#" id="logoutLink">ログアウト</a>
-  <a href="teacher_mypage.html">アカウント</a>
+  <a href="teacher_mypage.html" id="accountLink">アカウント</a>
 </header>
 
 <main>
@@ -245,10 +250,36 @@
 
 <script>
   const API_BASE = "http://localhost:8080";
-  //  const API_BASE = "http://45.76.55.162:8080"; //外部公開用のURL
+  // const API_BASE = "http://45.76.55.162:8080"; //外部公開用
+
   const token = localStorage.getItem("token");
-  const role = localStorage.getItem("role");
-  const isAdmin = (role && role.toUpperCase() === "NORMAL_ADMIN");
+  const roleRaw = localStorage.getItem("role"); // "normal_admin" / "super_admin"
+  const roleUpper = roleRaw ? roleRaw.toUpperCase() : "";
+
+  // ★ normal_admin / super_admin を「管理者」として扱う
+  const isAdmin = (roleUpper === "NORMAL_ADMIN" || roleUpper === "SUPER_ADMIN");
+  const isSuperAdmin = (roleUpper === "SUPER_ADMIN");
+
+  // ヘッダー：super_admin のときだけリンク表示
+  function setupSuperAdminHeaderLinks() {
+  const userManageLink = document.getElementById("userManageLink");
+  const teacherRegisterLink = document.getElementById("teacherRegisterLink");
+  const accountLink = document.getElementById("accountLink");
+
+  if (userManageLink) userManageLink.style.display = isSuperAdmin ? "inline" : "none";
+  if (teacherRegisterLink) teacherRegisterLink.style.display = isSuperAdmin ? "inline" : "none";
+
+  // ★ super_admin のときだけ「アカウント」リンク先を差し替え
+  if (accountLink) {
+    if (isSuperAdmin) {
+      accountLink.href = "super_admin_mypage.html";   // ←作る予定のページ
+      // accountLink.textContent = "アカウント（super_admin）"; // 表示変えたいなら任意
+    } else {
+      accountLink.href = "teacher_mypage.html";       // normal_admin は教師マイページ
+      accountLink.textContent = "アカウント";
+    }
+  }
+}
 
   const listEl = document.getElementById("companyList");
   const msgEl = document.getElementById("message");
@@ -345,7 +376,6 @@
   async function loadCompanies(page) {
     if (page < 1) page = 1;
 
-    // keyword は未実装（API側に無いので今は送らない）
     const qs = new URLSearchParams({ page: String(page), size: String(PAGE_SIZE) });
 
     try {
@@ -395,7 +425,6 @@
       const detail = document.createElement("div");
       detail.className = "company-detail";
 
-      // アコーディオン内容
       detail.innerHTML = `
         <div class="kv">
           <div class="k">所在地</div><div class="v">${escapeHtml(c.address ?? "未設定")}</div>
@@ -522,7 +551,6 @@
     editMsg.textContent = "";
     editingCompanyId = company.companyId;
 
-    // 元の値を入れる
     eName.value = company.name ?? "";
     eAddress.value = company.address ?? "";
     eWebsite.value = company.website ?? "";
@@ -613,7 +641,6 @@
       });
 
       if (!res.ok) {
-        // 409 のときもここに来る。message を出す
         let msg = "";
         try { msg = (await res.json()).message ?? ""; } catch { msg = await res.text(); }
         deleteMsg.textContent = `削除失敗: ${res.status} ${msg}`;
@@ -642,7 +669,10 @@
       .replaceAll("'", "&#039;");
   }
 
-  window.addEventListener("load", () => loadCompanies(1));
+  window.addEventListener("load", () => {
+    setupSuperAdminHeaderLinks();
+    loadCompanies(1);
+  });
 </script>
 
 </body>

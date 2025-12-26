@@ -1,0 +1,348 @@
+<!-- super_admin_mypage.html（完成版：super_admin、アカウント情報表示のみ、未ログイン時はページ内表示、logoutLink対応） -->
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <title>マイページ（super_admin）</title>
+  <style>
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Helvetica Neue", sans-serif;
+      background-color: #f5f5f5;
+      margin: 0;
+      color: #111;
+    }
+
+    /* 上部メニュー（管理画面と合わせる） */
+    header {
+      border-bottom: 1px solid #ccc;
+      padding: 16px 40px;
+      display: flex;
+      justify-content: center;
+      gap: 80px;
+      font-size: 14px;
+      background-color: #fff;
+    }
+    header a {
+      text-decoration: none;
+      color: #333;
+      cursor: pointer;
+    }
+
+    .container {
+      width: 700px;
+      margin: 50px auto 80px;
+      background: #fff;
+      border: 4px solid #000;
+      padding: 50px 70px;
+      box-sizing: border-box;
+    }
+
+    h1 {
+      text-align: center;
+      margin: 0 0 40px;
+      letter-spacing: 0.2em;
+      font-size: 26px;
+    }
+
+    .section {
+      border-top: 2px solid #000;
+      padding-top: 24px;
+      margin-top: 24px;
+    }
+    .section:first-of-type {
+      border-top: none;
+      padding-top: 0;
+      margin-top: 0;
+    }
+
+    .section-title {
+      font-size: 14px;
+      font-weight: 700;
+      margin: 0 0 16px;
+      letter-spacing: 0.08em;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 160px 1fr;
+      gap: 10px 16px;
+      align-items: center;
+    }
+
+    .label {
+      font-size: 13px;
+      color: #111;
+    }
+
+    .value {
+      font-size: 14px;
+      padding: 10px;
+      border: 2px solid #000;
+      background: #fdfdfd;
+      box-sizing: border-box;
+      word-break: break-word;
+    }
+
+    .hint {
+      font-size: 12px;
+      color: #777;
+      margin-top: 10px;
+      line-height: 1.7;
+    }
+
+    .error {
+      color: #d00;
+      font-size: 13px;
+      margin-top: 10px;
+      display: none;
+      white-space: pre-wrap;
+    }
+
+    /* 未ログイン案内ボックス */
+    .need-login-box {
+      border: 2px solid #000;
+      background: #fff;
+      padding: 16px;
+      margin: 0 0 20px;
+    }
+    .need-login-title {
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      margin-bottom: 8px;
+      font-size: 14px;
+    }
+    .need-login-text {
+      font-size: 14px;
+      line-height: 1.7;
+    }
+    .need-login-actions {
+      margin-top: 12px;
+      font-size: 14px;
+    }
+    .need-login-actions a {
+      color: #000;
+      text-decoration: underline;
+    }
+
+    .loading {
+      font-size: 13px;
+      color: #555;
+      text-align: center;
+      display: none;
+      margin-top: 10px;
+    }
+  </style>
+</head>
+
+<body>
+  <!-- ===== super_admin用ヘッダー（管理画面と統一） ===== -->
+  <header>
+    <a href="adminevents.html">説明会情報管理</a>
+    <a href="admincompanies.html">会社情報管理</a>
+
+    <!-- ★追加：ユーザ管理 / 教師新規登録（super_admin用） -->
+    <a href="adminusers.html">ユーザ管理</a>
+    <a href="teacherRegister.html">教師新規登録</a>
+
+    <a href="#" id="logoutLink">ログアウト</a>
+    <a href="super_admin_mypage.html">アカウント</a>
+  </header>
+
+  <div class="container">
+    <h1>マイページ（super_admin）</h1>
+
+    <!-- 未ログイン時メッセージ（リダイレクトしない） -->
+    <div id="needLoginBox" class="need-login-box" style="display:none;">
+      <div class="need-login-title">ログインが必要です</div>
+      <div class="need-login-text">
+        アカウント情報は <b>ログイン後</b> に閲覧できます。
+      </div>
+      <div class="need-login-actions">
+        <a href="login.html">ログイン画面へ</a>
+      </div>
+    </div>
+
+    <div id="loading" class="loading">読み込み中...</div>
+    <div id="pageError" class="error"></div>
+
+    <!-- ★ログイン時に表示する領域 -->
+    <div id="authedArea" style="display:none;">
+
+      <div class="section">
+        <div class="section-title">基本情報</div>
+        <div class="grid">
+          <div class="label">ユーザーID</div>
+          <div class="value" id="vUserId">-</div>
+
+          <div class="label">氏名</div>
+          <div class="value" id="vName">-</div>
+
+          <div class="label">メールアドレス</div>
+          <div class="value" id="vEmail">-</div>
+
+          <div class="label">権限</div>
+          <div class="value" id="vRole">-</div>
+        </div>
+
+        <div class="hint">
+         
+        </div>
+      </div>
+
+    </div><!-- /authedArea -->
+  </div>
+
+<script>
+  // =============================
+  // 設定
+  // =============================
+  const API_BASE = "http://localhost:8080";
+  // const API_BASE = "http://45.76.55.162:8080";
+
+  // ★super_admin用：GETだけあればOK
+  // 例：バックエンドに /api/super/me を用意する想定
+  const ME_API = "/api/super/me";
+
+  function getLoginInfo() {
+    const token = localStorage.getItem("token");
+    const roleRaw = localStorage.getItem("role");
+    const role = roleRaw ? roleRaw.toLowerCase() : null;
+    return { token, role };
+  }
+
+  // =============================
+  // ヘッダー：logoutLink方式
+  // =============================
+  function setupHeaderByLoginStatus() {
+    const logoutLink = document.getElementById("logoutLink");
+    if (!logoutLink) return;
+
+    const { token } = getLoginInfo();
+
+    if (!token) {
+      logoutLink.textContent = "ログイン";
+      logoutLink.href = "login.html";
+      return;
+    }
+
+    logoutLink.textContent = "ログアウト";
+    logoutLink.href = "#";
+
+    logoutLink.replaceWith(logoutLink.cloneNode(true));
+    const newLogoutLink = document.getElementById("logoutLink");
+
+    newLogoutLink.addEventListener("click", (e) => {
+      e.preventDefault();
+
+      localStorage.removeItem("token");
+      localStorage.removeItem("userId");
+      localStorage.removeItem("email");
+      localStorage.removeItem("name");
+      localStorage.removeItem("role");
+
+      alert("ログアウトしました。");
+      renderAuthState();
+      setupHeaderByLoginStatus();
+    });
+  }
+
+  function show(el) { el.style.display = "block"; }
+  function hide(el) { el.style.display = "none"; }
+  function setText(id, text) { document.getElementById(id).textContent = text; }
+
+  function clearMessages() {
+    const pageError = document.getElementById("pageError");
+    pageError.textContent = "";
+    hide(pageError);
+  }
+
+  function renderAuthState() {
+    const { token } = getLoginInfo();
+    const needLoginBox = document.getElementById("needLoginBox");
+    const authedArea = document.getElementById("authedArea");
+    const loading = document.getElementById("loading");
+
+    clearMessages();
+
+    if (!token) {
+      show(needLoginBox);
+      hide(authedArea);
+      hide(loading);
+      return false;
+    } else {
+      hide(needLoginBox);
+      show(authedArea);
+      return true;
+    }
+  }
+
+  async function apiFetch(path, options = {}) {
+    const { token } = getLoginInfo();
+    const headers = options.headers ? options.headers : {};
+    headers["Authorization"] = "Bearer " + token;
+
+    const res = await fetch(API_BASE + path, { ...options, headers });
+
+    if (res.status === 401 || res.status === 403) {
+      throw new Error("AUTH");
+    }
+    return res;
+  }
+
+  async function loadMe() {
+    const loading = document.getElementById("loading");
+    show(loading);
+
+    try {
+      const res = await apiFetch(ME_API, { method: "GET" });
+      if (!res.ok) {
+        const t = await res.text();
+        throw new Error(t || ("HTTP " + res.status));
+      }
+
+      const me = await res.json();
+
+      setText("vUserId", (me.userId ?? me.id ?? "-"));
+      setText("vName", me.name ?? "-");
+      setText("vEmail", me.email ?? "-");
+      setText("vRole", (me.role ?? "-"));
+
+    } catch (err) {
+      console.error(err);
+      const pageError = document.getElementById("pageError");
+
+      if (err.message === "AUTH") {
+        pageError.textContent = "ログイン情報が無効です。もう一度ログインしてください。";
+        show(pageError);
+        localStorage.removeItem("token");
+        renderAuthState();
+        setupHeaderByLoginStatus();
+      } else {
+        pageError.textContent = "情報の取得に失敗しました。\n" + (err.message || "");
+        show(pageError);
+      }
+    } finally {
+      hide(loading);
+    }
+  }
+
+  window.addEventListener("load", async () => {
+    setupHeaderByLoginStatus();
+
+    // 未ログインなら案内表示で終了（遷移しない）
+    if (!renderAuthState()) return;
+
+    // ★super_admin以外が来たら戻す（teacher/studentと同様の考え方）
+    const { role } = getLoginInfo();
+    if (role && role !== "super_admin") {
+      alert("このページはsuper_admin専用です。");
+      window.location.href = "index.html";
+      return;
+    }
+
+    await loadMe();
+  });
+</script>
+
+</body>
+</html>

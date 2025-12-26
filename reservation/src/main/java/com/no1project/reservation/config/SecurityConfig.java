@@ -79,17 +79,19 @@ public class SecurityConfig {
                     .requestMatchers("/api/me/**").hasRole("STUDENT")
                     //教師マイページ
                     .requestMatchers("/api/teacher/me/**").hasRole("NORMAL_ADMIN")
+                    //スーパー管理者マイページ
+                    .requestMatchers("/api/super/me/**").hasRole("SUPER_ADMIN")
                     //予約閲覧
                     .requestMatchers(HttpMethod.GET, "/reservations/me").hasRole("STUDENT")
                     //予約削除
                     .requestMatchers(HttpMethod.DELETE, "/reservations/*").hasRole("STUDENT")
                     // 管理者API（会社/説明会 管理）は管理者のみ
-                    .requestMatchers("/api/admin/**").hasRole("NORMAL_ADMIN")
+                    .requestMatchers("/api/admin/**").hasAnyRole("NORMAL_ADMIN","SUPER_ADMIN")
 
                     //フロントエンド
                     .requestMatchers("/index.html", "admincompanies.html", 
                     "adminevents.html", "login.html", "register.html", "reservations.html", 
-                    "teacherRegister.html", "mypage.html", "teacher_mypage.html").permitAll()
+                    "teacherRegister.html", "mypage.html", "teacher_mypage.html", "super_admin_mypage.html").permitAll()
                     
                     // preflight
                     .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()

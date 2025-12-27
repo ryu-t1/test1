@@ -50,4 +50,10 @@ public class TeacherRepository {
                 .stream()
                 .findFirst();
     }
+
+     // teacherのプロフィール更新
+    public int updateProfile(int userId, int grade, String myClass) {
+        String sql = "UPDATE Teacher SET grade = ?, class = ? WHERE user_id = ?";
+        return jdbcTemplate.update(sql, grade, myClass, userId);
+    }
 }

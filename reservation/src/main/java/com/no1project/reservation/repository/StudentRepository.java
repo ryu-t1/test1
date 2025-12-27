@@ -52,4 +52,20 @@ public class StudentRepository {
                 .findFirst();
     }
 
+     //studentのプロフィール更新
+    public int updateProfile(int userId, int grade, String myClass, int number) {
+        String sql = "UPDATE Student SET grade = ?, class = ?, number = ? WHERE user_id = ?";
+        return jdbcTemplate.update(sql, grade, myClass, number, userId);
+    }
+
+    //学年一括更新
+    public int batchUpdateGrade(Integer fromGrade, int toGrade) {
+        if (fromGrade == null) {
+            String sql = "UPDATE Student SET grade = ?";
+            return jdbcTemplate.update(sql, toGrade);
+        } else {
+            String sql = "UPDATE Student SET grade = ? WHERE grade = ?";
+            return jdbcTemplate.update(sql, toGrade, fromGrade);
+        }
+    }
 }

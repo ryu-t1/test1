@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <title>全ユーザ管理（super_admin）</title>
+  <style>
+    body { font-family: system-ui, -apple-system, "Helvetica Neue", Arial, sans-serif; margin:0; background:#fafafa; color:#111; }
+    header{
+      border-bottom:1px solid #ccc; padding:16px 40px; display:flex; justify-content:center; gap:80px;
+      font-size:14px; background:#fff;
+    }
+    header a{ text-decoration:none; color:#333; cursor:pointer; }
+    main{ max-width:900px; margin:30px auto 70px; padding:0 16px; }
+
+    .panel{ background:#fff; border:1px solid #ddd; border-radius:10px; padding:16px; margin-bottom:14px; }
+    .row{ display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
+    .row > * { margin:4px 0; }
+
+    .input{ padding:10px; border:1px solid #333; border-radius:8px; background:#fff; }
+    .btn{ padding:10px 14px; border:1px solid #333; background:#fff; cursor:pointer; border-radius:8px; }
+    .btn:disabled{ opacity:.5; cursor:not-allowed; }
+
+    .muted{ color:#666; font-size:13px; }
+    .error{ color:#b00020; font-size:13px; }
+    .ok{ color:#0a7a2f; font-size:13px; }
+
+    .list{ margin-top:10px; }
+    details.user{
+      background:#fff; border:1px solid #ddd; border-radius:10px; margin:10px 0; overflow:hidden;
+    }
+    details.user summary{
+      list-style:none; cursor:pointer; padding:14px 14px; display:flex; align-items:center; justify-content:space-between;
+    }
+    details.user summary::-webkit-details-marker{ display:none; }
+    .left{ display:flex; flex-direction:column; gap:4px; }
+    .title{ font-weight:700; }
+    .meta{ font-size:13px; color:#444; }
+    .role{ font-size:12px; padding:4px 8px; border:1px solid #bbb; border-radius:999px; color:#333; background:#fff; }
+
+    .detail{ border-top:1px solid #eee; padding:14px; background:#fcfcfc; }
+    .grid{ display:grid; grid-template-columns: 1fr 1fr 1fr; gap:10px; }
+    @media (max-width: 760px){ .grid{ grid-template-columns: 1fr; } }
+
+    .pager{ display:flex; gap:10px; align-items:center; justify-content:center; margin:16px 0; }
+  </style>
+</head>
+<body>
+
+  <!-- ===== super_admin用ヘッダー（管理画面と統一） ===== -->
+  <header>
+    <a href="adminevents.html">説明会情報管理</a>
+    <a href="admincompanies.html">会社情報管理</a>
+
+    <a href="super_admin_user_manage.html">ユーザ管理</a>
+    <a href="teacherRegister.html">教師新規登録</a>
+
+    <a href="#" id="logoutLink">ログアウト</a>
+    <a href="super_admin_mypage.html">アカウント</a>
+  </header>
+
+<main>
+  <h2 style="margin:0 0 10px;">全ユーザ管理（super_admin）</h2>
+
+  <!-- 学年一括変更 -->
+  <div class="panel">
+    <div style="font-weight:700; margin-bottom:8px;">学生の学年 一括変更</div>
+    <div class="row">
+      <input id="fromGrade" class="input" type="number" placeholder="変更元学年（必須）" style="width:220px;">
+      <input id="toGrade" class="input" type="number" placeholder="変更先学年（必須）" style="width:180px;">
+      <button id="batchBtn" class="btn">一括変更する</button>
+      <span id="batchMsg" class="muted"></span>
+    </div>
+  </div>
+
+  <!-- 検索 -->
+  <div class="panel">
+    <div class="row">
+      <!-- ★qは氏名/メールだけに（権限は選択式にする） -->
+      <input id="q" class="input" placeholder="ユーザ検索（氏名 / メール）" style="flex:1; min-width:240px;">
+
+      <!-- ★追加：権限の選択 -->
+      <select id="roleFilter" class="input" style="min-width:170px;">
+        <option value="">権限（すべて）</option>
+        <option value="student">学生</option>
+        <option value="normal_admin">教師</option>
+        <option value="super_admin">管理者</option>
+      </select>
+
+      <button id="searchBtn" class="btn">検索</button>
+      <button id="clearBtn" class="btn">クリア</button>
+
+      <select id="size" class="input">
+        <option value="10">10件</option>
+        <option value="20">20件</option>
+        <option value="30">30件</option>
+        <option value="50">50件</option>
+      </select>
+    </div>
+    <div id="msg" class="muted" style="margin-top:8px;"></div>
+  </div>
+
+  <!-- 一覧 -->
+  <div class="list" id="list"></div>
+
+  <!-- ページング -->
+  <div class="pager">
+    <button id="prevBtn" class="btn">前へ</button>
+    <div id="pageInfo" class="muted"></div>
+    <button id="nextBtn" class="btn">次へ</button>
+  </div>
+
+</main>
+
+<script>
+  const API_BASE = "http://localhost:8080";
+  // const API_BASE = "http://45.76.55.162:8080";
+
+  // ★roleFilter追加
+  let state = { page: 0, size: 10, q: "", role: "", total: 0, items: [] };
+
+  function getLoginInfo() {
+    const token = localStorage.getItem("token");
+    const roleRaw = localStorage.getItem("role");
+    const role = roleRaw ? roleRaw.toLowerCase() : null;
+    return { token, role };
+  }
+
+  function setupHeaderByLoginStatus() {
+    const logoutLink = document.getElementById("logoutLink");
+    if (!logoutLink) return;
+
+    const { token } = getLoginInfo();
+
+    if (!token) {
+      logoutLink.textContent = "ログイン";
+      logoutLink.href = "login.html";
+      return;
+    }
+
+    logoutLink.textContent = "ログアウト";
+    logoutLink.href = "#";
+
+    logoutLink.replaceWith(logoutLink.cloneNode(true));
+    const newLogoutLink = document.getElementById("logoutLink");
+
+    newLogoutLink.addEventListener("click", (e) => {
+      e.preventDefault();
+
+      localStorage.removeItem("token");
+      localStorage.removeItem("userId");
+      localStorage.removeItem("email");
+      localStorage.removeItem("name");
+      localStorage.removeItem("role");
+
+      alert("ログアウトしました。");
+      window.location.href = "index.html";
+    });
+  }
+
+  function authHeaders(){
+    const { token } = getLoginInfo();
+    const h = { "Content-Type": "application/json" };
+    if (token) h["Authorization"] = "Bearer " + token;
+    return h;
+  }
+
+  function setMsg(text, type="muted"){
+    const el = document.getElementById("msg");
+    el.className = type;
+    el.textContent = text || "";
+  }
+
+  function escapeHtml(s){
+    return (s ?? "").toString()
+      .replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;")
+      .replaceAll("\"","&quot;").replaceAll("'","&#039;");
+  }
+
+  function roleToJa(roleRaw){
+    const r = (roleRaw || "").toLowerCase();
+    if (r === "normal_admin") return "教師";
+    if (r === "student") return "学生";
+    if (r === "super_admin") return "管理者"; // ★表示名を「管理者」に
+    return roleRaw || "-";
+  }
+
+  function isBlank(v){
+    return v === null || v === undefined || String(v).trim() === "";
+  }
+  function readNumberOrNull(inputEl){
+    const raw = inputEl.value;
+    if (isBlank(raw)) return null;
+    const n = Number(raw);
+    if (Number.isNaN(n)) return null;
+    return n;
+  }
+
+  async function load(){
+    setMsg("読み込み中…");
+    const qs = new URLSearchParams({
+      page: state.page,
+      size: state.size,
+    });
+
+    if (state.q && state.q.trim()) qs.set("q", state.q.trim());
+
+    // ★追加：権限フィルタ
+    if (state.role && state.role.trim()) qs.set("role", state.role.trim());
+
+    const res = await fetch(`${API_BASE}/super-admin/users?${qs.toString()}`, {
+      method: "GET",
+      headers: authHeaders()
+    });
+
+    if (!res.ok) {
+      const t = await res.text().catch(()=> "");
+      setMsg(`取得に失敗しました（${res.status}） ${t}`, "error");
+      render([]);
+      updatePager();
+      return;
+    }
+
+    const data = await res.json();
+    state.items = data.items || [];
+    state.total = data.total ?? 0;
+
+    setMsg(`全 ${state.total} 件 / ${state.size}件ずつ表示`);
+    render(state.items);
+    updatePager();
+  }
+
+  function updatePager(){
+    const totalPages = Math.max(1, Math.ceil(state.total / state.size));
+    document.getElementById("pageInfo").textContent = `${state.page + 1} / ${totalPages} ページ`;
+    document.getElementById("prevBtn").disabled = (state.page <= 0);
+    document.getElementById("nextBtn").disabled = (state.page + 1 >= totalPages);
+  }
+
+  function render(items){
+    const list = document.getElementById("list");
+    if (!items.length){
+      list.innerHTML = `<div class="panel muted">該当ユーザがいません。</div>`;
+      return;
+    }
+
+    list.innerHTML = items.map(u => {
+      const roleRaw = (u.role || "");
+      const role = roleRaw.toLowerCase();
+      const roleLabel = escapeHtml(roleToJa(roleRaw));
+
+      const name = escapeHtml(u.name || "");
+      const email = escapeHtml(u.email || "");
+      const userId = u.userId;
+
+      const grade = (u.grade ?? "");
+      const myClass = escapeHtml(u.myClass ?? "");
+      const number = (u.number ?? "");
+
+      let formHtml = `<div class="muted">このユーザは編集対象外です（学生 / 教師 のみ編集可能）</div>`;
+
+      if (role === "student") {
+        formHtml = `
+          <div class="grid">
+            <div>
+              <div class="muted">学年</div>
+              <input class="input" type="number" id="grade-${userId}" value="${grade}" />
+            </div>
+            <div>
+              <div class="muted">クラス</div>
+              <input class="input" type="text" id="class-${userId}" value="${myClass}" />
+            </div>
+            <div>
+              <div class="muted">番号</div>
+              <input class="input" type="number" id="number-${userId}" value="${number}" />
+            </div>
+          </div>
+          <div class="row" style="margin-top:12px;">
+            <button class="btn" onclick="saveStudent(${userId})">保存</button>
+            <span id="saveMsg-${userId}" class="muted"></span>
+          </div>
+        `;
+      } else if (role === "normal_admin") {
+        formHtml = `
+          <div class="grid">
+            <div>
+              <div class="muted">担当学年</div>
+              <input class="input" type="number" id="grade-${userId}" value="${grade}" />
+            </div>
+            <div>
+              <div class="muted">担当クラス</div>
+              <input class="input" type="text" id="class-${userId}" value="${myClass}" />
+            </div>
+            <div></div>
+          </div>
+          <div class="row" style="margin-top:12px;">
+            <button class="btn" onclick="saveTeacher(${userId})">保存</button>
+            <span id="saveMsg-${userId}" class="muted"></span>
+          </div>
+        `;
+      }
+
+      return `
+        <details class="user">
+          <summary>
+            <div class="left">
+              <div class="title">${name}</div>
+              <div class="meta">${email}</div>
+              <div class="meta">学年：${u.grade ?? "-"} ／ クラス：${escapeHtml(u.myClass ?? "-")} ／ 番号：${u.number ?? "-"}</div>
+            </div>
+            <div class="role">${roleLabel}</div>
+          </summary>
+          <div class="detail">
+            ${formHtml}
+          </div>
+        </details>
+      `;
+    }).join("");
+  }
+
+  function setSaveMsg(userId, text, type="muted"){
+    const el = document.getElementById(`saveMsg-${userId}`);
+    if (!el) return;
+    el.className = type;
+    el.textContent = text || "";
+  }
+
+  window.saveStudent = async (userId) => {
+    setSaveMsg(userId, "");
+
+    const gradeEl = document.getElementById(`grade-${userId}`);
+    const classEl = document.getElementById(`class-${userId}`);
+    const numberEl = document.getElementById(`number-${userId}`);
+
+    const grade = readNumberOrNull(gradeEl);
+    const myClass = (classEl.value ?? "").trim();
+    const number = readNumberOrNull(numberEl);
+
+    if (grade === null || isBlank(myClass) || number === null) {
+      setSaveMsg(userId, "未入力があります（学年・クラス・番号は必須）", "error");
+      return;
+    }
+
+    setSaveMsg(userId, "保存中…");
+
+    const payload = { grade, myClass, number };
+
+    const res = await fetch(`${API_BASE}/super-admin/users/${userId}/student`, {
+      method: "PUT",
+      headers: authHeaders(),
+      body: JSON.stringify(payload)
+    });
+
+    if (!res.ok){
+      const t = await res.text().catch(()=> "");
+      setSaveMsg(userId, `失敗（${res.status}） ${t}`, "error");
+      return;
+    }
+    setSaveMsg(userId, "保存しました", "ok");
+    await load();
+  };
+
+  window.saveTeacher = async (userId) => {
+    setSaveMsg(userId, "");
+
+    const gradeEl = document.getElementById(`grade-${userId}`);
+    const classEl = document.getElementById(`class-${userId}`);
+
+    const grade = readNumberOrNull(gradeEl);
+    const myClass = (classEl.value ?? "").trim();
+
+    if (grade === null || isBlank(myClass)) {
+      setSaveMsg(userId, "未入力があります（担当学年・担当クラスは必須）", "error");
+      return;
+    }
+
+    setSaveMsg(userId, "保存中…");
+
+    const payload = { grade, myClass };
+
+    const res = await fetch(`${API_BASE}/super-admin/users/${userId}/teacher`, {
+      method: "PUT",
+      headers: authHeaders(),
+      body: JSON.stringify(payload)
+    });
+
+    if (!res.ok){
+      const t = await res.text().catch(()=> "");
+      setSaveMsg(userId, `失敗（${res.status}） ${t}`, "error");
+      return;
+    }
+    setSaveMsg(userId, "保存しました", "ok");
+    await load();
+  };
+
+  document.getElementById("searchBtn").onclick = () => {
+    state.q = document.getElementById("q").value || "";
+    state.role = document.getElementById("roleFilter").value || ""; // ★追加
+    state.page = 0;
+    load();
+  };
+
+  document.getElementById("clearBtn").onclick = () => {
+    document.getElementById("q").value = "";
+    document.getElementById("roleFilter").value = ""; // ★追加
+    state.q = "";
+    state.role = "";
+    state.page = 0;
+    load();
+  };
+
+  document.getElementById("size").onchange = (e) => {
+    state.size = Number(e.target.value);
+    state.page = 0;
+    load();
+  };
+
+  document.getElementById("prevBtn").onclick = () => {
+    state.page = Math.max(0, state.page - 1);
+    load();
+  };
+
+  document.getElementById("nextBtn").onclick = () => {
+    state.page += 1;
+    load();
+  };
+
+  document.getElementById("batchBtn").onclick = async () => {
+    const fromEl = document.getElementById("fromGrade");
+    const toEl = document.getElementById("toGrade");
+
+    const fromGrade = readNumberOrNull(fromEl);
+    const toGrade = readNumberOrNull(toEl);
+
+    const batchMsg = document.getElementById("batchMsg");
+    batchMsg.className = "muted";
+    batchMsg.textContent = "";
+
+    if (fromGrade === null) {
+      batchMsg.className = "error";
+      batchMsg.textContent = "変更元学年（必須）が未入力です";
+      return;
+    }
+    if (toGrade === null) {
+      batchMsg.className = "error";
+      batchMsg.textContent = "変更先学年（必須）が未入力です";
+      return;
+    }
+
+    const ok = confirm(`学年${fromGrade}の学生を学年${toGrade}に一括変更します。\nよろしいですか？`);
+    if (!ok) {
+      batchMsg.className = "muted";
+      batchMsg.textContent = "キャンセルしました";
+      return;
+    }
+
+    batchMsg.textContent = "更新中…";
+
+    const payload = { fromGrade, toGrade };
+
+    const res = await fetch(`${API_BASE}/super-admin/students/grade-batch`, {
+      method: "PUT",
+      headers: authHeaders(),
+      body: JSON.stringify(payload)
+    });
+
+    if (!res.ok){
+      const t = await res.text().catch(()=> "");
+      batchMsg.className = "error";
+      batchMsg.textContent = `失敗（${res.status}） ${t}`;
+      return;
+    }
+
+    const updated = await res.json().catch(()=> null);
+    batchMsg.className = "ok";
+    batchMsg.textContent = `一括変更しました（更新件数: ${updated}）`;
+    await load();
+  };
+
+  window.addEventListener("load", () => {
+    setupHeaderByLoginStatus();
+
+    const { token, role } = getLoginInfo();
+    if (!token) {
+      alert("ログインが必要です。");
+      window.location.href = "login.html";
+      return;
+    }
+    if (role !== "super_admin") {
+      alert("このページはsuper_admin専用です。");
+      window.location.href = "index.html";
+      return;
+    }
+
+    state.size = Number(document.getElementById("size").value);
+    load();
+  });
+</script>
+</body>
+</html>

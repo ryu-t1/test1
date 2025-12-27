@@ -9,6 +9,7 @@ import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Repository;
 
 import java.sql.*;
+import java.util.List;
 import java.util.Optional;
 
 @Repository
@@ -93,4 +94,43 @@ public class UserRepository {
         return jdbcTemplate.update(sql, encodedPassword, userId);
     }
 
+    public List<User> findPaged(String q, String role, int limit, int offset) {
+    String like = (q == null || q.isBlank()) ? null : "%" + q.trim() + "%";
+    String roleEq = (role == null || role.isBlank()) ? null : role.trim();
+
+    String sql =
+            "SELECT * FROM Users " +
+            "WHERE " +
+            "  (? IS NULL OR name LIKE ? OR email LIKE ? OR role LIKE ?) " +
+            "  AND (? IS NULL OR LOWER(role) = LOWER(?)) " +   // ★追加（role完全一致）
+            "ORDER BY user_id DESC " +
+            "LIMIT ? OFFSET ?";
+
+    return jdbcTemplate.query(
+            sql,
+            new UserRowMapper(),
+            like, like, like, like,
+            roleEq, roleEq,
+            limit, offset
+    );
+}
+
+   public int countAll(String q, String role) {
+    String like = (q == null || q.isBlank()) ? null : "%" + q.trim() + "%";
+    String roleEq = (role == null || role.isBlank()) ? null : role.trim();
+
+    String sql =
+            "SELECT COUNT(*) FROM Users " +
+            "WHERE " +
+            "  (? IS NULL OR name LIKE ? OR email LIKE ? OR role LIKE ?) " +
+            "  AND (? IS NULL OR LOWER(role) = LOWER(?))";     // ★追加
+
+    Integer n = jdbcTemplate.queryForObject(
+            sql,
+            Integer.class,
+            like, like, like, like,
+            roleEq, roleEq
+    );
+    return (n == null) ? 0 : n;
+}
 }

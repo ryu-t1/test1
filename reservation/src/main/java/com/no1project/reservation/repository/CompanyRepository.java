@@ -109,4 +109,40 @@ public class CompanyRepository {
         return count == null ? 0 : count;
     }
 
+    // CompanyRepository.java に追記
+
+    public List<Company> findPageBySearch(String qName, String qAddress, int limit, int offset) {
+        String sql = """
+                    SELECT company_id, name, address, website
+                    FROM Company
+                    WHERE (? IS NULL OR ? = '' OR name LIKE CONCAT('%', ?, '%'))
+                      AND (? IS NULL OR ? = '' OR address LIKE CONCAT('%', ?, '%'))
+                    ORDER BY company_id DESC
+                    LIMIT ? OFFSET ?
+                """;
+
+        return jdbcTemplate.query(
+                sql,
+                new CompanyRowMapper(),
+                qName, qName, qName,
+                qAddress, qAddress, qAddress,
+                limit, offset);
+    }
+
+    public int countBySearch(String qName, String qAddress) {
+        String sql = """
+                    SELECT COUNT(*)
+                    FROM Company
+                    WHERE (? IS NULL OR ? = '' OR name LIKE CONCAT('%', ?, '%'))
+                      AND (? IS NULL OR ? = '' OR address LIKE CONCAT('%', ?, '%'))
+                """;
+
+        Integer count = jdbcTemplate.queryForObject(
+                sql,
+                Integer.class,
+                qName, qName, qName,
+                qAddress, qAddress, qAddress);
+        return count == null ? 0 : count;
+    }
+
 }

@@ -21,21 +21,29 @@
 
     .search-box{
       margin: 0 auto 20px;
-      max-width: 600px;
+      max-width: 760px;
       border: 1px solid #333;
       padding: 16px;
-      text-align: center;
       background-color: #fff;
     }
-    .search-box input{
-      width: 70%;
-      padding: 6px 8px;
-      box-sizing: border-box;
+    .search-grid{
+      display:grid;
+      grid-template-columns: 1fr 1fr auto auto;
+      gap:10px;
+      align-items:center;
     }
-    .search-box button{
-      padding: 6px 12px;
-      margin-left: 8px;
+    .search-grid input{
+      width:100%;
+      padding: 8px 10px;
+      box-sizing: border-box;
+      border:1px solid #ccc;
+    }
+    .search-grid button{
+      padding: 8px 12px;
       cursor: pointer;
+      border:1px solid #333;
+      background:#fff;
+      font-size: 13px;
     }
 
     .top-actions{
@@ -131,6 +139,7 @@
       text-align:center;
       margin-top:20px;
       color:#666;
+      white-space: pre-line;
     }
 
     /* modal */
@@ -163,9 +172,14 @@
     <button class="btn" id="openModalBtn">会社新規登録ボタン</button>
   </div>
 
+  <!-- ★検索（会社名・所在地） -->
   <div class="search-box">
-    <input id="keyword" type="text" placeholder="検索フォーム（未実装）">
-    <button id="searchBtn">検索</button>
+    <div class="search-grid">
+      <input id="qName" type="text" placeholder="会社名で検索">
+      <input id="qAddress" type="text" placeholder="所在地で検索">
+      <button id="searchBtn">検索</button>
+      <button id="clearBtn">クリア</button>
+    </div>
   </div>
 
   <div class="hint">＊ 登録・閲覧・編集・画面はポップアップBOXで表示</div>
@@ -260,33 +274,33 @@
   const isAdmin = (roleUpper === "NORMAL_ADMIN" || roleUpper === "SUPER_ADMIN");
   const isSuperAdmin = (roleUpper === "SUPER_ADMIN");
 
-  // ヘッダー：super_admin のときだけリンク表示
   function setupSuperAdminHeaderLinks() {
-  const userManageLink = document.getElementById("userManageLink");
-  const teacherRegisterLink = document.getElementById("teacherRegisterLink");
-  const accountLink = document.getElementById("accountLink");
+    const userManageLink = document.getElementById("userManageLink");
+    const teacherRegisterLink = document.getElementById("teacherRegisterLink");
+    const accountLink = document.getElementById("accountLink");
 
-  if (userManageLink) userManageLink.style.display = isSuperAdmin ? "inline" : "none";
-  if (teacherRegisterLink) teacherRegisterLink.style.display = isSuperAdmin ? "inline" : "none";
+    if (userManageLink) userManageLink.style.display = isSuperAdmin ? "inline" : "none";
+    if (teacherRegisterLink) teacherRegisterLink.style.display = isSuperAdmin ? "inline" : "none";
 
-  // ★ super_admin のときだけ「アカウント」リンク先を差し替え
-  if (accountLink) {
-    if (isSuperAdmin) {
-      accountLink.href = "super_admin_mypage.html";   // ←作る予定のページ
-      // accountLink.textContent = "アカウント（super_admin）"; // 表示変えたいなら任意
-    } else {
-      accountLink.href = "teacher_mypage.html";       // normal_admin は教師マイページ
-      accountLink.textContent = "アカウント";
+    if (accountLink) {
+      if (isSuperAdmin) {
+        accountLink.href = "super_admin_mypage.html";
+      } else {
+        accountLink.href = "teacher_mypage.html";
+        accountLink.textContent = "アカウント";
+      }
     }
   }
-}
 
   const listEl = document.getElementById("companyList");
   const msgEl = document.getElementById("message");
   const paginationEl = document.getElementById("pagination");
 
-  const keywordEl = document.getElementById("keyword");
+  // ★検索入力
+  const qNameEl = document.getElementById("qName");
+  const qAddressEl = document.getElementById("qAddress");
   const searchBtn = document.getElementById("searchBtn");
+  const clearBtn = document.getElementById("clearBtn");
 
   // 新規登録
   const backdrop = document.getElementById("backdrop");
@@ -339,7 +353,7 @@
     localStorage.removeItem("name");
     localStorage.removeItem("role");
     alert("ログアウトしました。");
-    window.location.href = "login.html";
+    window.location.href = "index.html";
   });
 
   // ===== modal open/close =====
@@ -366,17 +380,38 @@
     if (e.target === deleteBackdrop) deleteBackdrop.style.display = "none";
   });
 
-  // 検索は未実装：押したら1ページ目を再表示だけ
-  searchBtn.onclick = () => loadCompanies(1);
-  keywordEl.addEventListener("keydown", (e) => {
-    if (e.key === "Enter") loadCompanies(1);
+  // ===== 検索 =====
+  function doSearch() {
+    loadCompanies(1);
+  }
+  searchBtn.onclick = doSearch;
+  clearBtn.onclick = () => {
+    qNameEl.value = "";
+    qAddressEl.value = "";
+    loadCompanies(1);
+  };
+
+  [qNameEl, qAddressEl].forEach(el => {
+    el.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") doSearch();
+    });
   });
 
   // ===== data load =====
   async function loadCompanies(page) {
     if (page < 1) page = 1;
 
-    const qs = new URLSearchParams({ page: String(page), size: String(PAGE_SIZE) });
+    const qName = qNameEl.value.trim();
+    const qAddress = qAddressEl.value.trim();
+
+    const qs = new URLSearchParams({
+      page: String(page),
+      size: String(PAGE_SIZE)
+    });
+
+    // ★検索条件があれば付ける（バックエンド：qName / qAddress）
+    if (qName) qs.set("qName", qName);
+    if (qAddress) qs.set("qAddress", qAddress);
 
     try {
       const res = await fetch(`${API_BASE}/api/admin/companies?${qs.toString()}`, {
@@ -385,13 +420,13 @@
       if (!res.ok) throw new Error("HTTP status " + res.status);
 
       const data = await res.json();
-      const items = data.items ?? data.companies ?? [];
+      const items = data.items ?? [];
       currentPage = data.page ?? page;
       totalPages = data.totalPages ?? 1;
 
       renderCompanies(items);
       renderPagination();
-      renderMessage(data.totalItems ?? items.length);
+      renderMessage(data.totalItems ?? items.length, qName, qAddress);
     } catch (err) {
       console.error(err);
       listEl.innerHTML = "";
@@ -484,9 +519,17 @@
     }
   }
 
-  function renderMessage(totalItems) {
+  function renderMessage(totalItems, qName, qAddress) {
     if (!totalItems || totalItems === 0) {
-      msgEl.textContent = "現在、表示できる会社情報がありません。";
+      const lines = [];
+      lines.push("該当する会社情報がありません。");
+      if (qName || qAddress) {
+        lines.push("");
+        lines.push("【検索条件】");
+        if (qName) lines.push("・会社名: " + qName);
+        if (qAddress) lines.push("・所在地: " + qAddress);
+      }
+      msgEl.textContent = lines.join("\n");
     } else {
       msgEl.textContent = "";
     }
@@ -536,6 +579,8 @@
 
       backdrop.style.display = "none";
       saveBtn.disabled = false;
+
+      // ★登録後は検索条件を維持して1ページ目へ
       await loadCompanies(1);
     } catch (e) {
       console.error(e);

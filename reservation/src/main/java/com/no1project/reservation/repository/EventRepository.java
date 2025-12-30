@@ -12,6 +12,7 @@ import org.springframework.stereotype.Repository;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.sql.Statement;
@@ -38,47 +39,122 @@ public class EventRepository {
             r.setCompanyId(rs.getInt("company_id"));
             r.setNote(rs.getString("note"));
             r.setCompanyName(rs.getString("name"));
+            r.setCompanyWebsite(rs.getString("website"));
             return r;
         }
     }
 
     /** page は 0 始まり、size は 1ページの件数（今回は10） */
-    public List<Event> findPage(int page, int size) {
+    // ★年度(3月〜翌3月) + 検索 + 日時範囲 + ページ
+    public List<Event> findPageFiltered(
+            int page, int size,
+            String fiscalStart, String fiscalEnd,
+            String q,
+            String from, String to) {
         int offset = page * size;
 
-        String sql = """
-                SELECT e.event_id, e.date, e.deadline, e.place, e.item, e.company_id, e.note, c.name
+        StringBuilder sql = new StringBuilder("""
+                SELECT e.event_id, e.date, e.deadline, e.place, e.item, e.company_id, e.note,
+                       c.name, c.website
                 FROM Event e
                 JOIN Company c ON e.company_id = c.company_id
-                ORDER BY e.event_id DESC
-                LIMIT ? OFFSET ?
-                """;
+                WHERE e.date >= ? AND e.date <= ?
+                """);
 
-        return jdbcTemplate.query(sql, new EventRowMapper(), size, offset);
+        List<Object> params = new ArrayList<>();
+        params.add(fiscalStart);
+        params.add(fiscalEnd);
+
+        // キーワード検索（会社名 + 説明会名っぽいもの）
+        if (q != null && !q.isBlank()) {
+            sql.append("""
+                    AND (
+                        c.name LIKE ?
+                        OR e.item LIKE ?
+                        OR e.note LIKE ?
+                    )
+                    """);
+            String like = "%" + q.trim() + "%";
+            params.add(like);
+            params.add(like);
+            params.add(like);
+        }
+
+        // 日時範囲検索
+        if (from != null && !from.isBlank()) {
+            sql.append(" AND e.date >= ? ");
+            params.add(from);
+        }
+        if (to != null && !to.isBlank()) {
+            sql.append(" AND e.date <= ? ");
+            params.add(to);
+        }
+
+        sql.append(" ORDER BY e.event_id DESC LIMIT ? OFFSET ? ");
+        params.add(size);
+        params.add(offset);
+
+        return jdbcTemplate.query(sql.toString(), new EventRowMapper(), params.toArray());
     }
 
     /** 総件数 */
-    public int countAll() {
-        String sql = "SELECT COUNT(*) FROM Event";
-        Integer count = jdbcTemplate.queryForObject(sql, Integer.class);
+    // ★年度(3月〜翌3月) + 検索 + 日時範囲 の総件数
+    public int countFiltered(
+            String fiscalStart, String fiscalEnd,
+            String q,
+            String from, String to) {
+        StringBuilder sql = new StringBuilder("""
+                SELECT COUNT(*)
+                FROM Event e
+                JOIN Company c ON e.company_id = c.company_id
+                WHERE e.date >= ? AND e.date <= ?
+                """);
+
+        List<Object> params = new ArrayList<>();
+        params.add(fiscalStart);
+        params.add(fiscalEnd);
+
+        if (q != null && !q.isBlank()) {
+            sql.append("""
+                    AND (
+                        c.name LIKE ?
+                        OR e.item LIKE ?
+                        OR e.note LIKE ?
+                    )
+                    """);
+            String like = "%" + q.trim() + "%";
+            params.add(like);
+            params.add(like);
+            params.add(like);
+        }
+
+        if (from != null && !from.isBlank()) {
+            sql.append(" AND e.date >= ? ");
+            params.add(from);
+        }
+        if (to != null && !to.isBlank()) {
+            sql.append(" AND e.date <= ? ");
+            params.add(to);
+        }
+
+        Integer count = jdbcTemplate.queryForObject(sql.toString(), Integer.class, params.toArray());
         return count != null ? count : 0;
     }
 
     /** イベント1件取得（予約時の締切チェックなどで使用） */
     public Event findById(int eventId) {
         String sql = """
-                    SELECT e.event_id, e.date, e.deadline, e.place, e.item,
-                           e.company_id, e.note, c.name
-                    FROM Event e
-                    JOIN Company c ON e.company_id = c.company_id
-                    WHERE e.event_id = ?
+                SELECT e.event_id, e.date, e.deadline, e.place, e.item,
+                       e.company_id, e.note, c.name, c.website
+                FROM Event e
+                JOIN Company c ON e.company_id = c.company_id
+                WHERE e.event_id = ?
                 """;
-
         List<Event> list = jdbcTemplate.query(sql, new EventRowMapper(), eventId);
-
         return list.isEmpty() ? null : list.get(0);
     }
-    //説明会追加
+
+    // 説明会追加
     public int insert(Event e) {
         String sql = """
                     INSERT INTO Event (date, deadline, place, item, company_id, note)
@@ -101,7 +177,8 @@ public class EventRepository {
         Number key = Objects.requireNonNull(keyHolder.getKey(), "generated key is null");
         return key.intValue();
     }
-    //説明会情報更新
+
+    // 説明会情報更新
     public int update(Event e) {
         String sql = """
                     UPDATE Event
@@ -118,16 +195,17 @@ public class EventRepository {
                 e.getNote(),
                 e.getEventId());
     }
-    //説明会削除
+
+    // 説明会削除
     public int deleteById(int eventId) {
         String sql = "DELETE FROM Event WHERE event_id = ?";
         return jdbcTemplate.update(sql, eventId);
     }
 
-    //予約件数チェック
+    // 予約件数チェック
     public int countReservationsByEventId(int eventId) {
-    String sql = "SELECT COUNT(*) FROM Reservation WHERE event_id = ?";
-    Integer count = jdbcTemplate.queryForObject(sql, Integer.class, eventId);
-    return count == null ? 0 : count;
-}
+        String sql = "SELECT COUNT(*) FROM Reservation WHERE event_id = ?";
+        Integer count = jdbcTemplate.queryForObject(sql, Integer.class, eventId);
+        return count == null ? 0 : count;
+    }
 }

@@ -36,22 +36,32 @@
     }
     .btn:disabled { opacity:0.5; cursor:not-allowed; }
 
-    .search-box{
+    /* ===== 検索フォーム（学生用に合わせて強化） ===== */
+    .search-box {
       margin: 0 auto 20px;
-      max-width: 600px;
+      max-width: 760px;
       border: 1px solid #333;
       padding: 16px;
       text-align: center;
       background-color: #fff;
     }
+    .search-row{
+      display:flex;
+      gap:10px;
+      justify-content:center;
+      flex-wrap:wrap;
+      margin-bottom:10px;
+    }
     .search-box input{
-      width: 70%;
       padding: 6px 8px;
       box-sizing: border-box;
+      font-family: inherit;
     }
+    #keyword { width: 320px; }
+    #fromDt, #toDt { width: 210px; }
+
     .search-box button{
       padding: 6px 12px;
-      margin-left: 8px;
       cursor: pointer;
     }
 
@@ -66,12 +76,14 @@
       justify-content:space-between;
       align-items:center;
       cursor: default;
+      gap: 12px;
     }
 
     .event-main-info{
       display:flex;
       flex-direction:column;
       gap:4px;
+      min-width: 0;
     }
 
     .event-title{ font-weight:bold; }
@@ -83,6 +95,7 @@
       font-size:12px;
       border:1px solid #333;
       background:#fff;
+      white-space: nowrap;
     }
 
     .event-detail{
@@ -98,11 +111,19 @@
       margin-bottom:4px;
     }
 
+    /* ★詳細内のリンク見た目 */
+    .detail-link a{
+      color:#0066cc;
+      text-decoration: underline;
+      word-break: break-all;
+    }
+
     .admin-actions{
       margin-top: 12px;
       display:flex;
       gap:10px;
       justify-content:flex-end;
+      flex-wrap: wrap;
     }
 
     #pagination{
@@ -142,6 +163,21 @@
     .muted { color:#666; font-size:12px; margin-top:10px; }
 
     .danger { border-color:#c00; }
+
+    /* ★ 予約者一覧モーダル用 */
+    .table{
+      width:100%;
+      border-collapse:collapse;
+      margin-top:8px;
+      font-size:14px;
+    }
+    .table th,.table td{
+      border:1px solid #ccc;
+      padding:8px;
+      text-align:left;
+    }
+    .table th{ background:#f5f5f5; }
+    .small-muted{ color:#666; font-size:12px; margin-top:10px; }
   </style>
 </head>
 <body>
@@ -163,9 +199,18 @@
     <button class="btn" id="openModalBtn">説明会新規登録ボタン</button>
   </div>
 
+  <!-- ★検索フォーム（学生用と同じ：会社名/日時） -->
   <div class="search-box">
-    <input id="keyword" type="text" placeholder="会社名・説明会名などで検索（後で実装）">
-    <button id="searchBtn">検索</button>
+    <div class="search-row">
+      <input id="keyword" type="text" placeholder="会社名・説明会名で検索">
+      <input id="fromDt" type="datetime-local">
+      <input id="toDt" type="datetime-local">
+      <button id="searchBtn">検索</button>
+      <button id="clearBtn" type="button">クリア</button>
+    </div>
+    <div style="font-size:12px;color:#666;">
+      ※ 表示対象は「今年度3月〜次年度3月」の説明会のみ（サーバ側で自動切替）
+    </div>
   </div>
 
   <div class="hint">＊ 登録・閲覧・編集・画面はポップアップBOXで表示</div>
@@ -284,6 +329,22 @@
   </div>
 </div>
 
+<!-- ★ Modal（予約者一覧） -->
+<div class="backdrop" id="attendeesBackdrop">
+  <div class="modal">
+    <h2>予約者一覧</h2>
+
+    <div id="attendeesInfo" class="small-muted"></div>
+    <div id="attendeesBody"></div>
+
+    <div class="actions">
+      <button class="btn" id="attendeesCloseBtn">閉じる</button>
+    </div>
+
+    <div class="error" id="attendeesMsg"></div>
+  </div>
+</div>
+
 <script>
   const API_BASE = "http://localhost:8080";
   // const API_BASE = "http://45.76.55.162:8080"; //外部公開用
@@ -298,25 +359,23 @@
 
   // ヘッダー：super_admin のときだけリンク表示
   function setupSuperAdminHeaderLinks() {
-  const userManageLink = document.getElementById("userManageLink");
-  const teacherRegisterLink = document.getElementById("teacherRegisterLink");
-  const accountLink = document.getElementById("accountLink");
+    const userManageLink = document.getElementById("userManageLink");
+    const teacherRegisterLink = document.getElementById("teacherRegisterLink");
+    const accountLink = document.getElementById("accountLink");
 
-  if (userManageLink) userManageLink.style.display = isSuperAdmin ? "inline" : "none";
-  if (teacherRegisterLink) teacherRegisterLink.style.display = isSuperAdmin ? "inline" : "none";
+    if (userManageLink) userManageLink.style.display = isSuperAdmin ? "inline" : "none";
+    if (teacherRegisterLink) teacherRegisterLink.style.display = isSuperAdmin ? "inline" : "none";
 
-  // ★ super_admin のときだけ「アカウント」リンク先を差し替え
-  if (accountLink) {
-    if (isSuperAdmin) {
-      accountLink.href = "super_admin_mypage.html";   // ←作る予定のページ
-      // accountLink.textContent = "アカウント（super_admin）"; // 表示変えたいなら任意
-    } else {
-      accountLink.href = "teacher_mypage.html";       // normal_admin は教師マイページ
-      accountLink.textContent = "アカウント";
+    // ★ super_admin のときだけ「アカウント」リンク先を差し替え
+    if (accountLink) {
+      if (isSuperAdmin) {
+        accountLink.href = "super_admin_mypage.html";   // ←作る予定のページ
+      } else {
+        accountLink.href = "teacher_mypage.html";       // normal_admin は教師マイページ
+        accountLink.textContent = "アカウント";
+      }
     }
   }
-}
-
 
   const eventListEl = document.getElementById("eventList");
   const messageEl = document.getElementById("message");
@@ -348,6 +407,16 @@
   const deleteCancelBtn = document.getElementById("deleteCancelBtn");
   const deleteOkBtn = document.getElementById("deleteOkBtn");
   const deleteMsg = document.getElementById("deleteMsg");
+
+  // ★ 予約者一覧
+  const attendeesBackdrop = document.getElementById("attendeesBackdrop");
+  const attendeesBody = document.getElementById("attendeesBody");
+  const attendeesMsg = document.getElementById("attendeesMsg");
+  const attendeesInfo = document.getElementById("attendeesInfo");
+  const attendeesCloseBtn = document.getElementById("attendeesCloseBtn");
+
+  const searchBtn = document.getElementById("searchBtn");
+  const clearBtn = document.getElementById("clearBtn");
 
   const PAGE_SIZE = 10;
   let currentPage = 0;
@@ -387,8 +456,30 @@
     localStorage.removeItem("name");
     localStorage.removeItem("role");
     alert("ログアウトしました。");
-    window.location.href = "login.html";
+    window.location.href = "index.html";
   });
+
+  // ========= 検索パラメータ =========
+  function toSqlDateTime(dtLocalValue) {
+    if (!dtLocalValue) return "";
+    return dtLocalValue.replace("T", " ") + ":00";
+  }
+
+  function getSearchParamsFromUI() {
+    const q = document.getElementById("keyword").value.trim();
+    const from = toSqlDateTime(document.getElementById("fromDt").value);
+    const to = toSqlDateTime(document.getElementById("toDt").value);
+    return { q, from, to };
+  }
+
+  // ★ http(s) が付いてない場合に補正
+  function normalizeUrl(url) {
+    if (!url) return "";
+    const u = String(url).trim();
+    if (!u) return "";
+    if (u.startsWith("http://") || u.startsWith("https://")) return u;
+    return "https://" + u;
+  }
 
   // ========= 会社一覧（selectへ流し込み） =========
   async function loadCompanyOptionsTo(selectEl) {
@@ -453,6 +544,12 @@
   deleteCancelBtn.onclick = () => deleteBackdrop.style.display = "none";
   deleteBackdrop.addEventListener("click", (e) => {
     if (e.target === deleteBackdrop) deleteBackdrop.style.display = "none";
+  });
+
+  // ★ 予約者一覧モーダル close
+  attendeesCloseBtn.onclick = () => attendeesBackdrop.style.display = "none";
+  attendeesBackdrop.addEventListener("click", (e) => {
+    if (e.target === attendeesBackdrop) attendeesBackdrop.style.display = "none";
   });
 
   // ========= datetime-local 変換 =========
@@ -638,11 +735,78 @@
     }
   };
 
+  // ========= ★ 予約者一覧（GET） =========
+  function openAttendeesModal(event) {
+    if (!isAdmin || !token) return;
+
+    attendeesMsg.textContent = "";
+    attendeesBody.innerHTML = "読み込み中...";
+    attendeesInfo.textContent = `会社：${event.companyName ?? ""} / 開催日：${event.date ?? ""}`;
+    attendeesBackdrop.style.display = "block";
+
+    loadAttendees(event.eventId);
+  }
+
+  async function loadAttendees(eventId) {
+    try {
+      // GET /events/{eventId}/reservations/attendees
+      const res = await fetch(`${API_BASE}/events/${eventId}/reservations/attendees`, {
+        headers: { "Authorization": `Bearer ${token}` }
+      });
+
+      if (!res.ok) {
+        const msg = await readErrorMessageOnce(res);
+        attendeesBody.innerHTML = "";
+        attendeesMsg.textContent = `取得失敗: ${res.status} ${msg}`;
+        return;
+      }
+
+      const list = await res.json();
+
+      if (!Array.isArray(list) || list.length === 0) {
+        attendeesBody.innerHTML = `<div>予約者はいません。</div>`;
+        return;
+      }
+
+      const rows = list.map(a => `
+        <tr>
+          <td>${escapeHtml(a.name)}</td>
+          <td>${escapeHtml(a.grade)}</td>
+          <td>${escapeHtml(a.myClass)}</td>
+          <td>${escapeHtml(a.number)}</td>
+        </tr>
+      `).join("");
+
+      attendeesBody.innerHTML = `
+        <table class="table">
+          <thead>
+            <tr>
+              <th>名前</th>
+              <th>学年</th>
+              <th>クラス</th>
+              <th>番号</th>
+            </tr>
+          </thead>
+          <tbody>${rows}</tbody>
+        </table>
+      `;
+    } catch (e) {
+      console.error(e);
+      attendeesBody.innerHTML = "";
+      attendeesMsg.textContent = "通信に失敗しました。サーバーを確認してください。";
+    }
+  }
+
   // ========= 一覧表示 =========
   async function loadEvents(page) {
     if (page < 0) page = 0;
 
+    const { q, from, to } = getSearchParamsFromUI();
+
     const params = new URLSearchParams({ page: page, size: PAGE_SIZE });
+    if (q) params.append("q", q);
+    if (from) params.append("from", from);
+    if (to) params.append("to", to);
 
     try {
       const res = await fetch(`${API_BASE}/events?` + params.toString());
@@ -685,8 +849,13 @@
       sub1.className = "event-sub";
       sub1.textContent = `開催日：${e.date ?? "未定"}`;
 
+      const sub2 = document.createElement("div");
+      sub2.className = "event-sub";
+      sub2.textContent = `場所：${e.place ?? "未定"}`;
+
       mainInfo.appendChild(title);
       mainInfo.appendChild(sub1);
+      mainInfo.appendChild(sub2);
 
       const toggleBtn = document.createElement("button");
       toggleBtn.className = "detail-toggle-btn";
@@ -698,12 +867,21 @@
       const detail = document.createElement("div");
       detail.className = "event-detail";
 
+      // ★会社Webをアコーディオン内に追加
+      const webUrl = e.companyWebsite ? normalizeUrl(e.companyWebsite) : "";
+
       detail.innerHTML = `
         <div class="event-detail-title">締切</div>
         <div>${escapeHtml(e.deadline ?? "未設定")}</div>
 
-        <div class="event-detail-title">場所</div>
-        <div>${escapeHtml(e.place ?? "未設定")}</div>
+        <div class="event-detail-title">会社Web</div>
+        <div class="detail-link">
+          ${
+            webUrl
+              ? `<a href="${escapeHtml(webUrl)}" target="_blank" rel="noopener noreferrer">${escapeHtml(e.companyWebsite)}</a>`
+              : `未登録です。`
+          }
+        </div>
 
         <div class="event-detail-title">持ち物</div>
         <div>${escapeHtml(e.item ?? "未設定")}</div>
@@ -716,16 +894,31 @@
         const actions = document.createElement("div");
         actions.className = "admin-actions";
 
+        const attendeesBtn = document.createElement("button");
+        attendeesBtn.className = "btn";
+        attendeesBtn.textContent = "予約者確認";
+        attendeesBtn.addEventListener("click", (ev) => {
+          ev.stopPropagation();
+          openAttendeesModal(e);
+        });
+
         const editBtn = document.createElement("button");
         editBtn.className = "btn";
         editBtn.textContent = "編集";
-        editBtn.addEventListener("click", async () => openEditModal(e));
+        editBtn.addEventListener("click", async (ev) => {
+          ev.stopPropagation();
+          await openEditModal(e);
+        });
 
         const delBtn = document.createElement("button");
         delBtn.className = "btn danger";
         delBtn.textContent = "削除";
-        delBtn.addEventListener("click", () => openDeleteModal(e));
+        delBtn.addEventListener("click", (ev) => {
+          ev.stopPropagation();
+          openDeleteModal(e);
+        });
 
+        actions.appendChild(attendeesBtn);
         actions.appendChild(editBtn);
         actions.appendChild(delBtn);
         detail.appendChild(actions);
@@ -773,7 +966,7 @@
   }
 
   function escapeHtml(str) {
-    return String(str)
+    return String(str ?? "")
       .replaceAll("&", "&amp;")
       .replaceAll("<", "&lt;")
       .replaceAll(">", "&gt;")
@@ -781,7 +974,17 @@
       .replaceAll("'", "&#039;");
   }
 
-  document.getElementById("searchBtn").addEventListener("click", () => loadEvents(0));
+  // 検索イベント
+  searchBtn.addEventListener("click", () => loadEvents(0));
+  clearBtn.addEventListener("click", () => {
+    document.getElementById("keyword").value = "";
+    document.getElementById("fromDt").value = "";
+    document.getElementById("toDt").value = "";
+    loadEvents(0);
+  });
+  document.getElementById("keyword").addEventListener("keydown", (e) => {
+    if (e.key === "Enter") loadEvents(0);
+  });
 
   window.addEventListener("load", () => {
     setupSuperAdminHeaderLinks();

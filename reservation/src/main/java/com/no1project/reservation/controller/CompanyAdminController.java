@@ -33,8 +33,10 @@ public class CompanyAdminController {
     @GetMapping
     public CompanyPageResponse list(
             @RequestParam(defaultValue = "1") int page,
-            @RequestParam(defaultValue = "10") int size) {
-        return companyService.getPage(page, size);
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(required = false) String qName,
+            @RequestParam(required = false) String qAddress) {
+        return companyService.getPage(qName, qAddress, page, size);
     }
 
     // ★編集

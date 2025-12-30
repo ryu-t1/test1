@@ -2,6 +2,7 @@ package com.no1project.reservation.service;
 
 import com.no1project.reservation.model.Event;
 import com.no1project.reservation.dto.ReservationViewDto;
+import com.no1project.reservation.dto.ReservationAttendeeDto;
 import com.no1project.reservation.repository.EventRepository;
 import com.no1project.reservation.repository.ReservationRepository;
 import org.springframework.stereotype.Service;
@@ -105,33 +106,41 @@ public class ReservationService {
         }
     }
 
-    //締切日を過ぎていなければ自分の予約を削除
+    // 締切日を過ぎていなければ自分の予約を削除
     public void cancelMyReservation(int userId, int reservationId) {
 
-    String deadlineStr = reservationRepository.findDeadlineByReservationIdAndUserId(reservationId, userId);
+        String deadlineStr = reservationRepository.findDeadlineByReservationIdAndUserId(reservationId, userId);
 
-    if (deadlineStr == null) {
-        // 存在しない or 他人の予約
-        throw new IllegalStateException("削除できません（予約が存在しない、または権限がありません）");
-    }
+        if (deadlineStr == null) {
+            // 存在しない or 他人の予約
+            throw new IllegalStateException("削除できません（予約が存在しない、または権限がありません）");
+        }
 
-    // deadline が空/NULLならキャンセルOK扱いにするならこのまま
-    if (deadlineStr != null && !deadlineStr.isBlank()) {
-        try {
-            LocalDateTime deadline = LocalDateTime.parse(deadlineStr, DEADLINE_FORMATTER);
-            if (deadline.isBefore(LocalDateTime.now())) {
-                throw new IllegalStateException("締切を過ぎているためキャンセルできません");
+        // deadline が空/NULLならキャンセルOK扱いにするならこのまま
+        if (deadlineStr != null && !deadlineStr.isBlank()) {
+            try {
+                LocalDateTime deadline = LocalDateTime.parse(deadlineStr, DEADLINE_FORMATTER);
+                if (deadline.isBefore(LocalDateTime.now())) {
+                    throw new IllegalStateException("締切を過ぎているためキャンセルできません");
+                }
+            } catch (DateTimeParseException e) {
+                throw new IllegalStateException("締切日時の形式が不正です: " + deadlineStr);
             }
-        } catch (DateTimeParseException e) {
-            throw new IllegalStateException("締切日時の形式が不正です: " + deadlineStr);
+        }
+
+        int deleted = reservationRepository.deleteByReservationIdAndUserId(reservationId, userId);
+        if (deleted == 0) {
+            throw new IllegalStateException("削除できません（予約が存在しない、または権限がありません）");
         }
     }
 
-    int deleted = reservationRepository.deleteByReservationIdAndUserId(reservationId, userId);
-    if (deleted == 0) {
-        throw new IllegalStateException("削除できません（予約が存在しない、または権限がありません）");
+    public List<ReservationAttendeeDto> getAttendees(int eventId) {
+        // event存在チェック（任意だけど入れておくと親切）
+        Event event = eventRepository.findById(eventId);
+        if (event == null) {
+            throw new IllegalArgumentException("イベントが存在しません");
+        }
+        return reservationRepository.findAttendeesByEventId(eventId);
     }
-}
-
 
 }

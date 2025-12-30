@@ -15,7 +15,8 @@ public class CompanyService {
     public CompanyService(CompanyRepository companyRepository) {
         this.companyRepository = companyRepository;
     }
-    //会社新規登録
+
+    // 会社新規登録
     public Company create(Company company) {
         if (!StringUtils.hasText(company.getName())) {
             throw new IllegalArgumentException("会社名は必須です");
@@ -45,6 +46,25 @@ public class CompanyService {
 
         int offset = (page - 1) * size;
         List<Company> items = companyRepository.findPage(size, offset);
+
+        return new CompanyPageResponse(items, page, size, totalItems, totalPages);
+    }
+
+    public CompanyPageResponse getPage(String qName, String qAddress, int page, int size) {
+        if (page < 1)
+            page = 1;
+        if (size < 1)
+            size = 10;
+
+        // 空白だけなら検索無し扱い
+        qName = (qName != null) ? qName.trim() : null;
+        qAddress = (qAddress != null) ? qAddress.trim() : null;
+
+        int totalItems = companyRepository.countBySearch(qName, qAddress);
+        int totalPages = (int) Math.ceil(totalItems / (double) size);
+
+        int offset = (page - 1) * size;
+        List<Company> items = companyRepository.findPageBySearch(qName, qAddress, size, offset);
 
         return new CompanyPageResponse(items, page, size, totalItems, totalPages);
     }

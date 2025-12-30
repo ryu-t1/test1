@@ -2,6 +2,7 @@ package com.no1project.reservation.repository;
 
 import com.no1project.reservation.model.Reservation;
 import com.no1project.reservation.dto.ReservationViewDto;
+import com.no1project.reservation.dto.ReservationAttendeeDto;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
@@ -47,6 +48,20 @@ public class ReservationRepository {
             dto.setItem(rs.getString("item"));
             dto.setNote(rs.getString("note"));
             dto.setCompanyName(rs.getString("company_name"));
+            return dto;
+        }
+    }
+
+    private static class ReservationAttendeeRowMapper implements RowMapper<ReservationAttendeeDto> {
+        @Override
+        public ReservationAttendeeDto mapRow(ResultSet rs, int rowNum) throws SQLException {
+            ReservationAttendeeDto dto = new ReservationAttendeeDto();
+            dto.setUserId(rs.getInt("user_id"));
+            dto.setName(rs.getString("name"));
+            dto.setGrade(rs.getInt("grade"));
+            dto.setMyClass(rs.getString("class"));
+            dto.setNumber(rs.getInt("number"));
+            dto.setReservationDate(rs.getString("reservation_date"));
             return dto;
         }
     }
@@ -100,10 +115,29 @@ public class ReservationRepository {
         List<String> list = jdbcTemplate.query(sql, (rs, i) -> rs.getString("deadline"), reservationId, userId);
         return list.isEmpty() ? null : list.get(0);
     }
+
     // 自分の予約を削除
     public int deleteByReservationIdAndUserId(int reservationId, int userId) {
         String sql = "DELETE FROM Reservation WHERE reservation_id = ? AND user_id = ?";
         return jdbcTemplate.update(sql, reservationId, userId);
     }
 
+    public List<ReservationAttendeeDto> findAttendeesByEventId(int eventId) {
+        String sql = """
+                    SELECT
+                      r.user_id,
+                      u.name,
+                      s.grade,
+                      s.`class`,
+                      s.number,
+                      r.reservation_date
+                    FROM Reservation r
+                    JOIN Users u ON r.user_id = u.user_id
+                    JOIN Student s ON r.user_id = s.user_id
+                    WHERE r.event_id = ?
+                    ORDER BY s.grade ASC, s.`class` ASC, s.number ASC
+                """;
+
+        return jdbcTemplate.query(sql, new ReservationAttendeeRowMapper(), eventId);
+    }
 }

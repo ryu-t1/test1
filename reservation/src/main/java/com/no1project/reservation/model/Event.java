@@ -9,6 +9,7 @@ public class Event {
     private int companyId;
     private String note;
     private String companyName;
+    private String companyWebsite;
 
     public int getEventId() {
         return eventId;
@@ -33,7 +34,7 @@ public class Event {
     public void setDeadline(String deadline) {
         this.deadline = deadline;
     }
-    
+
     public String getPlace() {
         return place;
     }
@@ -65,13 +66,21 @@ public class Event {
     public void setNote(String note) {
         this.note = note;
     }
-    
-        public String getCompanyName() {
+
+    public String getCompanyName() {
         return companyName;
     }
 
     public void setCompanyName(String companyName) {
         this.companyName = companyName;
+    }
+
+    public String getCompanyWebsite() {
+        return companyWebsite;
+    }
+
+    public void setCompanyWebsite(String companyWebsite) {
+        this.companyWebsite = companyWebsite;
     }
 
 }

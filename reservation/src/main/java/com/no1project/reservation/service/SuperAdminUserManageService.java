@@ -23,8 +23,7 @@ public class SuperAdminUserManageService {
     public SuperAdminUserManageService(
             UserRepository userRepository,
             StudentRepository studentRepository,
-            TeacherRepository teacherRepository
-    ) {
+            TeacherRepository teacherRepository) {
         this.userRepository = userRepository;
         this.studentRepository = studentRepository;
         this.teacherRepository = teacherRepository;
@@ -43,50 +42,64 @@ public class SuperAdminUserManageService {
             this.total = total;
         }
 
-        public List<T> getItems() { return items; }
-        public int getPage() { return page; }
-        public int getSize() { return size; }
-        public int getTotal() { return total; }
+        public List<T> getItems() {
+            return items;
+        }
+
+        public int getPage() {
+            return page;
+        }
+
+        public int getSize() {
+            return size;
+        }
+
+        public int getTotal() {
+            return total;
+        }
     }
 
     public PageResponse<AdminUserRowDto> listUsers(String q, String role, int page, int size) {
-    if (page < 0) page = 0;
-    if (size <= 0) size = 10;
-    if (size > 50) size = 50;
+        if (page < 0)
+            page = 0;
+        if (size <= 0)
+            size = 10;
+        if (size > 50)
+            size = 50;
 
-    // roleは完全一致想定（student / normal_admin / super_admin）
-    String roleFilter = (role == null || role.isBlank()) ? null : role.trim();
+        // roleは完全一致想定（student / normal_admin / super_admin）
+        String roleFilter = (role == null || role.isBlank()) ? null : role.trim();
 
-    int offset = page * size;
-    List<User> users = userRepository.findPaged(q, roleFilter, size, offset);
-    int total = userRepository.countAll(q, roleFilter);
+        int offset = page * size;
+        List<User> users = userRepository.findPaged(q, roleFilter, size, offset);
+        int total = userRepository.countAll(q, roleFilter);
 
-    List<AdminUserRowDto> rows = new ArrayList<>();
-    for (User u : users) {
-        AdminUserRowDto dto = new AdminUserRowDto();
-        dto.setUserId(u.getUserId());
-        dto.setName(u.getName());
-        dto.setEmail(u.getEmail());
-        dto.setRole(u.getRole());
+        List<AdminUserRowDto> rows = new ArrayList<>();
+        for (User u : users) {
+            AdminUserRowDto dto = new AdminUserRowDto();
+            dto.setUserId(u.getUserId());
+            dto.setName(u.getName());
+            dto.setEmail(u.getEmail());
+            dto.setRole(u.getRole());
 
-        String r = (u.getRole() == null) ? "" : u.getRole().toLowerCase();
-        if (r.equals("student")) {
-            studentRepository.findByUserId(u.getUserId()).ifPresent(s -> {
-                dto.setGrade(s.getGrade());
-                dto.setMyClass(s.getMyClass());
-                dto.setNumber(s.getNumber());
-            });
-        } else if (r.equals("normal_admin")) {
-            teacherRepository.findByUserId(u.getUserId()).ifPresent(t -> {
-                dto.setGrade(t.getGrade());
-                dto.setMyClass(t.getMyClass());
-            });
+            String r = (u.getRole() == null) ? "" : u.getRole().toLowerCase();
+            if (r.equals("student")) {
+                studentRepository.findByUserId(u.getUserId()).ifPresent(s -> {
+                    dto.setGrade(s.getGrade());
+                    dto.setMyClass(s.getMyClass());
+                    dto.setNumber(s.getNumber());
+                });
+            } else if (r.equals("normal_admin")) {
+                teacherRepository.findByUserId(u.getUserId()).ifPresent(t -> {
+                    dto.setGrade(t.getGrade());
+                    dto.setMyClass(t.getMyClass());
+                });
+            }
+            rows.add(dto);
         }
-        rows.add(dto);
-    }
 
-    return new PageResponse<>(rows, page, size, total);
-}
+        return new PageResponse<>(rows, page, size, total);
+    }
 
     @Transactional
     public void updateStudentProfile(int userId, UpdateStudentProfileRequest req) {
@@ -98,7 +111,8 @@ public class SuperAdminUserManageService {
         }
 
         int updated = studentRepository.updateProfile(userId, req.getGrade(), req.getMyClass(), req.getNumber());
-        if (updated == 0) throw new IllegalArgumentException("student情報が存在しません");
+        if (updated == 0)
+            throw new IllegalArgumentException("student情報が存在しません");
     }
 
     @Transactional
@@ -111,11 +125,19 @@ public class SuperAdminUserManageService {
         }
 
         int updated = teacherRepository.updateProfile(userId, req.getGrade(), req.getMyClass());
-        if (updated == 0) throw new IllegalArgumentException("teacher情報が存在しません");
+        if (updated == 0)
+            throw new IllegalArgumentException("teacher情報が存在しません");
     }
 
     @Transactional
     public int batchUpdateStudentGrade(BatchUpdateStudentGradeRequest req) {
-        return studentRepository.batchUpdateGrade(req.getFromGrade(), req.getToGrade());
+        int delta = req.getDelta();
+
+        // 1 か -1 以外は禁止
+        if (delta != 1 && delta != -1) {
+            throw new IllegalArgumentException("delta は +1 または -1 のみ指定できます");
+        }
+
+        return studentRepository.batchShiftGrade(delta);
     }
 }

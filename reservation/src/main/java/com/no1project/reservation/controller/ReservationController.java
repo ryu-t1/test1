@@ -35,4 +35,9 @@ public class ReservationController {
     public ResponseEntity<List<ReservationAttendeeDto>> attendees(@PathVariable int eventId) {
         return ResponseEntity.ok(reservationService.getAttendees(eventId));
     }
+
+    @GetMapping("/count")
+    public ResponseEntity<Integer> count(@PathVariable int eventId) {
+        return ResponseEntity.ok(reservationService.getReservationCount(eventId));
+    }
 }

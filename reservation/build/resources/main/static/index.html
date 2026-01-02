@@ -70,6 +70,7 @@
       margin-bottom: 12px;
     }
 
+    /* ヘッダー（左：会社名/開催日/場所、右：予約人数 + 詳細ボタン） */
     .event-header {
       padding: 10px 16px;
       display: flex;
@@ -84,6 +85,7 @@
       flex-direction: column;
       gap: 4px;
       min-width: 0;
+      flex: 1;
     }
 
     .event-title {
@@ -92,11 +94,34 @@
 
     .event-sub { font-size: 13px; }
 
+    /* ★右側のまとまり（予約人数 + 詳細ボタン） */
+    .event-right{
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-shrink: 0;
+    }
+
     .detail-toggle-btn {
       padding: 4px 8px;
       cursor: pointer;
       font-size: 12px;
       white-space: nowrap;
+    }
+
+    /* ★予約人数（ヘッダー内・右側・他の文字と同程度） */
+    .reservation-count-inline{
+      font-size: 13px; /* event-sub と同じくらい */
+      color: #333;
+      white-space: nowrap;
+    }
+    .reservation-count-inline .label{
+      color:#555;
+      margin-right: 4px;
+    }
+    .reservation-count-inline .value{
+      font-weight: bold; /* 強調は太字だけ */
+      color:#111;
     }
 
     .event-detail {
@@ -293,6 +318,13 @@
     return "https://" + u;
   }
 
+  // ★予約人数を取得（トークン不要・人数だけ）
+  async function fetchReservationCount(eventId) {
+    const res = await fetch(`${API_BASE}/events/${eventId}/reservations/count`);
+    if (!res.ok) throw new Error("HTTP " + res.status);
+    return await res.json(); // int
+  }
+
   function renderEvents(events) {
     const list = document.getElementById("eventList");
     list.innerHTML = "";
@@ -304,13 +336,16 @@
       const card = document.createElement("div");
       card.className = "event-card";
 
+      // --------------------------
+      // ヘッダー
+      // --------------------------
       const header = document.createElement("div");
       header.className = "event-header";
 
+      // 左：会社名/開催日/場所
       const mainInfo = document.createElement("div");
       mainInfo.className = "event-main-info";
 
-      // ★ヘッダーは会社名だけ
       const title = document.createElement("div");
       title.className = "event-title";
       title.textContent = event.companyName ?? "会社名未設定";
@@ -327,13 +362,48 @@
       mainInfo.appendChild(sub1);
       mainInfo.appendChild(sub2);
 
+      // 右：予約人数 + 詳細ボタン
+      const rightWrap = document.createElement("div");
+      rightWrap.className = "event-right";
+
+      const countInline = document.createElement("div");
+      countInline.className = "reservation-count-inline";
+
+      const countLabel = document.createElement("span");
+      countLabel.className = "label";
+      countLabel.textContent = "現在の予約：";
+
+      const countValue = document.createElement("span");
+      countValue.className = "value";
+      countValue.textContent = "取得中…";
+
+      countInline.appendChild(countLabel);
+      countInline.appendChild(countValue);
+
       const toggleBtn = document.createElement("button");
       toggleBtn.className = "detail-toggle-btn";
       toggleBtn.textContent = "▽ 詳細表示";
 
-      header.appendChild(mainInfo);
-      header.appendChild(toggleBtn);
+      rightWrap.appendChild(countInline);
+      rightWrap.appendChild(toggleBtn);
 
+      header.appendChild(mainInfo);
+      header.appendChild(rightWrap);
+
+      // ヘッダー表示時に人数取得
+      (async () => {
+        try {
+          const n = await fetchReservationCount(event.eventId);
+          countValue.textContent = `${n}人`;
+        } catch (e) {
+          console.error(e);
+          countValue.textContent = "取得失敗";
+        }
+      })();
+
+      // --------------------------
+      // アコーディオン詳細
+      // --------------------------
       const detail = document.createElement("div");
       detail.className = "event-detail";
 
@@ -343,7 +413,6 @@
 
       const deadlineBody = document.createElement("div");
       deadlineBody.textContent = event.deadline || "締切は未設定です。";
-
 
       const itemTitle = document.createElement("div");
       itemTitle.className = "event-detail-title";
@@ -359,7 +428,6 @@
       const noteBody = document.createElement("div");
       noteBody.textContent = event.note || "詳細情報は未登録です。";
 
-       // ★追加：会社Web（アコーディオン内）
       const webTitle = document.createElement("div");
       webTitle.className = "event-detail-title";
       webTitle.textContent = "会社Web";
@@ -371,7 +439,7 @@
         a.href = normalizeUrl(event.companyWebsite);
         a.target = "_blank";
         a.rel = "noopener noreferrer";
-        a.textContent = event.companyWebsite; // 表示はURL文字列
+        a.textContent = event.companyWebsite;
         webBody.appendChild(a);
       } else {
         webBody.textContent = "未登録です。";
@@ -420,6 +488,13 @@
 
             if (res.ok) {
               alert("予約が完了しました。");
+              // ★予約後に人数も更新（右側の表示を更新）
+              try {
+                const n = await fetchReservationCount(event.eventId);
+                countValue.textContent = `${n}人`;
+              } catch (e) {
+                console.error(e);
+              }
             } else if (res.status === 400 || res.status === 409) {
               const msg = await res.text();
               alert("予約に失敗しました: " + msg);
@@ -435,7 +510,6 @@
         });
       }
 
-      // detailへ追加（会社Webは締切の下に入れる例）
       detail.appendChild(deadlineTitle);
       detail.appendChild(deadlineBody);
 

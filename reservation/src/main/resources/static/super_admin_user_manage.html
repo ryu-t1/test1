@@ -61,14 +61,20 @@
 <main>
   <h2 style="margin:0 0 10px;">全ユーザ管理（super_admin）</h2>
 
-  <!-- 学年一括変更 -->
+  <!-- 学年一括変更（仕様変更：全学年を一括で +1 / -1 のみ） -->
   <div class="panel">
     <div style="font-weight:700; margin-bottom:8px;">学生の学年 一括変更</div>
     <div class="row">
-      <input id="fromGrade" class="input" type="number" placeholder="変更元学年（必須）" style="width:220px;">
-      <input id="toGrade" class="input" type="number" placeholder="変更先学年（必須）" style="width:180px;">
+      <select id="gradeDelta" class="input" style="min-width:260px;">
+        <option value="1">学年を +1 する（進級）</option>
+        <option value="-1">学年を -1 する（繰り下げ）</option>
+      </select>
+
       <button id="batchBtn" class="btn">一括変更する</button>
       <span id="batchMsg" class="muted"></span>
+    </div>
+    <div class="muted" style="margin-top:6px;">
+      ※すべての学生の学年に対して一括適用します（変更元/変更先の学年指定はありません）
     </div>
   </div>
 
@@ -424,29 +430,23 @@
     load();
   };
 
+  // ★学年一括変更（仕様変更：payloadは { delta: 1 } or { delta: -1 }）
   document.getElementById("batchBtn").onclick = async () => {
-    const fromEl = document.getElementById("fromGrade");
-    const toEl = document.getElementById("toGrade");
-
-    const fromGrade = readNumberOrNull(fromEl);
-    const toGrade = readNumberOrNull(toEl);
+    const deltaEl = document.getElementById("gradeDelta");
+    const delta = Number(deltaEl.value); // 1 or -1
 
     const batchMsg = document.getElementById("batchMsg");
     batchMsg.className = "muted";
     batchMsg.textContent = "";
 
-    if (fromGrade === null) {
+    if (delta !== 1 && delta !== -1) {
       batchMsg.className = "error";
-      batchMsg.textContent = "変更元学年（必須）が未入力です";
-      return;
-    }
-    if (toGrade === null) {
-      batchMsg.className = "error";
-      batchMsg.textContent = "変更先学年（必須）が未入力です";
+      batchMsg.textContent = "学年の変更は +1 / -1 のみ選べます";
       return;
     }
 
-    const ok = confirm(`学年${fromGrade}の学生を学年${toGrade}に一括変更します。\nよろしいですか？`);
+    const label = (delta === 1) ? "学年を +1（進級）" : "学年を -1（繰り下げ）";
+    const ok = confirm(`すべての学生の${label}を一括適用します。\nよろしいですか？`);
     if (!ok) {
       batchMsg.className = "muted";
       batchMsg.textContent = "キャンセルしました";
@@ -455,8 +455,9 @@
 
     batchMsg.textContent = "更新中…";
 
-    const payload = { fromGrade, toGrade };
+    const payload = { delta };
 
+    // ★エンドポイントは今のまま（サーバ側を delta 対応に変更する前提）
     const res = await fetch(`${API_BASE}/super-admin/students/grade-batch`, {
       method: "PUT",
       headers: authHeaders(),

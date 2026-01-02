@@ -1,11 +1,9 @@
 package com.no1project.reservation.dto;
 
 public class BatchUpdateStudentGradeRequest {
-    private Integer fromGrade; // nullなら全員
-    private int toGrade;
+    // +1 か -1 だけ許可する（フロントもこれしか送らない）
+    private int delta; // 1 or -1
 
-    public Integer getFromGrade() { return fromGrade; }
-    public void setFromGrade(Integer fromGrade) { this.fromGrade = fromGrade; }
-    public int getToGrade() { return toGrade; }
-    public void setToGrade(int toGrade) { this.toGrade = toGrade; }
+    public int getDelta() { return delta; }
+    public void setDelta(int delta) { this.delta = delta; }
 }

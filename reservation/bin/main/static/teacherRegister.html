@@ -63,6 +63,8 @@
       padding: 6px 8px;
       box-sizing: border-box;
       font-size: 14px;
+      border: 1px solid #999;
+      outline: none;
     }
 
     .note {
@@ -99,6 +101,18 @@
       opacity: 0.6;
       cursor: not-allowed;
     }
+
+    /* ===== 入力エラー見た目 ===== */
+    .danger {
+      border-color: #c00 !important;
+    }
+    .field-error {
+      color: #c00;
+      font-size: 12px;
+      margin-top: 4px;
+      display: none;
+      white-space: pre-wrap;
+    }
   </style>
 </head>
 <body>
@@ -107,7 +121,7 @@
 <header>
   <a href="adminevents.html">説明会情報管理</a>
   <a href="admincompanies.html">会社情報管理</a>
-   <a href="super_admin_user_manage.html">ユーザー管理</a>
+  <a href="super_admin_user_manage.html">ユーザー管理</a>
   <a href="teacherRegister.html">新規教師登録</a>
   <a href="#" id="logoutLink">ログアウト</a>
   <a href="super_admin_mypage.html">アカウント</a>
@@ -122,17 +136,20 @@
     <div class="form-group">
       <label for="name">氏名</label>
       <input id="name" type="text" autocomplete="name">
+      <div id="nameErr" class="field-error"></div>
     </div>
 
     <div class="form-group">
       <label for="email">メールアドレス</label>
       <input id="email" type="email" autocomplete="email">
+      <div id="emailErr" class="field-error"></div>
     </div>
 
     <div class="form-group">
       <label for="password">パスワード</label>
       <input id="password" type="password" autocomplete="new-password">
-      <div class="note"></div>
+      <div class="note">英数字8文字以上（記号・全角は不可）</div>
+      <div id="passwordErr" class="field-error"></div>
     </div>
 
     <div class="form-group">
@@ -144,11 +161,20 @@
         <option value="3">3年</option>
         <option value="4">4年</option>
       </select>
+      <div id="gradeErr" class="field-error"></div>
     </div>
 
     <div class="form-group">
       <label for="myClass">クラス</label>
-      <input id="myClass" type="text" placeholder="例）A, B など">
+      <select id="myClass">
+        <option value="">選択してください</option>
+        <option value="A">A</option>
+        <option value="B">B</option>
+        <option value="C">C</option>
+        <option value="D">D</option>
+        <option value="E">E</option>
+      </select>
+      <div id="classErr" class="field-error"></div>
     </div>
 
     <div class="btn-area">
@@ -173,7 +199,7 @@
     msgEl.className = isError ? "error" : "success";
   }
 
-  // ===== ログアウト（管理画面と同じ） =====
+  // ===== ログアウト =====
   document.getElementById("logoutLink").addEventListener("click", (e) => {
     e.preventDefault();
     localStorage.removeItem("token");
@@ -194,6 +220,145 @@
     registerBtn.disabled = true;
   }
 
+  // ===== 表示ヘルパー =====
+  function show(el) { el.style.display = "block"; }
+  function hide(el) { el.style.display = "none"; }
+
+  // ★「触った後だけ」赤文字を出すためのフラグ
+  const touched = {
+    name: false,
+    email: false,
+    password: false,
+    grade: false,
+    myClass: false
+  };
+
+  function setFieldError(inputEl, errEl, message, shouldShow) {
+    if (!inputEl || !errEl) return;
+
+    // shouldShow=false の時は「表示しない（赤枠も付けない）」に統一
+    if (!shouldShow) {
+      inputEl.classList.remove("danger");
+      errEl.textContent = "";
+      hide(errEl);
+      return;
+    }
+
+    if (message) {
+      inputEl.classList.add("danger");
+      errEl.textContent = message;
+      show(errEl);
+    } else {
+      inputEl.classList.remove("danger");
+      errEl.textContent = "";
+      hide(errEl);
+    }
+  }
+
+  // ===== ルール =====
+  const PASS_RULE = /^[A-Za-z0-9]{8,}$/;
+
+  function validateOne(fieldKey, showIfTouchedOnly, showAllForced) {
+    const nameEl = document.getElementById("name");
+    const emailEl = document.getElementById("email");
+    const pwEl = document.getElementById("password");
+    const gradeEl = document.getElementById("grade");
+    const classEl = document.getElementById("myClass");
+
+    const name = nameEl.value.trim();
+    const email = emailEl.value.trim();
+    const password = pwEl.value;
+    const grade = gradeEl.value;
+    const myClass = classEl.value;
+
+    // 「表示してよいか？」＝ (送信時強制) OR (触った後だけ)
+    const canShow = showAllForced ? true : (showIfTouchedOnly ? !!touched[fieldKey] : true);
+
+    if (fieldKey === "name") {
+      const msg = !name ? "氏名を入力してください。" : "";
+      setFieldError(nameEl, document.getElementById("nameErr"), msg, canShow);
+      return !msg;
+    }
+
+    if (fieldKey === "email") {
+      let msg = "";
+      if (!email) msg = "メールアドレスを入力してください。";
+      else if (!email.includes("@")) msg = "メールアドレスは「@」を含めてください。";
+      setFieldError(emailEl, document.getElementById("emailErr"), msg, canShow);
+      return !msg;
+    }
+
+    if (fieldKey === "password") {
+      let msg = "";
+      if (!password) msg = "パスワードを入力してください。";
+      else if (!PASS_RULE.test(password)) msg = "パスワードは英数字8文字以上にしてください。";
+      setFieldError(pwEl, document.getElementById("passwordErr"), msg, canShow);
+      return !msg;
+    }
+
+    if (fieldKey === "grade") {
+      const msg = !grade ? "担当学年を選択してください。" : "";
+      setFieldError(gradeEl, document.getElementById("gradeErr"), msg, canShow);
+      return !msg;
+    }
+
+    if (fieldKey === "myClass") {
+      const msg = !myClass ? "クラスを選択してください。" : "";
+      setFieldError(classEl, document.getElementById("classErr"), msg, canShow);
+      return !msg;
+    }
+
+    return true;
+  }
+
+  // ★全体チェック：エラー表示は「触ったものだけ」／送信時は全て表示
+  function validateAll({ showTouchedOnly = true, forceShowAll = false } = {}) {
+    const okName = validateOne("name", showTouchedOnly, forceShowAll);
+    const okEmail = validateOne("email", showTouchedOnly, forceShowAll);
+    const okPw = validateOne("password", showTouchedOnly, forceShowAll);
+    const okGrade = validateOne("grade", showTouchedOnly, forceShowAll);
+    const okClass = validateOne("myClass", showTouchedOnly, forceShowAll);
+
+    let ok = okName && okEmail && okPw && okGrade && okClass;
+
+    if (!token || !isSuperAdmin) ok = false;
+
+    registerBtn.disabled = !ok;
+    return ok;
+  }
+
+  // ===== 入力を「触った」扱いにする（blur/change時） =====
+  function markTouched(key) {
+    touched[key] = true;
+  }
+
+  // 触ったら、その項目だけ表示許可して再検証
+  function attachTouchedValidation(id, key) {
+    const el = document.getElementById(id);
+
+    // 入力中はボタン活性を更新したいので validateAll は走らせるが、
+    // エラー表示は touched のものだけに限定される
+    el.addEventListener("input", () => {
+      validateAll({ showTouchedOnly: true, forceShowAll: false });
+    });
+
+    // blur/change で「触った」確定 → その瞬間から赤文字出してOK
+    el.addEventListener("blur", () => {
+      markTouched(key);
+      validateAll({ showTouchedOnly: true, forceShowAll: false });
+    });
+    el.addEventListener("change", () => {
+      markTouched(key);
+      validateAll({ showTouchedOnly: true, forceShowAll: false });
+    });
+  }
+
+  attachTouchedValidation("name", "name");
+  attachTouchedValidation("email", "email");
+  attachTouchedValidation("password", "password");
+  attachTouchedValidation("grade", "grade");
+  attachTouchedValidation("myClass", "myClass");
+
   async function readError(res) {
     const raw = await res.text();
     if (!raw) return "";
@@ -208,16 +373,18 @@
   async function registerTeacher() {
     if (!token || !isSuperAdmin) return;
 
+    // ★送信時は全項目のエラーを強制表示
+    const ok = validateAll({ showTouchedOnly: false, forceShowAll: true });
+    if (!ok) {
+      showMessage("入力内容を確認してください。", true);
+      return;
+    }
+
     const name = document.getElementById("name").value.trim();
     const email = document.getElementById("email").value.trim();
     const password = document.getElementById("password").value;
     const grade = document.getElementById("grade").value;
-    const myClass = document.getElementById("myClass").value.trim();
-
-    if (!name || !email || !password || !grade || !myClass) {
-      showMessage("未入力の項目があります。", true);
-      return;
-    }
+    const myClass = document.getElementById("myClass").value;
 
     const payload = {
       name,
@@ -235,7 +402,7 @@
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "Authorization": `Bearer ${token}` // ★ super_adminでの登録を想定
+          "Authorization": `Bearer ${token}`
         },
         body: JSON.stringify(payload)
       });
@@ -243,30 +410,47 @@
       if (!res.ok) {
         const errMsg = await readError(res);
         showMessage(`登録に失敗しました。\n${errMsg || "メール重複などを確認してください。"}`, true);
-        registerBtn.disabled = false;
+        // 失敗後：触ったものだけ表示に戻す
+        validateAll({ showTouchedOnly: true, forceShowAll: false });
         return;
       }
 
-      // ===== 成功：遷移しないで、この画面に残る =====
       showMessage("教師アカウントの登録が完了しました。", false);
 
-      // 入力欄クリア（連続登録しやすい）
+      // 入力欄クリア
       document.getElementById("name").value = "";
       document.getElementById("email").value = "";
       document.getElementById("password").value = "";
       document.getElementById("grade").value = "";
       document.getElementById("myClass").value = "";
 
-      registerBtn.disabled = false;
+      // touchedもリセット（初期状態に戻す）
+      Object.keys(touched).forEach(k => touched[k] = false);
+
+      // エラーは全部消す（初期状態で赤文字が出ないように）
+      ["nameErr","emailErr","passwordErr","gradeErr","classErr"].forEach(id => {
+        const el = document.getElementById(id);
+        el.textContent = "";
+        hide(el);
+      });
+      ["name","email","password","grade","myClass"].forEach(id => {
+        document.getElementById(id).classList.remove("danger");
+      });
+
+      // 初期状態：ボタンは無効だが、赤文字は出さない
+      validateAll({ showTouchedOnly: true, forceShowAll: false });
 
     } catch (err) {
       console.error(err);
       showMessage("サーバーへの接続に失敗しました。バックエンドを確認してください。", true);
-      registerBtn.disabled = false;
+      validateAll({ showTouchedOnly: true, forceShowAll: false });
     }
   }
 
   registerBtn.addEventListener("click", registerTeacher);
+
+  // ★初期状態：赤文字は出さない（ボタンだけ無効）
+  validateAll({ showTouchedOnly: true, forceShowAll: false });
 </script>
 
 </body>

@@ -74,6 +74,8 @@ public class SecurityConfig {
 
                     // 予約APIは学生のみ
                     .requestMatchers(HttpMethod.POST, "/events/*/reservations").hasRole("STUDENT")
+                    //説明会の予約人数
+                    .requestMatchers(HttpMethod.GET,  "/events/*/reservations/count").permitAll()
                     //説明会ごとの予約閲覧
                     .requestMatchers(HttpMethod.GET,  "/events/*/reservations/attendees").hasAnyRole("NORMAL_ADMIN", "SUPER_ADMIN")
                     // 学生マイページ（/api/me 配下は学生のみ）

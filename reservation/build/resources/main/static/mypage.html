@@ -220,6 +220,19 @@
       display: none;
       margin-top: 10px;
     }
+
+    /* 入力エラー見た目 */
+    .danger {
+      border-color: #d00 !important;
+      outline: none;
+    }
+    .field-error {
+      color: #d00;
+      font-size: 12px;
+      margin-top: 6px;
+      display: none;
+      white-space: pre-wrap;
+    }
   </style>
 </head>
 
@@ -249,7 +262,7 @@
     <div id="loading" class="loading">読み込み中...</div>
     <div id="pageError" class="error"></div>
 
-    <!-- ★ログイン時に表示する領域 -->
+    <!-- ログイン時に表示する領域 -->
     <div id="authedArea" style="display:none;">
 
       <!-- 基本情報 -->
@@ -281,6 +294,10 @@
           <input id="newEmail" type="email" placeholder="新しいメールアドレスを入力" />
           <button id="btnUpdateEmail" class="btn">変更する</button>
         </div>
+
+        <!-- フィールド単体エラー（@が無いときだけ表示） -->
+        <div id="newEmailErr" class="field-error"></div>
+
         <div id="emailSuccess" class="success"></div>
         <div id="emailError" class="error"></div>
         <div class="hint">変更後、再ログインが必要になる場合があります。</div>
@@ -308,6 +325,7 @@
           <input id="currentPassword" type="password" placeholder="現在のパスワード" />
           <button type="button" class="toggle-password" data-target="currentPassword">👁</button>
         </div>
+        <div id="currentPwErr" class="field-error"></div>
       </div>
 
       <div class="field">
@@ -316,7 +334,8 @@
           <input id="newPassword" type="password" placeholder="新しいパスワード" />
           <button type="button" class="toggle-password" data-target="newPassword">👁</button>
         </div>
-        <div class="hint">半角英数字</div>
+        <div class="hint">英数字8文字以上（記号・全角は不可）</div>
+        <div id="newPwErr" class="field-error"></div>
       </div>
 
       <div class="field">
@@ -325,6 +344,7 @@
           <input id="newPassword2" type="password" placeholder="もう一度入力" />
           <button type="button" class="toggle-password" data-target="newPassword2">👁</button>
         </div>
+        <div id="newPw2Err" class="field-error"></div>
       </div>
 
       <div id="modalError" class="error"></div>
@@ -377,7 +397,6 @@
         localStorage.removeItem("name");
         localStorage.removeItem("role");
         alert("ログアウトしました。");
-        // このページ内に「ログイン後に閲覧できます」を表示する
         renderAuthState();
       });
 
@@ -404,6 +423,13 @@
       el.textContent = "";
       hide(el);
     });
+
+    ["newEmailErr","currentPwErr","newPwErr","newPw2Err"].forEach(id => {
+      const el = document.getElementById(id);
+      if (!el) return;
+      el.textContent = "";
+      hide(el);
+    });
   }
 
   // 未ログイン時は「案内」表示／ログイン時は機能領域表示
@@ -424,6 +450,37 @@
       show(authedArea);
       return true;
     }
+  }
+
+  // =============================
+  // バリデーション共通
+  // =============================
+  function setFieldError(inputEl, errEl, message) {
+    if (!inputEl || !errEl) return;
+    if (message) {
+      inputEl.classList.add("danger");
+      errEl.textContent = message;
+      show(errEl);
+    } else {
+      inputEl.classList.remove("danger");
+      errEl.textContent = "";
+      hide(errEl);
+    }
+  }
+
+  // メール：入力されている時だけ「@」をチェック（同じメールでもOK）
+  function validateEmailValue(email) {
+    if (!email) return ""; // 空なら何も出さない
+    if (!String(email).includes("@")) return "メールアドレスは「@」を含めてください。";
+    return "";
+  }
+
+  // パスワード：英数字8文字以上
+  const PASS_RULE = /^[A-Za-z0-9]{8,}$/;
+  function validateNewPasswordValue(pw) {
+    if (!pw) return "新しいパスワードを入力してください。";
+    if (!PASS_RULE.test(pw)) return "英数字のみで8文字以上にしてください（記号・全角は不可）。";
+    return "";
   }
 
   // =============================
@@ -479,7 +536,6 @@
         pageError.textContent = "ログイン情報が無効です。もう一度ログインしてください。";
         show(pageError);
 
-        // tokenが死んでる可能性が高いので消して、ページ内で未ログイン表示へ
         localStorage.removeItem("token");
         renderAuthState();
       } else {
@@ -492,6 +548,33 @@
   }
 
   // =============================
+  // メール更新：入力されている時だけ @ チェック
+  // （空欄はメッセージなし／@なしだけメッセージ表示）
+  // =============================
+  function validateEmailUI() {
+    const input = document.getElementById("newEmail");
+    const errEl = document.getElementById("newEmailErr");
+    const btn = document.getElementById("btnUpdateEmail");
+
+    const value = input.value.trim();
+
+    // 空欄はメッセージ無し＆ボタン無効
+    if (!value) {
+      setFieldError(input, errEl, "");
+      btn.disabled = true;
+      return false;
+    }
+
+    // 入力されている時だけ @ をチェック
+    const msg = validateEmailValue(value);
+    setFieldError(input, errEl, msg);
+
+    // @が入っていればボタン有効、入ってなければ無効
+    btn.disabled = !!msg;
+    return !msg;
+  }
+
+  // =============================
   // メール更新
   // =============================
   async function updateEmail() {
@@ -501,10 +584,12 @@
     const input = document.getElementById("newEmail");
     const newEmail = input.value.trim();
 
-    if (!newEmail) {
-      const e = document.getElementById("emailError");
-      e.textContent = "新しいメールアドレスを入力してください。";
-      show(e);
+    // 空欄は何も表示せず終了（通常ボタン無効なので来ない）
+    if (!newEmail) return;
+
+    // @が無い場合だけメッセージ表示して止める（同じメールでもOK）
+    if (!newEmail.includes("@")) {
+      setFieldError(input, document.getElementById("newEmailErr"), "メールアドレスは「@」を含めてください。");
       return;
     }
 
@@ -535,6 +620,9 @@
       localStorage.setItem("email", newEmail);
       input.value = "";
 
+      // 空欄になったので：メッセージ消し + ボタン無効に戻す
+      validateEmailUI();
+
       await loadMe();
 
     } catch (err) {
@@ -551,7 +639,7 @@
         show(e);
       }
     } finally {
-      btn.disabled = false;
+      validateEmailUI();
     }
   }
 
@@ -567,6 +655,21 @@
     document.getElementById("currentPassword").value = "";
     document.getElementById("newPassword").value = "";
     document.getElementById("newPassword2").value = "";
+
+    // エラー表示/赤枠を初期化
+    ["currentPassword","newPassword","newPassword2"].forEach(id => {
+      const input = document.getElementById(id);
+      input.classList.remove("danger");
+    });
+    ["currentPwErr","newPwErr","newPw2Err"].forEach(id => {
+      const el = document.getElementById(id);
+      el.textContent = "";
+      hide(el);
+    });
+
+    // 初期は無効（入力したら有効化）
+    document.getElementById("btnUpdatePassword").disabled = true;
+
     backdrop.style.display = "flex";
     backdrop.setAttribute("aria-hidden", "false");
   }
@@ -574,6 +677,50 @@
   function closePasswordModal() {
     backdrop.style.display = "none";
     backdrop.setAttribute("aria-hidden", "true");
+  }
+
+  // モーダル内：パスワードのリアルタイムチェック
+  function validatePasswordModalUI() {
+    const cur = document.getElementById("currentPassword");
+    const pw1 = document.getElementById("newPassword");
+    const pw2 = document.getElementById("newPassword2");
+
+    const curErr = document.getElementById("currentPwErr");
+    const pw1Err = document.getElementById("newPwErr");
+    const pw2Err = document.getElementById("newPw2Err");
+
+    let ok = true;
+
+    // 現在PW：必須だけ
+    if (!cur.value) {
+      ok = false;
+      setFieldError(cur, curErr, "現在のパスワードを入力してください。");
+    } else {
+      setFieldError(cur, curErr, "");
+    }
+
+    // 新PW：英数字8文字以上
+    const msg1 = validateNewPasswordValue(pw1.value);
+    if (msg1) {
+      ok = false;
+      setFieldError(pw1, pw1Err, msg1);
+    } else {
+      setFieldError(pw1, pw1Err, "");
+    }
+
+    // 確認：一致
+    if (!pw2.value) {
+      ok = false;
+      setFieldError(pw2, pw2Err, "確認用パスワードを入力してください。");
+    } else if (pw1.value !== pw2.value) {
+      ok = false;
+      setFieldError(pw2, pw2Err, "新しいパスワード（確認）が一致しません。");
+    } else {
+      setFieldError(pw2, pw2Err, "");
+    }
+
+    document.getElementById("btnUpdatePassword").disabled = !ok;
+    return ok;
   }
 
   async function updatePassword() {
@@ -586,20 +733,15 @@
       return;
     }
 
+    // 同じチェックを必ず通す
+    if (!validatePasswordModalUI()) {
+      modalError.textContent = "入力内容を確認してください。";
+      show(modalError);
+      return;
+    }
+
     const currentPassword = document.getElementById("currentPassword").value;
     const newPassword = document.getElementById("newPassword").value;
-    const newPassword2 = document.getElementById("newPassword2").value;
-
-    if (!currentPassword || !newPassword || !newPassword2) {
-      modalError.textContent = "すべて入力してください。";
-      show(modalError);
-      return;
-    }
-    if (newPassword !== newPassword2) {
-      modalError.textContent = "新しいパスワード（確認）が一致しません。";
-      show(modalError);
-      return;
-    }
 
     const ok = confirm("パスワードを変更しますか？");
     if (!ok) return;
@@ -635,9 +777,8 @@
       } else {
         modalError.textContent = "更新に失敗しました。\n" + (err.message || "");
         show(modalError);
+        btn.disabled = !validatePasswordModalUI();
       }
-    } finally {
-      btn.disabled = false;
     }
   }
 
@@ -687,6 +828,19 @@
     document.getElementById("btnOpenPasswordModal").addEventListener("click", openPasswordModal);
     document.getElementById("btnCloseModal").addEventListener("click", closePasswordModal);
     document.getElementById("btnUpdatePassword").addEventListener("click", updatePassword);
+
+    // メール入力中にリアルタイムチェック（空欄は何も出さない）
+    const newEmailInput = document.getElementById("newEmail");
+    newEmailInput.addEventListener("input", validateEmailUI);
+    newEmailInput.addEventListener("change", validateEmailUI);
+    validateEmailUI(); // 初期は空：メッセージ無し＆ボタン無効
+
+    // モーダル内パスワードもリアルタイムチェック
+    ["currentPassword","newPassword","newPassword2"].forEach(id => {
+      const input = document.getElementById(id);
+      input.addEventListener("input", validatePasswordModalUI);
+      input.addEventListener("change", validatePasswordModalUI);
+    });
 
     await loadMe();
   });

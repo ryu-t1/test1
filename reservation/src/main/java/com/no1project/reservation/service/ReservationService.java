@@ -143,4 +143,14 @@ public class ReservationService {
         return reservationRepository.findAttendeesByEventId(eventId);
     }
 
+    // 予約人数
+    public int getReservationCount(int eventId) {
+        // event存在チェック（任意）
+        Event event = eventRepository.findById(eventId);
+        if (event == null) {
+            throw new IllegalArgumentException("イベントが存在しません");
+        }
+        return eventRepository.countReservationsByEventId(eventId);
+    }
+
 }

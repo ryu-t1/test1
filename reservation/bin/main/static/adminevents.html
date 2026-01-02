@@ -36,7 +36,7 @@
     }
     .btn:disabled { opacity:0.5; cursor:not-allowed; }
 
-    /* ===== 検索フォーム（学生用に合わせて強化） ===== */
+    /* ===== 検索フォーム ===== */
     .search-box {
       margin: 0 auto 20px;
       max-width: 760px;
@@ -70,6 +70,7 @@
     #eventList{ margin-top: 10px; }
     .event-card{ border:1px solid #333; background:#fff; margin-bottom:12px; }
 
+    /* ヘッダー（左：会社名/開催日/場所、右：予約人数 + 詳細ボタン） */
     .event-header{
       padding:10px 16px;
       display:flex;
@@ -84,10 +85,19 @@
       flex-direction:column;
       gap:4px;
       min-width: 0;
+      flex: 1;
     }
 
     .event-title{ font-weight:bold; }
     .event-sub{ font-size:13px; }
+
+    /* ★右側のまとまり（予約人数 + 詳細ボタン） */
+    .event-right{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      flex-shrink:0;
+    }
 
     .detail-toggle-btn{
       padding:4px 8px;
@@ -96,6 +106,21 @@
       border:1px solid #333;
       background:#fff;
       white-space: nowrap;
+    }
+
+    /* ★予約人数（ヘッダー内・右側・学生用と同じ見た目） */
+    .reservation-count-inline{
+      font-size: 13px;
+      color: #333;
+      white-space: nowrap;
+    }
+    .reservation-count-inline .label{
+      color:#555;
+      margin-right:4px;
+    }
+    .reservation-count-inline .value{
+      font-weight:bold;
+      color:#111;
     }
 
     .event-detail{
@@ -164,6 +189,14 @@
 
     .danger { border-color:#c00; }
 
+    /* ★追加：入力欄の直下に出すエラーメッセージ */
+    .field-error{
+      color:#c00;
+      font-size:12px;
+      margin-top:6px;
+      line-height:1.4;
+    }
+
     /* ★ 予約者一覧モーダル用 */
     .table{
       width:100%;
@@ -199,7 +232,7 @@
     <button class="btn" id="openModalBtn">説明会新規登録ボタン</button>
   </div>
 
-  <!-- ★検索フォーム（学生用と同じ：会社名/日時） -->
+  <!-- ★検索フォーム -->
   <div class="search-box">
     <div class="search-row">
       <input id="keyword" type="text" placeholder="会社名・説明会名で検索">
@@ -233,14 +266,16 @@
       <div class="muted">※ 会社情報管理で登録した会社が表示されます</div>
     </div>
 
-    <div class="field">
+    <div class="field" id="m_date_field">
       <label>開催日（必須）</label>
       <input id="m_date" type="datetime-local" />
+      <div class="field-error" id="m_date_err" style="display:none;"></div>
     </div>
 
-    <div class="field">
+    <div class="field" id="m_deadline_field">
       <label>締切（必須）</label>
       <input id="m_deadline" type="datetime-local" />
+      <div class="field-error" id="m_deadline_err" style="display:none;"></div>
     </div>
 
     <div class="field">
@@ -369,9 +404,9 @@
     // ★ super_admin のときだけ「アカウント」リンク先を差し替え
     if (accountLink) {
       if (isSuperAdmin) {
-        accountLink.href = "super_admin_mypage.html";   // ←作る予定のページ
+        accountLink.href = "super_admin_mypage.html";
       } else {
-        accountLink.href = "teacher_mypage.html";       // normal_admin は教師マイページ
+        accountLink.href = "teacher_mypage.html";
         accountLink.textContent = "アカウント";
       }
     }
@@ -388,6 +423,14 @@
   const saveBtn = document.getElementById("saveBtn");
   const modalMsg = document.getElementById("modalMsg");
   const companySelect = document.getElementById("m_company");
+
+  // ★ 新規登録：開催日/締切の入力欄・エラー表示要素
+  const mDate = document.getElementById("m_date");
+  const mDeadline = document.getElementById("m_deadline");
+  const mDateField = document.getElementById("m_date_field");
+  const mDeadlineField = document.getElementById("m_deadline_field");
+  const mDateErr = document.getElementById("m_date_err");
+  const mDeadlineErr = document.getElementById("m_deadline_err");
 
   // 編集
   const editBackdrop = document.getElementById("editBackdrop");
@@ -437,6 +480,82 @@
     }
   }
 
+  // ★ datetime-local を Date にする（ローカル時刻として解釈）
+  function toLocalDate(dtLocalValue) {
+    if (!dtLocalValue) return null;
+    const d = new Date(dtLocalValue);
+    return isNaN(d.getTime()) ? null : d;
+  }
+
+  // ★ 追加：新規登録の「開催日/締切」チェックを見える化する
+  // - NGなら: 入力欄を赤枠 + エラーテキスト表示 + 登録ボタン無効
+  // - OKなら: 赤枠解除 + エラー非表示 + 登録ボタン有効（ただし必須未入力の場合はここでは触らない）
+  function setFieldError(fieldEl, errEl, message) {
+    if (!fieldEl || !errEl) return;
+    if (message) {
+      fieldEl.classList.add("danger");
+      errEl.textContent = message;
+      errEl.style.display = "block";
+    } else {
+      fieldEl.classList.remove("danger");
+      errEl.textContent = "";
+      errEl.style.display = "none";
+    }
+  }
+
+  function validateNewEventDates({ show = true } = {}) {
+    // まず消す
+    if (show) {
+      setFieldError(mDate, mDateErr, "");
+      setFieldError(mDeadline, mDeadlineErr, "");
+      modalMsg.textContent = "";
+    }
+
+    const dateVal = mDate.value;
+    const deadlineVal = mDeadline.value;
+
+    // 片方未入力なら、ここでは「日付順チェック」しない（必須チェックは登録時に別でやる）
+    if (!dateVal || !deadlineVal) {
+      // 登録ボタンは一旦有効（必須で止まるので）
+      saveBtn.disabled = false;
+      return { ok: true, reason: "missing" };
+    }
+
+    const eventDt = toLocalDate(dateVal);
+    const deadlineDt = toLocalDate(deadlineVal);
+
+    if (!eventDt || !deadlineDt) {
+      if (show) {
+        setFieldError(mDate, mDateErr, "日付の形式が正しくありません。入れ直してください。");
+        setFieldError(mDeadline, mDeadlineErr, "日付の形式が正しくありません。入れ直してください。");
+        modalMsg.textContent = "日付の形式が正しくありません（開催日/締切を入れ直してください）";
+      }
+      saveBtn.disabled = true;
+      return { ok: false, reason: "invalid_format" };
+    }
+
+    // 仕様：締切 < 開催日 だけOK
+    if (eventDt.getTime() <= deadlineDt.getTime()) {
+      if (show) {
+        // どっちが原因か分かるように両方出す
+        setFieldError(mDate, mDateErr, "開催日は「締切より後」にしてください。");
+        setFieldError(mDeadline, mDeadlineErr, "締切は「開催日より前」にしてください。");
+        modalMsg.textContent = "登録できません：締切は開催日より前に設定してください（締切 < 開催日）";
+      }
+      saveBtn.disabled = true;
+      return { ok: false, reason: "order" };
+    }
+
+    // OK
+    if (show) {
+      setFieldError(mDate, mDateErr, "");
+      setFieldError(mDeadline, mDeadlineErr, "");
+      modalMsg.textContent = "";
+    }
+    saveBtn.disabled = false;
+    return { ok: true, reason: "ok" };
+  }
+
   if (!token) {
     messageEl.textContent = "JWTトークンがありません。先に管理者でログインしてください。";
     openModalBtn.disabled = true;
@@ -481,6 +600,13 @@
     return "https://" + u;
   }
 
+  // ★追加：予約人数を取得（公開 or 管理者でもOKな想定）
+  async function fetchReservationCount(eventId) {
+    const res = await fetch(`${API_BASE}/events/${eventId}/reservations/count`);
+    if (!res.ok) throw new Error("HTTP " + res.status);
+    return await res.json(); // int
+  }
+
   // ========= 会社一覧（selectへ流し込み） =========
   async function loadCompanyOptionsTo(selectEl) {
     selectEl.innerHTML = `<option value="">読み込み中...</option>`;
@@ -493,6 +619,14 @@
 
       const data = await res.json();
       const items = data.items ?? data.companies ?? [];
+
+      // ★★★★★ ここが追加：会社名を「あいうえお順」にする（フロントだけで対応） ★★★★★
+      items.sort((a, b) => {
+        const an = (a.name ?? "").trim();
+        const bn = (b.name ?? "").trim();
+        return an.localeCompare(bn, "ja", { numeric: true, sensitivity: "base" });
+      });
+      // ★★★★★ 追加ここまで ★★★★★
 
       if (!items.length) {
         selectEl.innerHTML = `<option value="">会社がありません（先に会社登録してください）</option>`;
@@ -527,6 +661,11 @@
     document.getElementById("m_item").value = "";
     document.getElementById("m_note").value = "";
 
+    // ★エラー表示も初期化
+    setFieldError(mDate, mDateErr, "");
+    setFieldError(mDeadline, mDeadlineErr, "");
+    saveBtn.disabled = false;
+
     backdrop.style.display = "block";
     await loadCompanyOptions();
   };
@@ -552,6 +691,10 @@
     if (e.target === attendeesBackdrop) attendeesBackdrop.style.display = "none";
   });
 
+  // ★リアルタイム検証：入力が変わるたびに分かりやすく表示
+  mDate.addEventListener("input", () => validateNewEventDates({ show: true }));
+  mDeadline.addEventListener("input", () => validateNewEventDates({ show: true }));
+
   // ========= datetime-local 変換 =========
   function toDatetimeLocalValue(s) {
     if (!s) return "";
@@ -564,6 +707,8 @@
     if (!isAdmin || !token) return;
 
     modalMsg.textContent = "";
+
+    // ★最初に一旦有効化（下で止める）
     saveBtn.disabled = true;
 
     const companyId = companySelect.value ? Number(companySelect.value) : 0;
@@ -583,6 +728,13 @@
     if (!payload.date)      { modalMsg.textContent = "開催日は必須です"; saveBtn.disabled = false; return; }
     if (!payload.deadline)  { modalMsg.textContent = "締切は必須です"; saveBtn.disabled = false; return; }
     if (!payload.place)     { modalMsg.textContent = "場所は必須です"; saveBtn.disabled = false; return; }
+
+    // ★ここで必ずチェック（NGなら赤表示 + メッセージ + 登録中止）
+    const v = validateNewEventDates({ show: true });
+    if (!v.ok) {
+      // validate内で saveBtn.disabled=true にしている
+      return;
+    }
 
     try {
       const res = await fetch(`${API_BASE}/api/admin/events`, {
@@ -749,7 +901,6 @@
 
   async function loadAttendees(eventId) {
     try {
-      // GET /events/{eventId}/reservations/attendees
       const res = await fetch(`${API_BASE}/events/${eventId}/reservations/attendees`, {
         headers: { "Authorization": `Bearer ${token}` }
       });
@@ -838,6 +989,7 @@
       const header = document.createElement("div");
       header.className = "event-header";
 
+      // 左：会社名/開催日/場所
       const mainInfo = document.createElement("div");
       mainInfo.className = "event-main-info";
 
@@ -857,12 +1009,44 @@
       mainInfo.appendChild(sub1);
       mainInfo.appendChild(sub2);
 
+      // 右：予約人数 + 詳細ボタン
+      const rightWrap = document.createElement("div");
+      rightWrap.className = "event-right";
+
+      const countInline = document.createElement("div");
+      countInline.className = "reservation-count-inline";
+
+      const countLabel = document.createElement("span");
+      countLabel.className = "label";
+      countLabel.textContent = "現在の予約：";
+
+      const countValue = document.createElement("span");
+      countValue.className = "value";
+      countValue.textContent = "取得中…";
+
+      countInline.appendChild(countLabel);
+      countInline.appendChild(countValue);
+
       const toggleBtn = document.createElement("button");
       toggleBtn.className = "detail-toggle-btn";
       toggleBtn.textContent = "▽ 詳細表示";
 
+      rightWrap.appendChild(countInline);
+      rightWrap.appendChild(toggleBtn);
+
       header.appendChild(mainInfo);
-      header.appendChild(toggleBtn);
+      header.appendChild(rightWrap);
+
+      // ★人数取得（ヘッダー右側に表示）
+      (async () => {
+        try {
+          const n = await fetchReservationCount(e.eventId);
+          countValue.textContent = `${n}人`;
+        } catch (err) {
+          console.error(err);
+          countValue.textContent = "取得失敗";
+        }
+      })();
 
       const detail = document.createElement("div");
       detail.className = "event-detail";

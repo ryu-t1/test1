@@ -1,204 +1,294 @@
-<!-- super_admin_mypage.html（完成版：super_admin、アカウント情報表示のみ、未ログイン時はページ内表示、logoutLink対応） -->
+<!-- super_admin_mypage.html（ヘッダーを index.html と同じCSSに統一した完全版） -->
 <!DOCTYPE html>
 <html lang="ja">
-<head>
-  <meta charset="UTF-8" />
-  <title>マイページ（super_admin）</title>
-  <style>
-    body {
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Helvetica Neue", sans-serif;
-      background-color: #f5f5f5;
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>マイページ（super_admin）</title>
+
+    <style>
+    :root{
+      --bg:#f6f7fb;
+      --card:#ffffff;
+      --text:#101828;
+      --muted:#667085;
+      --line:#e4e7ec;
+      --line-strong:#d0d5dd;
+      --shadow: 0 10px 30px rgba(16,24,40,.08);
+      --shadow-sm: 0 6px 16px rgba(16,24,40,.06);
+      --radius:14px;
+      --accent:#2563eb;
+      --accent-2:#1d4ed8;
+      --danger:#b42318;
+      --focus: 0 0 0 4px rgba(37,99,235,.18);
+      --container: 1120px;
+      --content: 980px;
+      --pad: 24px;
+    }
+
+    *{ box-sizing:border-box; }
+    body{
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans JP", "Hiragino Kaku Gothic ProN", Meiryo, sans-serif;
+      background-color: var(--bg);
+      background-image: radial-gradient(1200px 520px at 50% -180px, rgba(37,99,235,.10), rgba(37,99,235,0));
+      background-repeat: no-repeat;
+      background-attachment: fixed;
       margin: 0;
-      color: #111;
+      color: var(--text);
+      line-height: 1.55;
+      padding-bottom: 72px;
     }
 
-    /* 上部メニュー（管理画面と合わせる） */
-    header {
-      border-bottom: 1px solid #ccc;
-      padding: 16px 40px;
-      display: flex;
-      justify-content: center;
-      gap: 80px;
-      font-size: 14px;
-      background-color: #fff;
+    /* ===== Header（index.htmlと統一） ===== */
+    header{
+        position: sticky;
+        top: 0;
+        z-index: 10;
+        background: rgba(255,255,255,.92);
+        backdrop-filter: blur(10px);
+        border-bottom: 1px solid var(--line);
+      }
+
+      /* “中央らへんでいい感じに分散”：
+         1) nav自体は中央配置
+         2) navの中身は等間隔に分散
+         3) ただし巨大画面でも広がりすぎないよう max-width を持たせる */
+      .header-inner{
+        max-width: var(--container);
+        margin: 0 auto;
+        padding: 14px var(--pad);
+        display:flex;
+        justify-content:center;   /* navを中央に */
+        align-items:center;
+      }
+
+      .nav{
+        width: min(760px, 100%);  /* 広がりすぎ防止（中央らへん） */
+        display:flex;
+        align-items:center;
+        justify-content: space-around; /* 中央付近で“分散” */
+        gap: 10px;
+        flex-wrap:wrap;
+      }
+
+      .nav a{
+        text-decoration:none;
+        color:#344054;
+        font-size: 13px;
+        padding: 8px 12px;
+        border-radius: 999px;
+        transition: background-color .15s ease, color .15s ease, transform .05s ease;
+        outline: none;
+        white-space: nowrap;
+      }
+    .nav a:hover{ background:#f2f4f7; color:#111827; }
+    .nav a:active{ transform: translateY(1px); }
+    .nav a:focus-visible{ box-shadow: var(--focus); }
+    .nav a.is-active{
+      background: rgba(37,99,235,.10);
+      color:#1d4ed8;
+      font-weight: 800;
+      border-color: rgba(37,99,235,.20);
     }
-    header a {
-      text-decoration: none;
-      color: #333;
-      cursor: pointer;
+    .nav a.danger-link{
+      color:#b42318;
+      border-color: rgba(180,35,24,.18);
+      background: rgba(180,35,24,.06);
+    }
+    .nav a.danger-link:hover{
+      background: rgba(180,35,24,.10);
+      color:#8a1f16;
     }
 
-    .container {
-      width: 700px;
-      margin: 50px auto 80px;
-      background: #fff;
-      border: 4px solid #000;
-      padding: 50px 70px;
-      box-sizing: border-box;
+    /* ===== Page ===== */
+    main{
+      max-width: 860px;
+      margin: 28px auto 0;
+      padding: 0 16px;
     }
 
-    h1 {
-      text-align: center;
-      margin: 0 0 40px;
-      letter-spacing: 0.2em;
-      font-size: 26px;
+    .container{
+      max-width: 760px;
+      margin: 22px auto 80px;
+      background: var(--card);
+      border: 1px solid var(--line);
+      box-shadow: var(--shadow-sm);
+      border-radius: 16px;
+      padding: 28px 24px;
     }
 
-    .section {
-      border-top: 2px solid #000;
-      padding-top: 24px;
-      margin-top: 24px;
+    h1{
+      text-align:center;
+      margin: 2px 0 18px;
+      font-size: 18px;
+      letter-spacing: .02em;
     }
-    .section:first-of-type {
+
+    .section{
+      border-top: 1px solid var(--line);
+      padding-top: 18px;
+      margin-top: 18px;
+    }
+    .section:first-of-type{
       border-top: none;
       padding-top: 0;
       margin-top: 0;
     }
 
-    .section-title {
-      font-size: 14px;
-      font-weight: 700;
-      margin: 0 0 16px;
-      letter-spacing: 0.08em;
+    .section-title{
+      font-size: 12px;
+      font-weight: 900;
+      letter-spacing: .06em;
+      margin: 0 0 12px;
+      color:#111827;
     }
 
-    .grid {
-      display: grid;
+    .grid{
+      display:grid;
       grid-template-columns: 160px 1fr;
-      gap: 10px 16px;
+      gap: 10px 14px;
       align-items: center;
     }
-
-    .label {
-      font-size: 13px;
-      color: #111;
+    @media (max-width: 560px){
+      .grid{ grid-template-columns: 1fr; }
     }
 
-    .value {
-      font-size: 14px;
-      padding: 10px;
-      border: 2px solid #000;
-      background: #fdfdfd;
-      box-sizing: border-box;
-      word-break: break-word;
-    }
-
-    .hint {
+    .label{
       font-size: 12px;
-      color: #777;
+      color:#344054;
+    }
+
+    .value{
+      font-size: 14px;
+      padding: 10px 12px;
+      border: 1px solid var(--line-strong);
+      background: #fff;
+      border-radius: 12px;
+      word-break: break-word;
+      min-height: 40px;
+      display:flex;
+      align-items:center;
+    }
+
+    .hint{
+      font-size: 12px;
+      color: var(--muted);
       margin-top: 10px;
       line-height: 1.7;
     }
 
-    .error {
-      color: #d00;
+    .error{
+      color: var(--danger);
       font-size: 13px;
       margin-top: 10px;
-      display: none;
+      display:none;
       white-space: pre-wrap;
     }
 
-    /* 未ログイン案内ボックス */
-    .need-login-box {
-      border: 2px solid #000;
+    /* 未ログイン案内 */
+    .need-login-box{
+      border: 1px solid var(--line-strong);
       background: #fff;
-      padding: 16px;
-      margin: 0 0 20px;
+      border-radius: 14px;
+      padding: 14px;
+      margin: 0 0 14px;
+      box-shadow: var(--shadow-sm);
     }
-    .need-login-title {
-      font-weight: 700;
-      letter-spacing: 0.08em;
-      margin-bottom: 8px;
-      font-size: 14px;
+    .need-login-title{
+      font-weight: 900;
+      letter-spacing: .04em;
+      margin-bottom: 6px;
+      font-size: 13px;
     }
-    .need-login-text {
-      font-size: 14px;
+    .need-login-text{
+      font-size: 13px;
       line-height: 1.7;
+      color:#344054;
     }
-    .need-login-actions {
-      margin-top: 12px;
-      font-size: 14px;
+    .need-login-actions{
+      margin-top: 10px;
+      font-size: 13px;
     }
-    .need-login-actions a {
-      color: #000;
+    .need-login-actions a{
+      color: var(--accent);
       text-decoration: underline;
     }
 
-    .loading {
+    .loading{
       font-size: 13px;
-      color: #555;
-      text-align: center;
-      display: none;
+      color:#475467;
+      text-align:center;
+      display:none;
       margin-top: 10px;
     }
   </style>
-</head>
+  </head>
 
-<body>
-  <!-- ===== super_admin用ヘッダー（管理画面と統一） ===== -->
-  <header>
-    <a href="adminevents.html">説明会情報管理</a>
-    <a href="admincompanies.html">会社情報管理</a>
-    <a href="super_admin_user_manage.html">ユーザ管理</a>
-    <a href="teacherRegister.html">教師新規登録</a>
+  <body>
+    <!-- ===== super_admin用ヘッダー（index.htmlと同じ見た目） ===== -->
+    <header>
+      <div class="header-inner">
+        <nav class="nav">
+          <a href="adminevents.html">説明会情報管理</a>
+          <a href="admincompanies.html">会社情報管理</a>
+          <a href="super_admin_user_manage.html">ユーザー管理</a>
+          <a href="teacherRegister.html">新規教師登録</a>
 
-    <a href="#" id="logoutLink">ログアウト</a>
-    <a href="super_admin_mypage.html">アカウント</a>
-  </header>
-
-  <div class="container">
-    <h1>マイページ（super_admin）</h1>
-
-    <!-- 未ログイン時メッセージ（リダイレクトしない） -->
-    <div id="needLoginBox" class="need-login-box" style="display:none;">
-      <div class="need-login-title">ログインが必要です</div>
-      <div class="need-login-text">
-        アカウント情報は <b>ログイン後</b> に閲覧できます。
+          <a href="super_admin_mypage.html" id="accountLink"
+            class="is-active">アカウント</a>
+          <a href="#" id="logoutLink" class="danger-link">ログアウト</a>
+        </nav>
       </div>
-      <div class="need-login-actions">
-        <a href="login.html">ログイン画面へ</a>
-      </div>
-    </div>
+    </header>
 
-    <div id="loading" class="loading">読み込み中...</div>
-    <div id="pageError" class="error"></div>
+    <main>
+      <div class="container">
+        <h1>マイページ（super_admin）</h1>
 
-    <!-- ★ログイン時に表示する領域 -->
-    <div id="authedArea" style="display:none;">
-
-      <div class="section">
-        <div class="section-title">基本情報</div>
-        <div class="grid">
-          <div class="label">ユーザーID</div>
-          <div class="value" id="vUserId">-</div>
-
-          <div class="label">氏名</div>
-          <div class="value" id="vName">-</div>
-
-          <div class="label">メールアドレス</div>
-          <div class="value" id="vEmail">-</div>
-
-          <div class="label">権限</div>
-          <div class="value" id="vRole">-</div>
+        <!-- 未ログイン時（ページ内表示、リダイレクトしない） -->
+        <div id="needLoginBox" class="need-login-box" style="display:none;">
+          <div class="need-login-title">ログインが必要です</div>
+          <div class="need-login-text">
+            アカウント情報は <b>ログイン後</b> に閲覧できます。
+          </div>
+          <div class="need-login-actions">
+            <a href="login.html">ログイン画面へ</a>
+          </div>
         </div>
 
-        <div class="hint">
-         
+        <div id="loading" class="loading">読み込み中...</div>
+        <div id="pageError" class="error"></div>
+
+        <!-- ログイン時に表示 -->
+        <div id="authedArea" style="display:none;">
+          <div class="section">
+            <div class="section-title">基本情報</div>
+
+            <div class="grid">
+              <div class="label">ユーザーID</div>
+              <div class="value" id="vUserId">-</div>
+
+              <div class="label">氏名</div>
+              <div class="value" id="vName">-</div>
+
+              <div class="label">メールアドレス</div>
+              <div class="value" id="vEmail">-</div>
+
+              <div class="label">権限</div>
+              <div class="value" id="vRole">-</div>
+            </div>
+
+            <div class="hint"></div>
+          </div>
         </div>
       </div>
+    </main>
 
-    </div><!-- /authedArea -->
-  </div>
-
-<script>
-  // =============================
-  // 設定
-  // =============================
+    <script>
   const API_BASE = "http://localhost:8080";
   // const API_BASE = "http://45.76.55.162:8080";
+  // const API_BASE = "";
 
-  // ★super_admin用：GETだけあればOK
-  // 例：バックエンドに /api/super/me を用意する想定
   const ME_API = "/api/super/me";
 
   function getLoginInfo() {
@@ -208,9 +298,7 @@
     return { token, role };
   }
 
-  // =============================
-  // ヘッダー：logoutLink方式
-  // =============================
+  // ヘッダー：ログイン/ログアウト切替（logoutLink方式）
   function setupHeaderByLoginStatus() {
     const logoutLink = document.getElementById("logoutLink");
     if (!logoutLink) return;
@@ -218,20 +306,22 @@
     const { token } = getLoginInfo();
 
     if (!token) {
+      logoutLink.classList.remove("danger-link");
       logoutLink.textContent = "ログイン";
       logoutLink.href = "login.html";
       return;
     }
 
+    logoutLink.classList.add("danger-link");
     logoutLink.textContent = "ログアウト";
     logoutLink.href = "#";
 
+    // 二重登録防止
     logoutLink.replaceWith(logoutLink.cloneNode(true));
     const newLogoutLink = document.getElementById("logoutLink");
 
     newLogoutLink.addEventListener("click", (e) => {
       e.preventDefault();
-
       localStorage.removeItem("token");
       localStorage.removeItem("userId");
       localStorage.removeItem("email");
@@ -280,10 +370,7 @@
     headers["Authorization"] = "Bearer " + token;
 
     const res = await fetch(API_BASE + path, { ...options, headers });
-
-    if (res.status === 401 || res.status === 403) {
-      throw new Error("AUTH");
-    }
+    if (res.status === 401 || res.status === 403) throw new Error("AUTH");
     return res;
   }
 
@@ -327,10 +414,8 @@
   window.addEventListener("load", async () => {
     setupHeaderByLoginStatus();
 
-    // 未ログインなら案内表示で終了（遷移しない）
     if (!renderAuthState()) return;
 
-    // ★super_admin以外が来たら戻す（teacher/studentと同様の考え方）
     const { role } = getLoginInfo();
     if (role && role !== "super_admin") {
       alert("このページはsuper_admin専用です。");
@@ -341,6 +426,5 @@
     await loadMe();
   });
 </script>
-
-</body>
+  </body>
 </html>

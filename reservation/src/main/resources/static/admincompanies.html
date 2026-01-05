@@ -2,103 +2,252 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>会社情報管理（管理者）</title>
+
   <style>
-    body { font-family: Arial, sans-serif; margin:0; padding:0; background:#fafafa; color:#111; }
+    :root{
+      --bg:#f6f7fb;
+      --card:#ffffff;
+      --text:#101828;
+      --muted:#667085;
+      --line:#e4e7ec;
+      --line-strong:#d0d5dd;
+      --shadow: 0 10px 30px rgba(16,24,40,.08);
+      --shadow-sm: 0 6px 16px rgba(16,24,40,.06);
+      --radius:14px;
+      --accent:#2563eb;
+      --accent-2:#1d4ed8;
+      --danger:#b42318;
+      --danger-bg: rgba(180,35,24,.08);
+      --focus: 0 0 0 4px rgba(37,99,235,.18);
+      --container: 1120px;
+      --content: 980px;
+      --pad: 24px;
+    }
 
-    header{
-      border-bottom:1px solid #ccc;
-      padding:16px 40px;
+    *{ box-sizing:border-box; }
+    body{
+      margin:0;
+      padding-bottom: 72px;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans JP", "Hiragino Kaku Gothic ProN", Meiryo, sans-serif;
+      color: var(--text);
+      background-color: var(--bg);
+      background-image: radial-gradient(1200px 520px at 50% -180px, rgba(37,99,235,.10), rgba(37,99,235,0));
+      background-repeat: no-repeat;
+      background-attachment: fixed;
+      line-height: 1.55;
+    }
+
+    /* ===== Header（index.html と同じ想定の統一スタイル） ===== */
+   header{
+        position: sticky;
+        top: 0;
+        z-index: 10;
+        background: rgba(255,255,255,.92);
+        backdrop-filter: blur(10px);
+        border-bottom: 1px solid var(--line);
+      }
+
+      /* “中央らへんでいい感じに分散”：
+         1) nav自体は中央配置
+         2) navの中身は等間隔に分散
+         3) ただし巨大画面でも広がりすぎないよう max-width を持たせる */
+      .header-inner{
+        max-width: var(--container);
+        margin: 0 auto;
+        padding: 14px var(--pad);
+        display:flex;
+        justify-content:center;   /* navを中央に */
+        align-items:center;
+      }
+
+      .nav{
+        width: min(760px, 100%);  /* 広がりすぎ防止（中央らへん） */
+        display:flex;
+        align-items:center;
+        justify-content: space-around; /* 中央付近で“分散” */
+        gap: 10px;
+        flex-wrap:wrap;
+      }
+
+      .nav a{
+        text-decoration:none;
+        color:#344054;
+        font-size: 13px;
+        padding: 8px 12px;
+        border-radius: 999px;
+        transition: background-color .15s ease, color .15s ease, transform .05s ease;
+        outline: none;
+        white-space: nowrap;
+      }
+    .nav a:hover{ background:#f2f4f7; color:#111827; }
+    .nav a:active{ transform: translateY(1px); }
+    .nav a:focus-visible{ box-shadow: var(--focus); }
+    .nav a.is-active{
+      background: rgba(37,99,235,.10);
+      color:#1d4ed8;
+      font-weight: 800;
+      border-color: rgba(37,99,235,.20);
+    }
+    .nav a.danger-link{
+      color:#b42318;
+      border-color: rgba(180,35,24,.18);
+      background: rgba(180,35,24,.06);
+    }
+    .nav a.danger-link:hover{
+      background: rgba(180,35,24,.10);
+      color:#8a1f16;
+    }
+
+    /* ===== Layout ===== */
+    main{
+      max-width: var(--content);
+      margin: 24px auto 0;
+      padding: 0 16px 90px;
+    }
+
+    .page-title{
       display:flex;
-      justify-content:center;
-      gap:80px;
-      font-size:14px;
-      background:#fff;
+      align-items:flex-end;
+      justify-content:space-between;
+      gap: 12px;
+      flex-wrap:wrap;
+      margin: 10px 0 12px;
     }
-    header a{ text-decoration:none; color:#333; cursor:pointer; }
-
-    main{ max-width:900px; margin:30px auto 60px; padding:0 16px; }
-
-    .search-box{
-      margin: 0 auto 20px;
-      max-width: 760px;
-      border: 1px solid #333;
-      padding: 16px;
-      background-color: #fff;
+    .page-title h1{
+      margin: 0;
+      font-size: 18px;
+      letter-spacing: .02em;
     }
-    .search-grid{
-      display:grid;
-      grid-template-columns: 1fr 1fr auto auto;
-      gap:10px;
+    .page-title .hint{
+      margin: 0;
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .toolbar{
+      display:flex;
+      align-items:center;
+      justify-content: space-between;
+      gap: 12px;
+      margin: 10px 0 12px;
+      flex-wrap: wrap;
+    }
+
+    /* ===== Cards ===== */
+    .panel{
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow-sm);
+      padding: 14px;
+    }
+
+    .row{
+      display:flex;
+      gap: 10px;
+      flex-wrap: wrap;
       align-items:center;
     }
-    .search-grid input{
-      width:100%;
-      padding: 8px 10px;
-      box-sizing: border-box;
-      border:1px solid #ccc;
+
+    .input{
+      height: 40px;
+      border: 1px solid var(--line-strong);
+      border-radius: 12px;
+      padding: 0 12px;
+      background: #fff;
+      color: var(--text);
+      outline: none;
+      transition: box-shadow .15s ease, border-color .15s ease;
+      font-size: 14px;
+      font-family: inherit;
     }
-    .search-grid button{
-      padding: 8px 12px;
-      cursor: pointer;
-      border:1px solid #333;
-      background:#fff;
-      font-size: 13px;
+    .input:focus{
+      border-color: rgba(37,99,235,.55);
+      box-shadow: var(--focus);
     }
 
-    .top-actions{
-      display:flex;
-      align-items:center;
-      gap:12px;
-      margin: 12px 0 10px;
-    }
     .btn{
-      padding:10px 14px;
-      border:1px solid #333;
-      background:#fff;
-      cursor:pointer;
+      height: 40px;
+      padding: 0 14px;
+      border-radius: 12px;
+      border: 1px solid var(--line-strong);
+      background: #fff;
+      color: #111827;
       font-size: 13px;
+      cursor: pointer;
+      transition: transform .05s ease, background-color .15s ease, border-color .15s ease;
+      outline: none;
+      white-space: nowrap;
     }
-    .btn:disabled { opacity:0.5; cursor:not-allowed; }
-    .danger { border-color:#c00; }
+    .btn:hover{ background:#f9fafb; }
+    .btn:active{ transform: translateY(1px); }
+    .btn:focus-visible{ box-shadow: var(--focus); }
+    .btn:disabled{ opacity: 0.6; cursor: not-allowed; }
 
-    .hint{
-      font-size:12px;
-      color:#333;
-      margin: 6px 0 14px;
+    .btn-primary{
+      background: var(--accent);
+      border-color: rgba(37,99,235,.25);
+      color: #fff;
+      font-weight: 800;
+    }
+    .btn-primary:hover{ background: var(--accent-2); }
+
+    .btn-danger{
+      color:#b42318;
+      border-color: rgba(180,35,24,.25);
+      background: rgba(180,35,24,.06);
+    }
+    .btn-danger:hover{ background: rgba(180,35,24,.10); }
+
+    .hint-text{
+      font-size: 12px;
+      color: var(--muted);
+      margin: 8px 0 14px;
     }
 
-    #companyList{ margin-top: 10px; }
+    /* ===== Company list cards ===== */
+    #companyList{ margin-top: 12px; }
 
     .company-card{
-      border:1px solid #333;
-      background:#fff;
-      margin-bottom:12px;
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow-sm);
+      overflow: hidden;
+      margin-bottom: 12px;
     }
 
     .company-header{
-      padding:10px 16px;
+      padding: 12px 14px;
       display:flex;
       justify-content:space-between;
       align-items:center;
-      cursor: default;
+      gap: 12px;
     }
+
     .company-title{
-      font-weight:bold;
-      font-size: 16px;
-      line-height: 1.4;
+      font-weight: 900;
+      font-size: 15px;
+      letter-spacing: .01em;
+      overflow:hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      flex: 1;
+      min-width: 0;
     }
-    .toggle-btn{
-      padding:4px 8px;
-      cursor:pointer;
-      font-size:12px;
-      border:1px solid #333;
-      background:#fff;
+
+    .tiny{
+      font-size: 12px;
+      height: 32px;
+      padding: 0 10px;
+      border-radius: 10px;
     }
 
     .company-detail{
-      border-top:1px solid #333;
-      padding:10px 16px 14px;
+      border-top: 1px solid var(--line);
+      padding: 12px 14px 14px;
       display:none;
       font-size:14px;
     }
@@ -110,79 +259,161 @@
       column-gap:14px;
       margin-top: 6px;
     }
-    .kv .k{ font-weight:bold; }
-    .kv .v{ word-break: break-word; }
+    .kv .k{ font-weight: 900; color:#111827; }
+    .kv .v{ word-break: break-word; color:#344054; }
 
     .admin-actions{
       margin-top: 14px;
       display:flex;
       gap:10px;
       justify-content:flex-end;
+      flex-wrap: wrap;
     }
 
+    /* ===== Pagination & message ===== */
     #pagination{
       text-align:center;
-      margin-top:24px;
-      font-size:14px;
+      margin-top: 18px;
+      font-size: 14px;
     }
     .page-link{
       display:inline-block;
-      margin:0 6px;
+      margin: 0 6px;
       cursor:pointer;
+      padding: 6px 10px;
+      border-radius: 10px;
+      border: 1px solid transparent;
     }
+    .page-link:hover{ background:#f2f4f7; }
     .page-link.active{
-      font-weight:bold;
-      text-decoration:underline;
+      font-weight: 900;
+      border-color: rgba(37,99,235,.25);
+      background: rgba(37,99,235,.08);
     }
 
     .message{
       text-align:center;
-      margin-top:20px;
-      color:#666;
+      margin-top: 16px;
+      color: var(--muted);
+      font-size: 13px;
       white-space: pre-line;
     }
 
-    /* modal */
-    .backdrop { position:fixed; inset:0; background:rgba(0,0,0,0.35); display:none; }
-    .modal { width:520px; max-width: calc(100vw - 32px); background:#fff; margin: 90px auto; padding:16px; border-radius:8px; border:1px solid #333; }
-    .modal h2 { margin:0 0 12px; font-size: 16px; }
-    .field { margin: 10px 0; }
-    .field label { display:block; font-size:12px; color:#222; margin-bottom:4px; }
-    .field input { width:100%; padding:10px; border:1px solid #ccc; box-sizing:border-box; }
-    .actions { display:flex; gap:10px; justify-content:flex-end; margin-top:12px; }
-    .error { color:#c00; font-size:12px; margin-top:8px; }
+    /* ===== Modal ===== */
+    .backdrop{
+      position: fixed;
+      inset: 0;
+      display:none;
+      align-items:center;
+      justify-content:center;
+      padding: 18px;
+      background: rgba(16,24,40,.45);
+      z-index: 9999;
+    }
+    .modal{
+      width: 560px;
+      max-width: calc(100vw - 32px);
+      background: var(--card);
+      border-radius: 16px;
+      border: 1px solid var(--line);
+      box-shadow: var(--shadow);
+      padding: 16px 16px 14px;
+    }
+    .modal h2{
+      margin: 4px 0 12px;
+      font-size: 16px;
+      letter-spacing: .02em;
+    }
+    .field{ margin: 10px 0; }
+    .field label{
+      display:block;
+      font-size: 12px;
+      color: var(--muted);
+      margin-bottom: 6px;
+      padding-left: 2px;
+    }
+    .field input{
+      width:100%;
+      padding: 10px 12px;
+      border: 1px solid var(--line-strong);
+      border-radius: 12px;
+      box-sizing:border-box;
+      font-family: inherit;
+      font-size: 14px;
+      outline: none;
+      transition: box-shadow .15s ease, border-color .15s ease;
+      background:#fff;
+    }
+    .field input:focus{
+      border-color: rgba(37,99,235,.55);
+      box-shadow: var(--focus);
+    }
+
+    .actions{
+      display:flex;
+      gap:10px;
+      justify-content:flex-end;
+      margin-top:12px;
+      flex-wrap: wrap;
+    }
+
+    .error{
+      color: var(--danger);
+      font-size: 12px;
+      margin-top: 10px;
+      white-space: pre-wrap;
+    }
+
+    @media (max-width: 900px){
+      :root{ --pad: 16px; }
+    }
+    @media (max-width: 520px){
+      .btn{ width: 100%; }
+      .btn.tiny{ width: auto; }
+      .kv{ grid-template-columns: 80px 1fr; }
+    }
   </style>
 </head>
+
 <body>
 
 <header>
-  <a href="adminevents.html">説明会情報管理</a>
-  <a href="admincompanies.html">会社情報管理</a>
+  <div class="header-inner">
+    <nav class="nav">
+      <a href="adminevents.html">説明会情報管理</a>
+      <a class="is-active" href="admincompanies.html">会社情報管理</a>
 
-  <!-- ★ super_admin のときだけ表示 -->
-  <a href="super_admin_user_manage.html" id="userManageLink" style="display:none;">ユーザー管理</a>
-  <a href="teacherRegister.html" id="teacherRegisterLink" style="display:none;">新規教師登録</a>
+      <!-- ★ super_admin のときだけ表示 -->
+      <a href="super_admin_user_manage.html" id="userManageLink" style="display:none;">ユーザー管理</a>
+      <a href="teacherRegister.html" id="teacherRegisterLink" style="display:none;">新規教師登録</a>
 
-  <a href="#" id="logoutLink">ログアウト</a>
-  <a href="teacher_mypage.html" id="accountLink">アカウント</a>
+      <a href="teacher_mypage.html" id="accountLink">アカウント</a>
+      <a href="#" id="logoutLink" class="danger-link">ログアウト</a>
+    </nav>
+  </div>
 </header>
 
 <main>
-  <div class="top-actions">
-    <button class="btn" id="openModalBtn">会社新規登録ボタン</button>
+  <div class="page-title">
+    <h1>会社情報管理</h1>
+    <p class="hint">登録・閲覧・編集はポップアップで行います（管理者のみ）。</p>
   </div>
 
-  <!-- ★検索（会社名・所在地） -->
-  <div class="search-box">
-    <div class="search-grid">
-      <input id="qName" type="text" placeholder="会社名で検索">
-      <input id="qAddress" type="text" placeholder="所在地で検索">
-      <button id="searchBtn">検索</button>
-      <button id="clearBtn">クリア</button>
+  <div class="toolbar">
+    <div></div>
+    <button class="btn btn-primary" id="openModalBtn">会社を新規登録</button>
+  </div>
+
+  <!-- 検索（会社名・所在地） -->
+  <div class="panel">
+    <div class="row">
+      <input id="qName" class="input" type="text" placeholder="会社名で検索" style="width:min(320px,100%);" />
+      <input id="qAddress" class="input" type="text" placeholder="所在地で検索" style="width:min(320px,100%);" />
+      <button id="searchBtn" class="btn">検索</button>
+      <button id="clearBtn" class="btn">クリア</button>
     </div>
+    <div class="hint-text">＊ 登録・閲覧・編集はポップアップBOXで表示します。</div>
   </div>
-
-  <div class="hint">＊ 登録・閲覧・編集・画面はポップアップBOXで表示</div>
 
   <div id="companyList"></div>
   <div id="message" class="message"></div>
@@ -190,8 +421,8 @@
 </main>
 
 <!-- Modal（新規登録） -->
-<div class="backdrop" id="backdrop">
-  <div class="modal">
+<div class="backdrop" id="backdrop" aria-hidden="true">
+  <div class="modal" role="dialog" aria-modal="true">
     <h2>会社新規登録</h2>
 
     <div class="field">
@@ -211,7 +442,7 @@
 
     <div class="actions">
       <button class="btn" id="closeModalBtn">キャンセル</button>
-      <button class="btn" id="saveBtn">登録</button>
+      <button class="btn btn-primary" id="saveBtn">登録</button>
     </div>
 
     <div class="error" id="modalMsg"></div>
@@ -219,8 +450,8 @@
 </div>
 
 <!-- Modal（編集） -->
-<div class="backdrop" id="editBackdrop">
-  <div class="modal">
+<div class="backdrop" id="editBackdrop" aria-hidden="true">
+  <div class="modal" role="dialog" aria-modal="true">
     <h2>会社情報 編集</h2>
 
     <div class="field">
@@ -240,7 +471,7 @@
 
     <div class="actions">
       <button class="btn" id="editCancelBtn">キャンセル</button>
-      <button class="btn" id="editSaveBtn">更新</button>
+      <button class="btn btn-primary" id="editSaveBtn">更新</button>
     </div>
 
     <div class="error" id="editMsg"></div>
@@ -248,14 +479,14 @@
 </div>
 
 <!-- Modal（削除確認） -->
-<div class="backdrop" id="deleteBackdrop">
-  <div class="modal">
+<div class="backdrop" id="deleteBackdrop" aria-hidden="true">
+  <div class="modal" role="dialog" aria-modal="true">
     <h2>削除確認</h2>
     <div id="deleteText" style="font-size:14px; line-height:1.6;"></div>
 
     <div class="actions">
       <button class="btn" id="deleteCancelBtn">キャンセル</button>
-      <button class="btn danger" id="deleteOkBtn">削除する</button>
+      <button class="btn btn-danger" id="deleteOkBtn">削除する</button>
     </div>
 
     <div class="error" id="deleteMsg"></div>
@@ -265,6 +496,7 @@
 <script>
   const API_BASE = "http://localhost:8080";
   // const API_BASE = "http://45.76.55.162:8080"; //外部公開用
+  // const API_BASE = "";
 
   const token = localStorage.getItem("token");
   const roleRaw = localStorage.getItem("role"); // "normal_admin" / "super_admin"
@@ -345,6 +577,7 @@
     openModalBtn.title = "管理者のみ操作できます";
   }
 
+  // ログアウト
   document.getElementById("logoutLink").addEventListener("click", (e) => {
     e.preventDefault();
     localStorage.removeItem("token");
@@ -357,44 +590,50 @@
   });
 
   // ===== modal open/close =====
+  function openBackdrop(bd){
+    bd.style.display = "flex";
+    bd.setAttribute("aria-hidden","false");
+  }
+  function closeBackdrop(bd){
+    bd.style.display = "none";
+    bd.setAttribute("aria-hidden","true");
+  }
+
   openModalBtn.onclick = () => {
     if (!isAdmin) return;
     modalMsg.textContent = "";
     mName.value = "";
     mAddress.value = "";
     mWebsite.value = "";
-    backdrop.style.display = "block";
+    openBackdrop(backdrop);
   };
-  closeModalBtn.onclick = () => backdrop.style.display = "none";
-  backdrop.addEventListener("click", (e) => {
-    if (e.target === backdrop) backdrop.style.display = "none";
-  });
+  closeModalBtn.onclick = () => closeBackdrop(backdrop);
+  backdrop.addEventListener("click", (e) => { if (e.target === backdrop) closeBackdrop(backdrop); });
 
-  editCancelBtn.onclick = () => editBackdrop.style.display = "none";
-  editBackdrop.addEventListener("click", (e) => {
-    if (e.target === editBackdrop) editBackdrop.style.display = "none";
-  });
+  editCancelBtn.onclick = () => closeBackdrop(editBackdrop);
+  editBackdrop.addEventListener("click", (e) => { if (e.target === editBackdrop) closeBackdrop(editBackdrop); });
 
-  deleteCancelBtn.onclick = () => deleteBackdrop.style.display = "none";
-  deleteBackdrop.addEventListener("click", (e) => {
-    if (e.target === deleteBackdrop) deleteBackdrop.style.display = "none";
+  deleteCancelBtn.onclick = () => closeBackdrop(deleteBackdrop);
+  deleteBackdrop.addEventListener("click", (e) => { if (e.target === deleteBackdrop) closeBackdrop(deleteBackdrop); });
+
+  // Escで閉じる
+  document.addEventListener("keydown", (e) => {
+    if (e.key !== "Escape") return;
+    [backdrop, editBackdrop, deleteBackdrop].forEach(bd => {
+      if (bd.style.display === "flex") closeBackdrop(bd);
+    });
   });
 
   // ===== 検索 =====
-  function doSearch() {
-    loadCompanies(1);
-  }
+  function doSearch() { loadCompanies(1); }
   searchBtn.onclick = doSearch;
   clearBtn.onclick = () => {
     qNameEl.value = "";
     qAddressEl.value = "";
     loadCompanies(1);
   };
-
   [qNameEl, qAddressEl].forEach(el => {
-    el.addEventListener("keydown", (e) => {
-      if (e.key === "Enter") doSearch();
-    });
+    el.addEventListener("keydown", (e) => { if (e.key === "Enter") doSearch(); });
   });
 
   // ===== data load =====
@@ -404,12 +643,7 @@
     const qName = qNameEl.value.trim();
     const qAddress = qAddressEl.value.trim();
 
-    const qs = new URLSearchParams({
-      page: String(page),
-      size: String(PAGE_SIZE)
-    });
-
-    // ★検索条件があれば付ける（バックエンド：qName / qAddress）
+    const qs = new URLSearchParams({ page: String(page), size: String(PAGE_SIZE) });
     if (qName) qs.set("qName", qName);
     if (qAddress) qs.set("qAddress", qAddress);
 
@@ -451,7 +685,7 @@
       title.textContent = c.name ?? "会社名未設定";
 
       const toggleBtn = document.createElement("button");
-      toggleBtn.className = "toggle-btn";
+      toggleBtn.className = "btn tiny";
       toggleBtn.textContent = "▽ 詳細表示";
 
       header.appendChild(title);
@@ -477,7 +711,7 @@
         editBtn.addEventListener("click", () => openEditModal(c));
 
         const delBtn = document.createElement("button");
-        delBtn.className = "btn danger";
+        delBtn.className = "btn btn-danger";
         delBtn.textContent = "削除";
         delBtn.addEventListener("click", () => openDeleteModal(c));
 
@@ -577,10 +811,9 @@
         return;
       }
 
-      backdrop.style.display = "none";
+      closeBackdrop(backdrop);
       saveBtn.disabled = false;
 
-      // ★登録後は検索条件を維持して1ページ目へ
       await loadCompanies(1);
     } catch (e) {
       console.error(e);
@@ -600,7 +833,7 @@
     eAddress.value = company.address ?? "";
     eWebsite.value = company.website ?? "";
 
-    editBackdrop.style.display = "block";
+    openBackdrop(editBackdrop);
   }
 
   editSaveBtn.onclick = async () => {
@@ -640,7 +873,7 @@
       }
 
       alert("更新しました。");
-      editBackdrop.style.display = "none";
+      closeBackdrop(editBackdrop);
       editSaveBtn.disabled = false;
 
       await loadCompanies(currentPage);
@@ -665,12 +898,12 @@
         <div><b>所在地：</b>${escapeHtml(company.address ?? "")}</div>
         <div><b>公式サイト：</b>${escapeHtml(company.website ?? "")}</div>
       </div>
-      <div style="margin-top:10px; color:#666; font-size:12px;">
+      <div style="margin-top:10px; color:#667085; font-size:12px;">
         ※ 説明会に紐づいている会社は削除できません。
       </div>
     `;
 
-    deleteBackdrop.style.display = "block";
+    openBackdrop(deleteBackdrop);
   }
 
   deleteOkBtn.onclick = async () => {
@@ -694,7 +927,7 @@
       }
 
       alert("削除しました。");
-      deleteBackdrop.style.display = "none";
+      closeBackdrop(deleteBackdrop);
       deleteOkBtn.disabled = false;
 
       await loadCompanies(currentPage);
@@ -706,7 +939,7 @@
   };
 
   function escapeHtml(str) {
-    return String(str)
+    return String(str ?? "")
       .replaceAll("&", "&amp;")
       .replaceAll("<", "&lt;")
       .replaceAll(">", "&gt;")

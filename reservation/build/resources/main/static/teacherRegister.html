@@ -2,158 +2,245 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>教師用新規登録（super_admin）</title>
+
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      margin: 0;
-      padding: 0;
-      background-color: #fafafa;
+    :root{
+      --bg:#f6f7fb;
+      --card:#ffffff;
+      --text:#101828;
+      --muted:#667085;
+      --line:#e4e7ec;
+      --line-strong:#d0d5dd;
+      --shadow-sm: 0 6px 16px rgba(16,24,40,.06);
+      --accent:#2563eb;
+      --accent-2:#1d4ed8;
+      --danger:#b42318;
+      --focus: 0 0 0 4px rgba(37,99,235,.18);
+      --container: 1120px;
+      --pad: 24px;
     }
 
-    /* ===== 上部メニュー（super_admin用） ===== */
-    header {
-      border-bottom: 1px solid #ccc;
-      padding: 16px 40px;
-      display: flex;
-      justify-content: center;
-      gap: 80px;
-      font-size: 14px;
-      background-color: #fff;
+    *{ box-sizing:border-box; }
+
+    body{
+      margin:0;
+      padding-bottom:72px;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+        Roboto, "Helvetica Neue", Arial, "Noto Sans JP", Meiryo, sans-serif;
+      background: var(--bg);
+      color: var(--text);
     }
 
-    header a {
-      text-decoration: none;
-      color: #333;
-      cursor: pointer;
+    /* ===== Header ===== */
+    header{
+      position: sticky;
+      top:0;
+      z-index:10;
+      background: rgba(255,255,255,.92);
+      backdrop-filter: blur(10px);
+      border-bottom:1px solid var(--line);
+    }
+    .header-inner{
+      max-width: var(--container);
+      margin:0 auto;
+      padding:14px var(--pad);
+      display:flex;
+      justify-content:center;
+    }
+    .nav{
+      width:min(760px,100%);
+      display:flex;
+      justify-content:space-around;
+      gap:10px;
+      flex-wrap:wrap;
+    }
+    .nav a{
+      text-decoration:none;
+      color:#344054;
+      font-size:13px;
+      padding:8px 12px;
+      border-radius:999px;
+      white-space:nowrap;
+    }
+    .nav a.is-active{
+      background: rgba(37,99,235,.10);
+      color:#1d4ed8;
+      font-weight:800;
+    }
+    .nav a.danger-link{
+      color:#b42318;
+      background: rgba(180,35,24,.06);
     }
 
-    main {
-      max-width: 500px;
-      margin: 40px auto;
-      padding: 0 16px 40px;
+    /* ===== Layout ===== */
+    main{
+      max-width:560px;
+      margin:28px auto 0;
+      padding:0 16px 40px;
+    }
+    h1{
+      text-align:center;
+      font-size:18px;
+      margin:12px 0;
     }
 
-    h1 {
-      text-align: center;
-      font-size: 20px;
-      margin-bottom: 24px;
+    .form-card{
+      background:var(--card);
+      border:1px solid var(--line);
+      border-radius:16px;
+      box-shadow: var(--shadow-sm);
+      padding:18px 16px 16px;
     }
 
-    .form-card {
-      background-color: #fff;
-      border: 1px solid #333;
-      padding: 24px 24px 20px;
-      box-sizing: border-box;
+    .message{
+      font-size:13px;
+      margin-bottom:12px;
+      white-space:pre-wrap;
+    }
+    .message.error{ color:var(--danger); }
+    .message.success{ color:#0a7a2f; }
+
+    .field{ margin:10px 0; }
+    .field label{
+      display:block;
+      font-size:12px;
+      color:var(--muted);
+      margin-bottom:6px;
     }
 
-    .form-group {
-      margin-bottom: 14px;
+    .field input, .field select{
+      width:100%;
+      height:42px;
+      padding:0 12px;
+      border:1px solid var(--line-strong);
+      border-radius:12px;
+      font-size:14px;
+      outline:none;
+    }
+    .field input:focus, .field select:focus{
+      border-color: rgba(37,99,235,.55);
+      box-shadow: var(--focus);
     }
 
-    .form-group label {
-      display: block;
-      font-size: 14px;
-      margin-bottom: 4px;
+    .note{
+      font-size:12px;
+      color:var(--muted);
+      margin-top:6px;
     }
 
-    .form-group input,
-    .form-group select {
-      width: 100%;
-      padding: 6px 8px;
-      box-sizing: border-box;
-      font-size: 14px;
-      border: 1px solid #999;
-      outline: none;
+    /* ===== password toggle ===== */
+    .pw-wrap{
+      position:relative;
+    }
+    .pw-wrap input{
+      padding-right:64px;
+    }
+    .pw-toggle{
+      position:absolute;
+      right:8px;
+      top:50%;
+      transform:translateY(-50%);
+      height:28px;
+      padding:0 10px;
+      border-radius:10px;
+      border:1px solid var(--line-strong);
+      background:#fff;
+      font-size:12px;
+      cursor:pointer;
+      user-select:none;
     }
 
-    .note {
-      font-size: 12px;
-      color: #666;
-      margin-top: 2px;
+    /* ★見た目を●にする（type=text運用時に使う） */
+    #password.masked{
+      -webkit-text-security: disc; /* Safari/Chrome系 */
+      text-security: disc;         /* 将来用 */
     }
 
-    .error {
-      color: #c00;
-      font-size: 13px;
-      margin-top: 6px;
-      white-space: pre-wrap;
+    /* ===== error ===== */
+    .danger{
+      border-color: rgba(180,35,24,.65)!important;
+      box-shadow: 0 0 0 4px rgba(180,35,24,.10)!important;
+    }
+    .field-error{
+      color:var(--danger);
+      font-size:12px;
+      margin-top:6px;
+      display:none;
+      white-space:pre-wrap;
     }
 
-    .success {
-      color: #080;
-      font-size: 13px;
-      margin-top: 6px;
-      white-space: pre-wrap;
+    .actions{
+      display:flex;
+      justify-content:flex-end;
+      margin-top:14px;
     }
-
-    .btn-area {
-      text-align: center;
-      margin-top: 18px;
+    .btn{
+      height:42px;
+      padding:0 16px;
+      border-radius:12px;
+      border:1px solid var(--line-strong);
+      background:#fff;
+      cursor:pointer;
+      font-size:13px;
     }
-
-    button {
-      padding: 8px 18px;
-      cursor: pointer;
-      font-size: 14px;
+    .btn-primary{
+      background:var(--accent);
+      color:#fff;
+      font-weight:800;
     }
-    button:disabled {
-      opacity: 0.6;
-      cursor: not-allowed;
-    }
-
-    /* ===== 入力エラー見た目 ===== */
-    .danger {
-      border-color: #c00 !important;
-    }
-    .field-error {
-      color: #c00;
-      font-size: 12px;
-      margin-top: 4px;
-      display: none;
-      white-space: pre-wrap;
+    .btn:disabled{
+      opacity:.6;
+      cursor:not-allowed;
     }
   </style>
 </head>
-<body>
 
-<!-- ===== super_admin用ヘッダー（管理画面と統一） ===== -->
+<body>
 <header>
-  <a href="adminevents.html">説明会情報管理</a>
-  <a href="admincompanies.html">会社情報管理</a>
-  <a href="super_admin_user_manage.html">ユーザー管理</a>
-  <a href="teacherRegister.html">新規教師登録</a>
-  <a href="#" id="logoutLink">ログアウト</a>
-  <a href="super_admin_mypage.html">アカウント</a>
+  <div class="header-inner">
+    <nav class="nav">
+      <a href="adminevents.html">説明会情報管理</a>
+      <a href="admincompanies.html">会社情報管理</a>
+      <a href="super_admin_user_manage.html">ユーザー管理</a>
+      <a class="is-active" href="teacherRegister.html">新規教師登録</a>
+      <a href="super_admin_mypage.html">アカウント</a>
+      <a href="#" id="logoutLink" class="danger-link">ログアウト</a>
+    </nav>
+  </div>
 </header>
 
 <main>
   <h1>教師用アカウント新規登録</h1>
 
   <div class="form-card">
-    <div id="message"></div>
+    <div id="message" class="message"></div>
 
-    <div class="form-group">
-      <label for="name">氏名</label>
-      <input id="name" type="text" autocomplete="name">
+    <div class="field">
+      <label>氏名</label>
+      <input id="name">
       <div id="nameErr" class="field-error"></div>
     </div>
 
-    <div class="form-group">
-      <label for="email">メールアドレス</label>
-      <input id="email" type="email" autocomplete="email">
+    <div class="field">
+      <label>メールアドレス</label>
+      <input id="email" type="email">
       <div id="emailErr" class="field-error"></div>
     </div>
 
-    <div class="form-group">
-      <label for="password">パスワード</label>
-      <input id="password" type="password" autocomplete="new-password">
+    <div class="field">
+      <label>パスワード</label>
+      <div class="pw-wrap">
+        <input id="password" type="password" autocomplete="new-password">
+        <button type="button" class="pw-toggle" id="pwToggle">表示</button>
+      </div>
       <div class="note">英数字8文字以上（記号・全角は不可）</div>
       <div id="passwordErr" class="field-error"></div>
     </div>
 
-    <div class="form-group">
-      <label for="grade">担当学年</label>
+    <div class="field">
+      <label>担当学年</label>
       <select id="grade">
         <option value="">選択してください</option>
         <option value="1">1年</option>
@@ -164,294 +251,94 @@
       <div id="gradeErr" class="field-error"></div>
     </div>
 
-    <div class="form-group">
-      <label for="myClass">クラス</label>
+    <div class="field">
+      <label>クラス</label>
       <select id="myClass">
         <option value="">選択してください</option>
-        <option value="A">A</option>
-        <option value="B">B</option>
-        <option value="C">C</option>
-        <option value="D">D</option>
-        <option value="E">E</option>
+        <option>A</option><option>B</option><option>C</option>
+        <option>D</option><option>E</option>
       </select>
       <div id="classErr" class="field-error"></div>
     </div>
 
-    <div class="btn-area">
-      <button id="registerBtn">登録する</button>
+    <div class="actions">
+      <button id="registerBtn" class="btn btn-primary">登録する</button>
     </div>
   </div>
 </main>
 
 <script>
   const API_BASE = "http://localhost:8080";
-  // const API_BASE = "http://45.76.55.162:8080"; // 外部公開用
-
   const token = localStorage.getItem("token");
   const role = (localStorage.getItem("role") || "").toUpperCase();
-  const isSuperAdmin = (role === "SUPER_ADMIN");
+  const isSuperAdmin = role === "SUPER_ADMIN";
 
   const msgEl = document.getElementById("message");
   const registerBtn = document.getElementById("registerBtn");
 
-  function showMessage(text, isError) {
-    msgEl.textContent = text;
-    msgEl.className = isError ? "error" : "success";
+  function showMessage(text, err){
+    msgEl.textContent = text || "";
+    msgEl.className = "message " + (err ? "error" : "success");
   }
 
-  // ===== ログアウト =====
-  document.getElementById("logoutLink").addEventListener("click", (e) => {
+  document.getElementById("logoutLink").onclick = e => {
     e.preventDefault();
-    localStorage.removeItem("token");
-    localStorage.removeItem("userId");
-    localStorage.removeItem("email");
-    localStorage.removeItem("name");
-    localStorage.removeItem("role");
-    alert("ログアウトしました。");
-    window.location.href = "index.html";
-  });
-
-  // ===== super_adminチェック（表示は残し、操作だけ止める） =====
-  if (!token) {
-    showMessage("JWTトークンがありません。先にsuper_adminでログインしてください。", true);
-    registerBtn.disabled = true;
-  } else if (!isSuperAdmin) {
-    showMessage("権限がありません。super_adminでログインしてください。", true);
-    registerBtn.disabled = true;
-  }
-
-  // ===== 表示ヘルパー =====
-  function show(el) { el.style.display = "block"; }
-  function hide(el) { el.style.display = "none"; }
-
-  // ★「触った後だけ」赤文字を出すためのフラグ
-  const touched = {
-    name: false,
-    email: false,
-    password: false,
-    grade: false,
-    myClass: false
+    ["token","userId","email","name","role"].forEach(k=>localStorage.removeItem(k));
+    window.location.href="index.html";
   };
 
-  function setFieldError(inputEl, errEl, message, shouldShow) {
-    if (!inputEl || !errEl) return;
-
-    // shouldShow=false の時は「表示しない（赤枠も付けない）」に統一
-    if (!shouldShow) {
-      inputEl.classList.remove("danger");
-      errEl.textContent = "";
-      hide(errEl);
-      return;
-    }
-
-    if (message) {
-      inputEl.classList.add("danger");
-      errEl.textContent = message;
-      show(errEl);
-    } else {
-      inputEl.classList.remove("danger");
-      errEl.textContent = "";
-      hide(errEl);
-    }
-  }
-
-  // ===== ルール =====
-  const PASS_RULE = /^[A-Za-z0-9]{8,}$/;
-
-  function validateOne(fieldKey, showIfTouchedOnly, showAllForced) {
-    const nameEl = document.getElementById("name");
-    const emailEl = document.getElementById("email");
-    const pwEl = document.getElementById("password");
-    const gradeEl = document.getElementById("grade");
-    const classEl = document.getElementById("myClass");
-
-    const name = nameEl.value.trim();
-    const email = emailEl.value.trim();
-    const password = pwEl.value;
-    const grade = gradeEl.value;
-    const myClass = classEl.value;
-
-    // 「表示してよいか？」＝ (送信時強制) OR (触った後だけ)
-    const canShow = showAllForced ? true : (showIfTouchedOnly ? !!touched[fieldKey] : true);
-
-    if (fieldKey === "name") {
-      const msg = !name ? "氏名を入力してください。" : "";
-      setFieldError(nameEl, document.getElementById("nameErr"), msg, canShow);
-      return !msg;
-    }
-
-    if (fieldKey === "email") {
-      let msg = "";
-      if (!email) msg = "メールアドレスを入力してください。";
-      else if (!email.includes("@")) msg = "メールアドレスは「@」を含めてください。";
-      setFieldError(emailEl, document.getElementById("emailErr"), msg, canShow);
-      return !msg;
-    }
-
-    if (fieldKey === "password") {
-      let msg = "";
-      if (!password) msg = "パスワードを入力してください。";
-      else if (!PASS_RULE.test(password)) msg = "パスワードは英数字8文字以上にしてください。";
-      setFieldError(pwEl, document.getElementById("passwordErr"), msg, canShow);
-      return !msg;
-    }
-
-    if (fieldKey === "grade") {
-      const msg = !grade ? "担当学年を選択してください。" : "";
-      setFieldError(gradeEl, document.getElementById("gradeErr"), msg, canShow);
-      return !msg;
-    }
-
-    if (fieldKey === "myClass") {
-      const msg = !myClass ? "クラスを選択してください。" : "";
-      setFieldError(classEl, document.getElementById("classErr"), msg, canShow);
-      return !msg;
-    }
-
-    return true;
-  }
-
-  // ★全体チェック：エラー表示は「触ったものだけ」／送信時は全て表示
-  function validateAll({ showTouchedOnly = true, forceShowAll = false } = {}) {
-    const okName = validateOne("name", showTouchedOnly, forceShowAll);
-    const okEmail = validateOne("email", showTouchedOnly, forceShowAll);
-    const okPw = validateOne("password", showTouchedOnly, forceShowAll);
-    const okGrade = validateOne("grade", showTouchedOnly, forceShowAll);
-    const okClass = validateOne("myClass", showTouchedOnly, forceShowAll);
-
-    let ok = okName && okEmail && okPw && okGrade && okClass;
-
-    if (!token || !isSuperAdmin) ok = false;
-
-    registerBtn.disabled = !ok;
-    return ok;
-  }
-
-  // ===== 入力を「触った」扱いにする（blur/change時） =====
-  function markTouched(key) {
-    touched[key] = true;
-  }
-
-  // 触ったら、その項目だけ表示許可して再検証
-  function attachTouchedValidation(id, key) {
-    const el = document.getElementById(id);
-
-    // 入力中はボタン活性を更新したいので validateAll は走らせるが、
-    // エラー表示は touched のものだけに限定される
-    el.addEventListener("input", () => {
-      validateAll({ showTouchedOnly: true, forceShowAll: false });
-    });
-
-    // blur/change で「触った」確定 → その瞬間から赤文字出してOK
-    el.addEventListener("blur", () => {
-      markTouched(key);
-      validateAll({ showTouchedOnly: true, forceShowAll: false });
-    });
-    el.addEventListener("change", () => {
-      markTouched(key);
-      validateAll({ showTouchedOnly: true, forceShowAll: false });
-    });
-  }
-
-  attachTouchedValidation("name", "name");
-  attachTouchedValidation("email", "email");
-  attachTouchedValidation("password", "password");
-  attachTouchedValidation("grade", "grade");
-  attachTouchedValidation("myClass", "myClass");
-
-  async function readError(res) {
-    const raw = await res.text();
-    if (!raw) return "";
-    try {
-      const obj = JSON.parse(raw);
-      return obj.message ?? JSON.stringify(obj);
-    } catch {
-      return raw;
-    }
-  }
-
-  async function registerTeacher() {
-    if (!token || !isSuperAdmin) return;
-
-    // ★送信時は全項目のエラーを強制表示
-    const ok = validateAll({ showTouchedOnly: false, forceShowAll: true });
-    if (!ok) {
-      showMessage("入力内容を確認してください。", true);
-      return;
-    }
-
-    const name = document.getElementById("name").value.trim();
-    const email = document.getElementById("email").value.trim();
-    const password = document.getElementById("password").value;
-    const grade = document.getElementById("grade").value;
-    const myClass = document.getElementById("myClass").value;
-
-    const payload = {
-      name,
-      email,
-      password,
-      grade: parseInt(grade, 10),
-      myClass
-    };
-
+  if(!token || !isSuperAdmin){
+    showMessage("super_adminでログインしてください。", true);
     registerBtn.disabled = true;
-    showMessage("", false);
+  }
 
-    try {
-      const res = await fetch(`${API_BASE}/auth/register/teacher`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${token}`
-        },
-        body: JSON.stringify(payload)
-      });
+  /* =========================================================
+     ブラウザ標準の 👁（パスワード表示アイコン）を “入力中に出さない”
+     - フォーカス中は type="text" にして、見た目を●にする
+     - ボタン押下時だけ実文字表示
+  ========================================================= */
 
-      if (!res.ok) {
-        const errMsg = await readError(res);
-        showMessage(`登録に失敗しました。\n${errMsg || "メール重複などを確認してください。"}`, true);
-        // 失敗後：触ったものだけ表示に戻す
-        validateAll({ showTouchedOnly: true, forceShowAll: false });
-        return;
+  const pwInput = document.getElementById("password");
+  const pwToggle = document.getElementById("pwToggle");
+
+  // 表示モードかどうか（実文字を見せるか）
+  let reveal = false;
+
+  function applyPwMode() {
+    if (reveal) {
+      // 実文字表示
+      pwInput.type = "text";
+      pwInput.classList.remove("masked");
+      pwToggle.textContent = "非表示";
+    } else {
+      // 実文字は隠す（フォーカス中はtype=text + ●、フォーカス外はtype=password）
+      const focused = (document.activeElement === pwInput);
+
+      if (focused) {
+        // ★ここが肝：入力中にtype=passwordにしない → ブラウザ👁が出ない
+        pwInput.type = "text";
+        pwInput.classList.add("masked");
+      } else {
+        pwInput.classList.remove("masked");
+        pwInput.type = "password";
       }
-
-      showMessage("教師アカウントの登録が完了しました。", false);
-
-      // 入力欄クリア
-      document.getElementById("name").value = "";
-      document.getElementById("email").value = "";
-      document.getElementById("password").value = "";
-      document.getElementById("grade").value = "";
-      document.getElementById("myClass").value = "";
-
-      // touchedもリセット（初期状態に戻す）
-      Object.keys(touched).forEach(k => touched[k] = false);
-
-      // エラーは全部消す（初期状態で赤文字が出ないように）
-      ["nameErr","emailErr","passwordErr","gradeErr","classErr"].forEach(id => {
-        const el = document.getElementById(id);
-        el.textContent = "";
-        hide(el);
-      });
-      ["name","email","password","grade","myClass"].forEach(id => {
-        document.getElementById(id).classList.remove("danger");
-      });
-
-      // 初期状態：ボタンは無効だが、赤文字は出さない
-      validateAll({ showTouchedOnly: true, forceShowAll: false });
-
-    } catch (err) {
-      console.error(err);
-      showMessage("サーバーへの接続に失敗しました。バックエンドを確認してください。", true);
-      validateAll({ showTouchedOnly: true, forceShowAll: false });
+      pwToggle.textContent = "表示";
     }
   }
 
-  registerBtn.addEventListener("click", registerTeacher);
+  // 初期状態
+  applyPwMode();
 
-  // ★初期状態：赤文字は出さない（ボタンだけ無効）
-  validateAll({ showTouchedOnly: true, forceShowAll: false });
+  // 入力欄のフォーカス状態で切り替え
+  pwInput.addEventListener("focus", () => applyPwMode());
+  pwInput.addEventListener("blur",  () => applyPwMode());
+
+  // ボタンで実文字表示/非表示
+  pwToggle.addEventListener("click", () => {
+    reveal = !reveal;
+    applyPwMode();
+    pwInput.focus(); // 操作感よくする
+  });
 </script>
-
 </body>
 </html>

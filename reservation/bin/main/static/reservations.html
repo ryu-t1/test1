@@ -2,159 +2,398 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>予約確認</title>
+
   <style>
-    body { font-family: Arial, sans-serif; margin:0; background:#fafafa; }
+    :root{
+      --bg:#f6f7fb;
+      --card:#ffffff;
+      --text:#101828;
+      --muted:#667085;
+      --line:#e4e7ec;
+      --line-strong:#d0d5dd;
+      --shadow: 0 10px 30px rgba(16,24,40,.08);
+      --shadow-sm: 0 6px 16px rgba(16,24,40,.06);
+      --radius:14px;
+      --accent:#2563eb;
+      --accent-2:#1d4ed8;
+      --danger:#b42318;
+      --danger-bg: rgba(180,35,24,.08);
+      --disabled:#98a2b3;
+      --focus: 0 0 0 4px rgba(37,99,235,.18);
 
-    /* 上部メニュー（index.html と合わせる） */
-    header {
-      border-bottom: 1px solid #ccc;
-      padding: 16px 40px;
-      display: flex;
-      justify-content: center;
-      gap: 80px;
-      font-size: 14px;
-      background-color: #fff;
-    }
-    header a { text-decoration:none; color:#333; cursor:pointer; }
-
-    main { max-width: 900px; margin: 30px auto 60px; padding: 0 16px; }
-
-    h2 { margin: 0 0 14px; }
-
-    /* タブ */
-    .tabs { display:flex; gap:10px; margin: 12px 0 16px; }
-    .tab {
-      padding: 10px 14px;
-      border: 1px solid #333;
-      background:#fff;
-      cursor:pointer;
-      font-size: 14px;
-    }
-    .tab.active { background:#333; color:#fff; }
-
-    /* セクションメッセージ */
-    .message {
-      text-align: center;
-      margin-top: 14px;
-      color: #666;
+      /* layout */
+      --container: 1120px;   /* header max */
+      --content: 980px;      /* main max */
+      --pad: 24px;
     }
 
-    /* カード */
-    .card {
-      border: 1px solid #333;
-      background: #fff;
-      margin-bottom: 12px;
-      border-radius: 8px;
-      overflow: hidden;
+    *{ box-sizing:border-box; }
+    html, body{ height:100%; }
+
+    body{
+      margin:0;
+      padding-bottom: 56px; /* 下の余白（詰まり防止） */
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans JP", "Hiragino Kaku Gothic ProN", Meiryo, sans-serif;
+      color: var(--text);
+      background-color: var(--bg);
+      background-image: radial-gradient(1200px 520px at 50% -180px, rgba(37,99,235,.10), rgba(37,99,235,0));
+      background-repeat: no-repeat;
+      background-attachment: fixed;
+      line-height:1.55;
     }
 
-    .card-head {
-      padding: 12px 16px;
+    /* ===== Header（統一） ===== */
+    header{
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      background: rgba(255,255,255,.92);
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid var(--line);
+    }
+
+    .header-inner{
+      max-width: var(--container);
+      margin: 0 auto;
+      padding: 14px var(--pad);
       display:flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 12px;
-      border-bottom: 1px solid #eee;
+      justify-content:center;
+      align-items:center;
     }
 
-    .title {
-      font-weight: bold;
-      font-size: 16px;
-      margin-bottom: 4px;
+    .nav{
+      width: min(760px, 100%);
+      display:flex;
+      align-items:center;
+      justify-content: space-around;
+      gap: 10px;
+      flex-wrap:wrap;
     }
-    .sub { font-size: 13px; color:#333; }
 
-    .badge {
-      font-size: 12px;
-      padding: 4px 10px;
-      border: 1px solid #999;
+    .nav a{
+      text-decoration:none;
+      color:#344054;
+      font-size: 13px;
+      padding: 8px 12px;
       border-radius: 999px;
+      transition: background-color .15s ease, color .15s ease, transform .05s ease;
+      outline: none;
       white-space: nowrap;
     }
-    .badge.upcoming { border-color: #2a7; }
-    .badge.past { opacity: 0.7; }
-
-    .label { font-weight: bold; margin-top: 6px; }
-    .muted { color:#666; }
-
-    /* 過去は少し薄く */
-    .pastCard { opacity: 0.85; }
-
-    /* エラーボックス */
-    .box {
-      border: 1px dashed #aaa;
-      background:#fff;
-      padding: 16px;
-      border-radius: 8px;
-      color:#555;
-      text-align: center;
+    .nav a:hover{ background:#f2f4f7; color:#111827; }
+    .nav a:active{ transform: translateY(1px); }
+    .nav a:focus-visible{ box-shadow: var(--focus); }
+    .nav a.is-active{
+      background: rgba(37,99,235,.10);
+      color:#1d4ed8;
+      font-weight:700;
+      border: 1px solid rgba(37,99,235,.20);
     }
 
-    /* アコーディオン */
-    .acc-toggle-btn {
-      padding: 4px 8px;
+    /* ===== Layout ===== */
+    main{
+      max-width: var(--content);
+      margin: 26px auto 0;
+      padding: 0 16px 90px; /* 下に余白 */
+    }
+
+    .page-title{
+      display:flex;
+      align-items:flex-end;
+      justify-content:space-between;
+      gap: 12px;
+      flex-wrap:wrap;
+      margin: 8px 0 14px;
+    }
+    .page-title h1{
+      margin: 0;
+      font-size: 18px;
+      letter-spacing: .02em;
+    }
+    .page-title .hint{
+      margin: 0;
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    /* ===== Tabs ===== */
+    .tabs{
+      margin-top: 14px;
+      display:flex;
+      justify-content:center;
+      gap: 10px;
+      flex-wrap:wrap;
+    }
+
+    .tab{
+      height: 40px;
+      padding: 0 14px;
+      border-radius: 999px;
+      border: 1px solid var(--line-strong);
+      background:#fff;
+      color:#344054;
+      cursor:pointer;
+      font-size: 13px;
+      transition: background-color .15s ease, transform .05s ease, border-color .15s ease;
+      outline: none;
+      white-space: nowrap;
+    }
+    .tab:hover{ background:#f9fafb; }
+    .tab:active{ transform: translateY(1px); }
+    .tab:focus-visible{ box-shadow: var(--focus); }
+
+    .tab.active{
+      background: rgba(37,99,235,.10);
+      border-color: rgba(37,99,235,.35);
+      color: #1d4ed8;
+      font-weight: 700;
+    }
+
+    /* ===== Message / Box ===== */
+    .message{
+      text-align:center;
+      margin-top: 16px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .box{
+      background: var(--card);
+      border: 1px dashed var(--line-strong);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow-sm);
+      padding: 16px;
+      color:#555;
+      text-align:center;
+      margin-top: 14px;
+    }
+
+    /* ===== Card ===== */
+    #list{ margin-top: 16px; display:flex; flex-direction:column; gap: 12px; }
+
+    .card{
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow-sm);
+      overflow:hidden;
+    }
+    .card.pastCard{ opacity: .86; }
+
+    .card-head{
+      padding: 14px;
+      display:flex;
+      justify-content: space-between;
+      align-items:center;
+      gap: 12px;
+    }
+
+    .left{
+      min-width: 0;
+      display:flex;
+      flex-direction:column;
+      gap: 6px;
+    }
+
+    .title{
+      font-weight: 800;
+      font-size: 14.5px;
+      letter-spacing:.01em;
+      overflow:hidden;
+      text-overflow:ellipsis;
+      white-space:nowrap;
+    }
+
+    .meta{
+      display:flex;
+      gap: 8px 10px;
+      flex-wrap:wrap;
+      align-items:center;
+      color: var(--muted);
+      font-size: 12.5px;
+    }
+
+    .chip{
+      display:inline-flex;
+      align-items:center;
+      gap: 6px;
+      padding: 5px 9px;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      background: #f9fafb;
+      color:#344054;
+      line-height: 1;
+    }
+    .chip b{ color:#111827; font-weight:600; }
+
+    .right{
+      display:flex;
+      align-items:center;
+      gap: 10px;
+      flex-shrink:0;
+    }
+
+    .badge{
+      font-size: 12px;
+      padding: 6px 10px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background:#f9fafb;
+      color:#344054;
+      white-space: nowrap;
+      line-height: 1;
+    }
+    .badge.upcoming{
+      border-color: rgba(42,170,119,.45);
+      background: rgba(42,170,119,.08);
+      color: #0f5132;
+      font-weight: 700;
+    }
+    .badge.past{
+      opacity: .85;
+    }
+
+    .acc-toggle-btn{
+      height: 34px;
+      padding: 0 10px;
+      border-radius: 10px;
+      border: 1px solid var(--line-strong);
+      background: #fff;
       cursor: pointer;
       font-size: 12px;
+      color:#111827;
+      transition: background-color .15s ease, transform .05s ease;
+      outline: none;
+      white-space: nowrap;
+    }
+    .acc-toggle-btn:hover{ background:#f9fafb; }
+    .acc-toggle-btn:active{ transform: translateY(1px); }
+    .acc-toggle-btn:focus-visible{ box-shadow: var(--focus); }
+
+    .acc-body{
+      display:none;
+      border-top: 1px solid var(--line);
+      padding: 14px;
+      background: #fff;
+      font-size: 13.5px;
     }
 
-    .acc-body {
-      display: none; /* 初期は閉じる */
-      border-top: 1px solid #333;
-      padding: 12px 16px;
+    .detail-grid{
+      display:grid;
+      grid-template-columns: 140px 1fr;
+      gap: 10px 14px;
+      align-items:start;
+    }
+    .label{
+      font-weight: 800;
+      color:#111827;
+      font-size: 12.5px;
+      padding-top: 2px;
+    }
+    .muted{ color:#667085; word-break: break-word; }
+
+    .detail-actions{
+      margin-top: 12px;
+      display:flex;
+      justify-content:flex-end;
+      gap: 10px;
+      flex-wrap:wrap;
     }
 
-    .cancel-btn {
-      margin-top: 10px;
-      padding: 6px 12px;
+    .btn{
+      height: 40px;
+      padding: 0 14px;
+      border-radius: 12px;
+      border: 1px solid var(--line-strong);
+      background: #fff;
+      color: #111827;
+      font-size: 13px;
       cursor: pointer;
+      transition: transform .05s ease, background-color .15s ease, border-color .15s ease;
+      outline: none;
+      white-space: nowrap;
     }
-    .cancel-btn.danger {
-      background: #f2dede;
-      border: 1px solid #a94442;
+    .btn:hover{ background:#f9fafb; }
+    .btn:active{ transform: translateY(1px); }
+    .btn:focus-visible{ box-shadow: var(--focus); }
+
+    .btn-danger{
+      border-color: rgba(180,35,24,.28);
+      background: var(--danger-bg);
+      color: var(--danger);
+      font-weight: 700;
     }
-    .cancel-btn[disabled] {
-      background: #eee;
-      border: 1px solid #bbb;
-      color: #666;
+    .btn-danger:hover{
+      background: rgba(180,35,24,.12);
+      border-color: rgba(180,35,24,.35);
+    }
+
+    .btn[disabled]{
+      background: #eef2f6;
+      border-color: var(--line);
+      color: var(--disabled);
       cursor: not-allowed;
+      opacity: 1;
+    }
+
+    /* ===== Responsive ===== */
+    @media (max-width: 900px){
+      :root{ --pad: 16px; }
+      .nav{ width: 100%; justify-content:center; }
+    }
+    @media (max-width: 760px){
+      .card-head{ align-items:flex-start; }
+      .right{ align-self:stretch; }
+      .detail-grid{ grid-template-columns: 1fr; }
+      .label{ font-size: 12px; }
+      .detail-actions{ justify-content:stretch; }
+      .detail-actions .btn{ width: 100%; }
     }
   </style>
 </head>
 
 <body>
-<header>
-  <a href="index.html">説明会一覧</a>
-  <a href="reservations.html">予約確認</a>
-  <a id="loginLink" href="login.html">ログイン</a>
-  <a id="registerLink" href="register.html">新規登録</a>
-  <a href="mypage.html">アカウント</a>
-</header>
+  <header>
+    <div class="header-inner">
+      <nav class="nav">
+        <a href="index.html">説明会一覧</a>
+        <a class="is-active" href="reservations.html">予約確認</a>
+        <a id="loginLink" href="login.html">ログイン</a>
+        <a id="registerLink" href="register.html">新規登録</a>
+        <a href="mypage.html">アカウント</a>
+      </nav>
+    </div>
+  </header>
 
-<main>
-  <h2>予約確認</h2>
+  <main>
+    <div class="page-title">
+      <h1>予約確認</h1>
+      <p class="hint">開催前と開催済みを切り替えて確認できます。</p>
+    </div>
 
-  <div class="tabs">
-    <button id="tab-upcoming" class="tab active">これから（開催前）</button>
-    <button id="tab-past" class="tab">過去（開催済み）</button>
-  </div>
+    <div class="tabs">
+      <button id="tab-upcoming" class="tab active">これから（開催前）</button>
+      <button id="tab-past" class="tab">過去（開催済み）</button>
+    </div>
 
-  <div id="list"></div>
-  <div id="message" class="message"></div>
-</main>
+    <div id="list"></div>
+    <div id="message" class="message"></div>
+  </main>
 
 <script>
   const API_BASE = "http://localhost:8080";
-  //  const API_BASE = "http://45.76.55.162:8080"; //外部公開用のURL
+  // const API_BASE = "http://45.76.55.162:8080"; // 外部公開用
+  // const API_BASE = "";
 
   function getLoginInfo() {
     const token = localStorage.getItem("token");
-    const roleRaw = localStorage.getItem("role"); // "student" / "normal_admin" etc
+    const roleRaw = localStorage.getItem("role");
     const role = roleRaw ? roleRaw.toUpperCase() : null;
     return { token, role };
   }
 
-  // index.html と同じログアウト挙動
   function setupHeaderByLoginStatus() {
     const loginLink = document.getElementById("loginLink");
     const registerLink = document.getElementById("registerLink");
@@ -189,7 +428,6 @@
     }
   }
 
-  // "yyyy-MM-dd HH:mm:ss" を見やすく
   function fmt(dtStr) {
     if (!dtStr) return "未定";
     return String(dtStr).replace("T", " ").slice(0, 19);
@@ -205,7 +443,6 @@
   }
 
   // 締切を過ぎているか（時刻まで厳密）
-  // DB: "yyyy-MM-dd HH:mm:ss" 想定 → "yyyy-MM-ddTHH:mm:ss" にして Date に食わせる
   function isDeadlineOver(deadlineStr) {
     if (!deadlineStr) return false;
     const iso = String(deadlineStr).replace(" ", "T");
@@ -214,7 +451,6 @@
     return d < new Date();
   }
 
-  // 画面状態
   let data = { upcoming: [], past: [] };
   let current = "upcoming";
 
@@ -238,22 +474,20 @@
       return;
     }
 
-    // まずHTMLを描画（アコーディオンは閉じた状態）
     listEl.innerHTML = items.map((r, idx) => {
       const deadlineOver = isDeadlineOver(r.deadline);
 
-      // upcoming の時だけ「取消」表示。ただし締切過ぎは disabled
       let cancelHtml = "";
       if (current === "upcoming") {
         if (deadlineOver) {
           cancelHtml = `
-            <button class="cancel-btn" disabled>
+            <button class="btn" disabled>
               締切済み（取消不可）
             </button>
           `;
         } else {
           cancelHtml = `
-            <button class="cancel-btn danger" data-reservation-id="${r.reservationId}">
+            <button class="btn btn-danger cancel-btn" data-reservation-id="${r.reservationId}">
               予約を取消
             </button>
           `;
@@ -263,13 +497,15 @@
       return `
         <div class="card ${current === "past" ? "pastCard" : ""}">
           <div class="card-head">
-            <div>
+            <div class="left">
               <div class="title">${escapeHtml(r.companyName || "会社名未設定")}</div>
-              <div class="sub">開催日：${escapeHtml(fmt(r.eventDate))}</div>
-              <div class="sub">場所：${escapeHtml(r.place || "未定")}</div>
+              <div class="meta">
+                <span class="chip"><b>開催日</b>：${escapeHtml(fmt(r.eventDate))}</span>
+                <span class="chip"><b>場所</b>：${escapeHtml(r.place || "未定")}</span>
+              </div>
             </div>
 
-            <div style="display:flex; align-items:center; gap:10px;">
+            <div class="right">
               <div class="badge ${current}">
                 ${current === "upcoming" ? "開催前" : "開催済み"}
               </div>
@@ -278,38 +514,39 @@
           </div>
 
           <div class="acc-body" id="acc-${idx}">
-            <div class="label">締切</div>
-            <div class="muted">${escapeHtml(fmt(r.deadline))}</div>
+            <div class="detail-grid">
+              <div class="label">締切</div>
+              <div class="muted">${escapeHtml(fmt(r.deadline))}</div>
 
-            <div class="label">持ち物</div>
-            <div>${escapeHtml(r.item || "未登録")}</div>
+              <div class="label">持ち物</div>
+              <div>${escapeHtml(r.item || "未登録")}</div>
 
-            <div class="label">説明</div>
-            <div>${escapeHtml(r.note || "未登録")}</div>
+              <div class="label">説明</div>
+              <div>${escapeHtml(r.note || "未登録")}</div>
 
-            <div class="label">予約日</div>
-            <div class="muted">${escapeHtml(fmt(r.reservationDate))}</div>
+              <div class="label">予約日</div>
+              <div class="muted">${escapeHtml(fmt(r.reservationDate))}</div>
+            </div>
 
-            ${cancelHtml}
+            <div class="detail-actions">
+              ${cancelHtml}
+            </div>
           </div>
         </div>
       `;
     }).join("");
 
-    // アコーディオン開閉
     document.querySelectorAll(".acc-toggle-btn").forEach(btn => {
       btn.addEventListener("click", () => {
         const idx = btn.getAttribute("data-idx");
         const body = document.getElementById(`acc-${idx}`);
         const isOpen = body.style.display === "block";
-
         body.style.display = isOpen ? "none" : "block";
         btn.textContent = isOpen ? "▽ 詳細表示" : "△ 閉じる";
       });
     });
 
-    // 取消（disabled には付かないが念のため）
-    document.querySelectorAll(".cancel-btn.danger").forEach(btn => {
+    document.querySelectorAll(".cancel-btn").forEach(btn => {
       btn.addEventListener("click", async () => {
         const reservationId = btn.getAttribute("data-reservation-id");
         const ok = window.confirm("この予約を取り消しますか？");
@@ -330,9 +567,8 @@
 
           if (res.ok) {
             alert("予約を取り消しました。");
-            await loadMyReservations(); // 再取得して画面更新
+            await loadMyReservations();
           } else if (res.status === 409) {
-            // サーバ側で「締切過ぎ」などをブロックしたケース
             const text = await res.text();
             alert(text || "締切を過ぎているため取消できません。");
             await loadMyReservations();
@@ -358,14 +594,12 @@
   async function loadMyReservations() {
     const { token, role } = getLoginInfo();
 
-    // 未ログイン
     if (!token) {
       listEl.innerHTML = `<div class="box">予約確認にはログインが必要です。</div>`;
       msgEl.textContent = "";
       return;
     }
 
-    // フロント側でも学生以外はブロック（※最終的にはサーバ側の権限が本命）
     if (role !== "STUDENT") {
       listEl.innerHTML = `<div class="box">この機能は学生アカウントのみ利用できます。</div>`;
       msgEl.textContent = "";

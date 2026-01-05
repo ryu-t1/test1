@@ -1,203 +1,407 @@
-<!-- login.html -->
+<!-- login.html（統一デザイン版） -->
 <!DOCTYPE html>
 <html lang="ja">
-<head>
-  <meta charset="UTF-8">
-  <title>ログイン</title>
-  <style>
-    body {
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Helvetica Neue", sans-serif;
-      background-color: #f5f5f5;
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ログイン</title>
+    <style>
+    :root{
+      --bg:#f6f7fb;
+      --card:#ffffff;
+      --text:#101828;
+      --muted:#667085;
+      --line:#e4e7ec;
+      --line-strong:#d0d5dd;
+      --shadow: 0 10px 30px rgba(16,24,40,.08);
+      --shadow-sm: 0 6px 16px rgba(16,24,40,.06);
+      --radius:14px;
+      --accent:#2563eb;
+      --accent-2:#1d4ed8;
+      --danger:#b42318;
+      --focus: 0 0 0 4px rgba(37,99,235,.18);
+
+      /* layout */
+      --container: 1120px;   /* header max */
+      --content: 980px;      /* main max */
+      --pad: 24px;
     }
-    .container {
-      width: 600px;
-      margin: 60px auto;
-      background: #fff;
-      border: 4px solid #000;
-      padding: 60px 80px;
-      box-sizing: border-box;
+
+    *{ box-sizing:border-box; }
+    html, body{ height:100%; }
+
+    body{
+      margin:0;
+      padding-bottom: 56px; /* 下の余白（ページ末の詰まり防止） */
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans JP", "Hiragino Kaku Gothic ProN", Meiryo, sans-serif;
+      color: var(--text);
+      background-color: var(--bg);
+      background-image: radial-gradient(1200px 520px at 50% -180px, rgba(37,99,235,.10), rgba(37,99,235,0));
+      background-repeat: no-repeat;
+      background-attachment: fixed;
+      line-height:1.55;
     }
-    h1 {
-      text-align: center;
-      margin-bottom: 60px;
-      letter-spacing: 0.2em;
-      font-size: 28px;
+
+    /* ===== Header（indexと統一） ===== */
+    header{
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      background: rgba(255,255,255,.92);
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid var(--line);
     }
-    label {
-      display: block;
+
+    .header-inner{
+      max-width: var(--container);
+      margin: 0 auto;
+      padding: 14px var(--pad);
+      display:flex;
+      justify-content:center;
+      align-items:center;
+    }
+
+    .nav{
+      width: min(760px, 100%);
+      display:flex;
+      align-items:center;
+      justify-content: space-around;
+      gap: 10px;
+      flex-wrap:wrap;
+    }
+
+    .nav a{
+      text-decoration:none;
+      color:#344054;
+      font-size: 13px;
+      padding: 8px 12px;
+      border-radius: 999px;
+      transition: background-color .15s ease, color .15s ease, transform .05s ease;
+      outline: none;
+      white-space: nowrap;
+    }
+    .nav a:hover{ background:#f2f4f7; color:#111827; }
+    .nav a:active{ transform: translateY(1px); }
+    .nav a:focus-visible{ box-shadow: var(--focus); }
+    .nav a.is-active{
+      background: rgba(37,99,235,.10);
+      color:#1d4ed8;
+      font-weight:700;
+      border: 1px solid rgba(37,99,235,.20);
+    }
+
+    /* ===== Layout ===== */
+    main{
+      max-width: var(--content);
+      margin: 34px auto 90px;
+      padding: 0 16px;
+    }
+
+    .auth-wrap{
+      display:flex;
+      justify-content:center;
+    }
+
+    .card{
+      width: min(560px, 100%);
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 28px 26px;
+    }
+
+    .title{
+      margin: 0 0 18px;
+      font-size: 20px;
+      letter-spacing: .04em;
+      text-align:center;
+    }
+
+    .subtitle{
+      margin: 0 0 20px;
+      font-size: 12.5px;
+      color: var(--muted);
+      text-align:center;
+    }
+
+    .field{
+      margin-bottom: 14px;
+    }
+
+    label{
+      display:block;
+      font-size: 12px;
+      color: var(--muted);
       margin-bottom: 6px;
-      font-size: 14px;
+      padding-left: 2px;
     }
-    input[type="email"],
-    input[type="password"] {
+
+    .input{
       width: 100%;
-      padding: 10px;
-      box-sizing: border-box;
-      border: 2px solid #000;
-      font-size: 14px;
-    }
-    .field {
-      margin-bottom: 30px;
-    }
-    .password-row {
-      display: flex;
-      align-items: center;
-      gap: 4px;
-    }
-    .toggle-password {
-      border: 1px solid #000;
+      height: 42px;
+      border: 1px solid var(--line-strong);
+      border-radius: 12px;
+      padding: 0 12px;
       background: #fff;
-      padding: 6px 8px;
-      cursor: pointer;
-      font-size: 12px;
-    }
-    .hint {
-      font-size: 12px;
-      color: #777;
-      margin-top: 4px;
-    }
-    .error {
-      color: #d00;
-      font-size: 13px;
-      margin-top: 8px;
-    }
-    .actions {
-      display: flex;
-      align-items: center;
-      gap: 16px;
-      margin-top: 20px;
-    }
-    .login-button {
-      padding: 8px 24px;
-      border: 2px solid #000;
-      background: #ddd;
-      cursor: pointer;
-    }
-    .remember-row {
-      margin-top: 16px;
-      font-size: 13px;
-    }
-    .link-row {
-      margin-top: 40px;
-      text-align: center;
+      color: var(--text);
+      outline: none;
+      transition: box-shadow .15s ease, border-color .15s ease;
       font-size: 14px;
     }
-    .link-row a {
-      color: #000;
+    .input::placeholder{ color:#98a2b3; }
+    .input:focus{
+      border-color: rgba(37,99,235,.55);
+      box-shadow: var(--focus);
+    }
+
+    .password-row{
+      display:flex;
+      gap: 10px;
+      align-items:center;
+    }
+    .password-row .input{ flex:1; }
+
+    .toggle-password{
+      height: 42px;
+      padding: 0 12px;
+      border-radius: 12px;
+      border: 1px solid var(--line-strong);
+      background: #fff;
+      cursor: pointer;
+      font-size: 12.5px;
+      color:#111827;
+      transition: background-color .15s ease, transform .05s ease;
+      outline: none;
+      white-space: nowrap;
+    }
+    .toggle-password:hover{ background:#f9fafb; }
+    .toggle-password:active{ transform: translateY(1px); }
+    .toggle-password:focus-visible{ box-shadow: var(--focus); }
+
+    .hint{
+      margin-top: 6px;
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+   .actions{
+  margin-top: 16px;
+  display:flex;
+  gap: 10px;
+  align-items:center;
+  justify-content:center; /* ★ 左寄せ → 中央 */
+  flex-wrap:wrap;
+}
+
+    .btn{
+      height: 42px;
+      padding: 0 14px;
+      border-radius: 12px;
+      border: 1px solid var(--line-strong);
+      background: #fff;
+      color: #111827;
+      font-size: 13px;
+      cursor: pointer;
+      transition: transform .05s ease, background-color .15s ease, border-color .15s ease;
+      outline: none;
+      white-space: nowrap;
+    }
+    .btn:hover{ background:#f9fafb; }
+    .btn:active{ transform: translateY(1px); }
+    .btn:focus-visible{ box-shadow: var(--focus); }
+
+    .btn-primary{
+      background: var(--accent);
+      border-color: rgba(37,99,235,.25);
+      color: #fff;
+      font-weight: 700;
+    }
+    .btn-primary:hover{ background: var(--accent-2); }
+
+    .remember-row{
+      margin-top: 14px;
+      font-size: 13px;
+      color:#344054;
+      display:flex;
+      align-items:center;
+      gap: 10px;
+      user-select:none;
+    }
+    .remember-row input{ transform: translateY(1px); }
+
+    .error{
+      margin-top: 12px;
+      padding: 10px 12px;
+      border-radius: 12px;
+      border: 1px solid rgba(180,35,24,.25);
+      background: rgba(180,35,24,.06);
+      color: var(--danger);
+      font-size: 13px;
+      display:none;
+    }
+
+    .link-row{
+      margin-top: 18px;
+      text-align:center;
+      font-size: 13px;
+      color: var(--muted);
+    }
+    .link-row a{
+      color: var(--accent);
+      text-decoration: none;
+      border-bottom: 1px solid rgba(37,99,235,.35);
+    }
+    .link-row a:hover{ border-bottom-color: rgba(37,99,235,.85); }
+
+    /* ===== Responsive ===== */
+    @media (max-width: 900px){
+      :root{ --pad: 16px; }
+      .nav{ width: 100%; justify-content:center; }
+    }
+    @media (max-width: 520px){
+      .card{ padding: 22px 16px; }
+      .password-row{ flex-direction:column; align-items:stretch; }
+      .toggle-password{ width: 100%; }
+      .actions{ justify-content:stretch; }
+      .actions .btn{ width: 100%; }
     }
   </style>
-</head>
-<body>
-<div class="container">
-  <h1>ログイン</h1>
+  </head>
 
-  <form id="loginForm">
-    <div class="field">
-      <label for="email">メールアドレス</label>
-      <input id="email" type="email" placeholder="メールアドレスを入力してください" required>
-    </div>
-
-    <div class="field">
-      <label for="password">パスワード</label>
-      <div class="password-row">
-        <input id="password" type="password" placeholder="パスワードを入力してください" required>
-        <button type="button" class="toggle-password">👁</button>
+  <body>
+    <header>
+      <div class="header-inner">
+        <nav class="nav">
+          <a href="index.html">説明会一覧</a>
+          <a href="reservations.html">予約確認</a>
+          <a id="loginLink" class="is-active" href="login.html">ログイン</a>
+          <a id="registerLink" href="register.html">新規登録</a>
+          <a href="mypage.html">アカウント</a>
+        </nav>
       </div>
-      <div class="hint">半角英数字</div>
-    </div>
+    </header>
 
-    <div class="actions">
-      <span style="color:#d00; font-size:13px;">パスワードをお忘れの方</span>
-      <button type="submit" class="login-button">ログイン</button>
-    </div>
+    <main>
+      <div class="auth-wrap">
+        <div class="card">
+          <h1 class="title">ログイン</h1>
+          <p class="subtitle">メールアドレスとパスワードを入力してください。</p>
 
-    <div class="remember-row">
-      <label>
-        <input type="checkbox" id="rememberMe">
-        ログイン情報を保存する
-      </label>
-    </div>
+          <form id="loginForm">
+            <div class="field">
+              <label for="email">メールアドレス</label>
+              <input id="email" class="input" type="email"
+                placeholder="メールアドレスを入力してください" required />
+            </div>
 
-    <div id="errorMessage" class="error" style="display:none;"></div>
+            <div class="field">
+              <label for="password">パスワード</label>
+              <div class="password-row">
+                <input id="password" class="input" type="password"
+                  placeholder="パスワードを入力してください" required />
+                <button type="button" class="toggle-password"
+                  aria-label="パスワード表示切替">表示</button>
+              </div>
+              <div class="hint">半角英数字</div>
+            </div>
 
-    <div class="link-row">
-      <a href="register.html">新規登録はこちら</a>
-    </div>
-  </form>
-</div>
+            <div class="actions">
+              <button type="submit" class="btn btn-primary">ログイン</button>
+            </div>
 
-<script>
-  const API_BASE = 'http://localhost:8080'; // バックエンドのURLに合わせて変更
-  //  const API_BASE = "http://45.76.55.162:8080"; //外部公開用のURL
+            <label class="remember-row">
+              <input type="checkbox" id="rememberMe" />
+              ログイン情報を保存する
+            </label>
 
-  const loginForm = document.getElementById('loginForm');
-  const errorMessage = document.getElementById('errorMessage');
-  const passwordInput = document.getElementById('password');
-  const togglePasswordBtn = document.querySelector('.toggle-password');
+            <div id="errorMessage" class="error"></div>
 
-  togglePasswordBtn.addEventListener('click', () => {
-    const type = passwordInput.type === 'password' ? 'text' : 'password';
-    passwordInput.type = type;
-  });
+            <div class="link-row">
+              <a href="register.html">新規登録はこちら</a>
+            </div>
+          </form>
+        </div>
+      </div>
+    </main>
 
-  // 「ログイン情報を保存する」で email を残したい場合
-  window.addEventListener('DOMContentLoaded', () => {
-    const savedEmail = localStorage.getItem('savedEmail');
-    if (savedEmail) {
-      document.getElementById('email').value = savedEmail;
-      document.getElementById('rememberMe').checked = true;
-    }
-  });
+    <script>
+    const API_BASE = 'http://localhost:8080';
+    // const API_BASE = "http://45.76.55.162:8080"; // 外部公開用
 
-  loginForm.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    errorMessage.style.display = 'none';
-    errorMessage.textContent = '';
+    const loginForm = document.getElementById('loginForm');
+    const errorMessage = document.getElementById('errorMessage');
+    const passwordInput = document.getElementById('password');
+    const togglePasswordBtn = document.querySelector('.toggle-password');
 
-    const email = document.getElementById('email').value.trim();
-    const password = document.getElementById('password').value;
-    const remember = document.getElementById('rememberMe').checked;
-
-    if (remember) {
-      localStorage.setItem('savedEmail', email);
-    } else {
-      localStorage.removeItem('savedEmail');
-    }
-
-    try {
-      const res = await fetch(`${API_BASE}/auth/login`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password })
-      });
-
-      if (!res.ok) {
-        const text = await res.text();
-        throw new Error(text || 'ログインに失敗しました');
-      }
-
-      const data = await res.json();
-      // token / role などを保存
-      localStorage.setItem('token', data.token);
-      localStorage.setItem('userId', data.userId);
-      localStorage.setItem('email', data.email);
-      localStorage.setItem('name', data.name);
-      localStorage.setItem('role', data.role); // "student" or "normal_admin"
-
-       // ★ role によって遷移先を分ける
-      if (data.role === 'normal_admin' || data.role === 'super_admin') {
-        window.location.href = 'adminevents.html';   // 管理者用画面（下で作る）
-      } else {
-        // 学生 or その他は学生トップへ
-        window.location.href = 'index.html';
-      }
-
-    } catch (err) {
-      console.error(err);
-      errorMessage.textContent = 'メールアドレスまたはパスワードが正しくありません。';
+    function showError(msg) {
+      errorMessage.textContent = msg;
       errorMessage.style.display = 'block';
     }
-  });
-</script>
-</body>
+    function clearError() {
+      errorMessage.textContent = '';
+      errorMessage.style.display = 'none';
+    }
+
+    togglePasswordBtn.addEventListener('click', () => {
+      const isHidden = passwordInput.type === 'password';
+      passwordInput.type = isHidden ? 'text' : 'password';
+      togglePasswordBtn.textContent = isHidden ? '非表示' : '表示';
+    });
+
+    // 「ログイン情報を保存する」で email を残したい場合
+    window.addEventListener('DOMContentLoaded', () => {
+      const savedEmail = localStorage.getItem('savedEmail');
+      if (savedEmail) {
+        document.getElementById('email').value = savedEmail;
+        document.getElementById('rememberMe').checked = true;
+      }
+    });
+
+    loginForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      clearError();
+
+      const email = document.getElementById('email').value.trim();
+      const password = document.getElementById('password').value;
+      const remember = document.getElementById('rememberMe').checked;
+
+      if (remember) localStorage.setItem('savedEmail', email);
+      else localStorage.removeItem('savedEmail');
+
+      try {
+        const res = await fetch(`${API_BASE}/auth/login`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, password })
+        });
+
+        if (!res.ok) {
+          const text = await res.text();
+          throw new Error(text || 'ログインに失敗しました');
+        }
+
+        const data = await res.json();
+
+        // token / role などを保存
+        localStorage.setItem('token', data.token);
+        localStorage.setItem('userId', data.userId);
+        localStorage.setItem('email', data.email);
+        localStorage.setItem('name', data.name);
+        localStorage.setItem('role', data.role); // "student" or "normal_admin"
+
+        // ★ role によって遷移先を分ける
+        if (data.role === 'normal_admin' || data.role === 'super_admin') {
+          window.location.href = 'adminevents.html';
+        } else {
+          window.location.href = 'index.html';
+        }
+
+      } catch (err) {
+        console.error(err);
+        showError('メールアドレスまたはパスワードが正しくありません。');
+      }
+    });
+  </script>
+  </body>
 </html>

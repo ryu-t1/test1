@@ -2,199 +2,476 @@
 <html lang="ja">
   <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>説明会一覧（学生用）</title>
     <style>
-    body {
-      font-family: Arial, sans-serif;
-      margin: 0;
-      padding: 0;
-      background-color: #fafafa;
-    }
+      :root{
+        --bg:#f6f7fb;
+        --card:#ffffff;
+        --text:#101828;
+        --muted:#667085;
+        --line:#e4e7ec;
+        --line-strong:#d0d5dd;
+        --shadow: 0 10px 30px rgba(16,24,40,.08);
+        --shadow-sm: 0 6px 16px rgba(16,24,40,.06);
+        --radius:14px;
+        --accent:#2563eb;
+        --accent-2:#1d4ed8;
+        --disabled:#98a2b3;
+        --focus: 0 0 0 4px rgba(37,99,235,.18);
 
-    header {
-      border-bottom: 1px solid #ccc;
-      padding: 16px 40px;
-      display: flex;
-      justify-content: center;
-      gap: 80px;
-      font-size: 14px;
-      background-color: #fff;
-    }
-    header a {
-      text-decoration: none;
-      color: #333;
-      cursor: pointer;
-    }
+        /* layout */
+        --container: 1120px;   /* header max */
+        --content: 980px;      /* main max */
+        --pad: 24px;
+      }
 
-    main {
-      max-width: 900px;
-      margin: 30px auto 60px;
-      padding: 0 16px;
-    }
+      *{ box-sizing:border-box; }
+      html, body{ height:100%; }
 
-    .search-box {
-      margin: 0 auto 30px;
-      max-width: 760px;
-      border: 1px solid #333;
-      padding: 16px;
-      text-align: center;
-      background-color: #fff;
-    }
+      body{
+        margin:0;
+        font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans JP", "Hiragino Kaku Gothic ProN", Meiryo, sans-serif;
+        color: var(--text);
+        background-color: var(--bg);
+        background-image: radial-gradient(1200px 520px at 50% -180px, rgba(37,99,235,.10), rgba(37,99,235,0));
+        background-repeat: no-repeat;
+        background-attachment: fixed;
+        line-height:1.55;
+      }
 
-    .search-row{
-      display:flex;
-      gap:10px;
-      justify-content:center;
-      flex-wrap:wrap;
-      margin-bottom:10px;
-    }
+      /* ===== Header ===== */
+      header{
+        position: sticky;
+        top: 0;
+        z-index: 10;
+        background: rgba(255,255,255,.92);
+        backdrop-filter: blur(10px);
+        border-bottom: 1px solid var(--line);
+      }
 
-    .search-box input {
-      padding: 6px 8px;
-      box-sizing: border-box;
-    }
+      /* “中央らへんでいい感じに分散”：
+         1) nav自体は中央配置
+         2) navの中身は等間隔に分散
+         3) ただし巨大画面でも広がりすぎないよう max-width を持たせる */
+      .header-inner{
+        max-width: var(--container);
+        margin: 0 auto;
+        padding: 14px var(--pad);
+        display:flex;
+        justify-content:center;   /* navを中央に */
+        align-items:center;
+      }
 
-    #keyword { width: 320px; }
-    #fromDt, #toDt { width: 210px; }
+      .nav{
+        width: min(760px, 100%);  /* 広がりすぎ防止（中央らへん） */
+        display:flex;
+        align-items:center;
+        justify-content: space-around; /* 中央付近で“分散” */
+        gap: 10px;
+        flex-wrap:wrap;
+      }
 
-    .search-box button {
-      padding: 6px 12px;
-      cursor: pointer;
-    }
+      .nav a{
+        text-decoration:none;
+        color:#344054;
+        font-size: 13px;
+        padding: 8px 12px;
+        border-radius: 999px;
+        transition: background-color .15s ease, color .15s ease, transform .05s ease;
+        outline: none;
+        white-space: nowrap;
+      }
+      .nav a.is-active{
+        background: rgba(37,99,235,.10);
+        color:#1d4ed8;
+        font-weight:700;
+        border: 1px solid rgba(37,99,235,.20);
+      }
+      .nav a:hover{ background:#f2f4f7; color:#111827; }
+      .nav a:active{ transform: translateY(1px); }
+      .nav a:focus-visible{ box-shadow: var(--focus); }
 
-    #eventList { margin-top: 20px; }
+      /* ===== Layout ===== */
+      main{
+  max-width: var(--content);
+  margin: 26px auto 0;      /* 下マージンは使わない */
+  padding: 0 16px 90px;     /* ★ここがポイント：ページ番号の下に余白 */
+}
 
-    .event-card {
-      border: 1px solid #333;
-      background-color: #fff;
-      margin-bottom: 12px;
-    }
+      .page-title{
+        display:flex;
+        align-items:flex-end;
+        justify-content:space-between;
+        gap: 12px;
+        flex-wrap:wrap;
+        margin: 8px 0 14px;
+      }
+      .page-title h1{
+        margin: 0;
+        font-size: 18px;
+        letter-spacing: .02em;
+      }
+      .page-title .hint{
+        margin: 0;
+        font-size: 12px;
+        color: var(--muted);
+      }
 
-    /* ヘッダー（左：会社名/開催日/場所、右：予約人数 + 詳細ボタン） */
-    .event-header {
-      padding: 10px 16px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      cursor: default;
-      gap: 12px;
-    }
+      /* ===== Search Box ===== */
+      .search-box{
+        background: var(--card);
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+        box-shadow: var(--shadow-sm);
+        padding: 14px;
+      }
 
-    .event-main-info {
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-      min-width: 0;
-      flex: 1;
-    }
+      .search-row{
+        display:flex;
+        gap: 10px;
+        flex-wrap:wrap;
+        justify-content:center;
+        align-items:flex-end;
+      }
 
-    .event-title {
-      font-weight: bold;
-    }
+      .field{
+        display:flex;
+        flex-direction:column;
+        gap: 6px;
+        min-width: 180px;
+      }
+      .field label{
+        font-size: 11px;
+        color: var(--muted);
+        padding-left: 2px;
+      }
 
-    .event-sub { font-size: 13px; }
+      .input{
+        height: 40px;
+        border: 1px solid var(--line-strong);
+        border-radius: 12px;
+        padding: 0 12px;
+        background: #fff;
+        color: var(--text);
+        outline: none;
+        transition: box-shadow .15s ease, border-color .15s ease;
+      }
+      .input::placeholder{ color:#98a2b3; }
+      .input:focus{
+        border-color: rgba(37,99,235,.55);
+        box-shadow: var(--focus);
+      }
 
-    /* ★右側のまとまり（予約人数 + 詳細ボタン） */
-    .event-right{
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      flex-shrink: 0;
-    }
+      #keyword{ width: 360px; max-width: 100%; }
+      #fromDt, #toDt{ width: 230px; max-width: 100%; }
 
-    .detail-toggle-btn {
-      padding: 4px 8px;
-      cursor: pointer;
-      font-size: 12px;
-      white-space: nowrap;
-    }
+      .actions{
+        display:flex;
+        gap: 10px;
+        align-items:center;
+        justify-content:center;
+        flex-wrap:wrap;
+      }
 
-    /* ★予約人数（ヘッダー内・右側・他の文字と同程度） */
-    .reservation-count-inline{
-      font-size: 13px; /* event-sub と同じくらい */
-      color: #333;
-      white-space: nowrap;
-    }
-    .reservation-count-inline .label{
-      color:#555;
-      margin-right: 4px;
-    }
-    .reservation-count-inline .value{
-      font-weight: bold; /* 強調は太字だけ */
-      color:#111;
-    }
+      .btn{
+        height: 40px;
+        padding: 0 14px;
+        border-radius: 12px;
+        border: 1px solid var(--line-strong);
+        background: #fff;
+        color: #111827;
+        font-size: 13px;
+        cursor: pointer;
+        transition: transform .05s ease, background-color .15s ease, border-color .15s ease;
+        outline: none;
+        white-space: nowrap;
+      }
+      .btn:hover{ background:#f9fafb; }
+      .btn:active{ transform: translateY(1px); }
+      .btn:focus-visible{ box-shadow: var(--focus); }
 
-    .event-detail {
-      border-top: 1px solid #333;
-      padding: 10px 16px 14px;
-      display: none;
-      font-size: 14px;
-    }
+      .btn-primary{
+        background: var(--accent);
+        border-color: rgba(37,99,235,.25);
+        color: #fff;
+      }
+      .btn-primary:hover{ background: var(--accent-2); }
 
-    .event-detail-title {
-      font-weight: bold;
-      margin-top: 6px;
-      margin-bottom: 4px;
-    }
+      .search-note{
+        margin-top: 10px;
+        text-align:center;
+        font-size: 12px;
+        color: var(--muted);
+      }
 
-    /* ★詳細内のリンク見た目 */
-    .detail-link a{
-      color:#0066cc;
-      text-decoration: underline;
-      word-break: break-all;
-    }
+      /* ===== Event list ===== */
+      #eventList{ margin-top: 16px; display:flex; flex-direction:column; gap: 12px; }
 
-    .reserve-btn {
-      margin-top: 10px;
-      padding: 6px 12px;
-      cursor: pointer;
-    }
+      .event-card{
+        background: var(--card);
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+        box-shadow: var(--shadow-sm);
+        overflow: hidden;
+      }
 
-    #pagination {
-      text-align: center;
-      margin-top: 24px;
-      font-size: 14px;
-    }
+      .event-header{
+        padding: 14px 14px;
+        display:flex;
+        align-items:center;
+        justify-content:space-between;
+        gap: 12px;
+      }
 
-    .page-link {
-      display: inline-block;
-      margin: 0 6px;
-      cursor: pointer;
-    }
+      .event-main-info{
+        min-width:0;
+        flex:1;
+        display:flex;
+        flex-direction:column;
+        gap: 6px;
+      }
 
-    .page-link.active {
-      font-weight: bold;
-      text-decoration: underline;
-    }
+      .event-title{
+        font-weight: 700;
+        font-size: 14.5px;
+        letter-spacing:.01em;
+        overflow:hidden;
+        text-overflow:ellipsis;
+        white-space:nowrap;
+      }
 
-    .message {
-      text-align: center;
-      margin-top: 20px;
-      color: #666;
-    }
-  </style>
+      .event-meta{
+        display:flex;
+        gap: 8px 10px;
+        flex-wrap:wrap;
+        align-items:center;
+        color: var(--muted);
+        font-size: 12.5px;
+      }
+
+      .chip{
+        display:inline-flex;
+        align-items:center;
+        gap: 6px;
+        padding: 5px 9px;
+        border-radius: 999px;
+        border: 1px solid var(--line);
+        background: #f9fafb;
+        color:#344054;
+        line-height: 1;
+      }
+      .chip b{ color:#111827; font-weight:600; }
+
+      .event-right{
+        display:flex;
+        align-items:center;
+        gap: 10px;
+        flex-shrink:0;
+      }
+
+      .reservation-count-inline{
+        display:inline-flex;
+        align-items:center;
+        gap: 6px;
+        padding: 6px 10px;
+        border-radius: 999px;
+        border: 1px solid var(--line);
+        background: #f9fafb;
+        font-size: 12.5px;
+        color:#344054;
+        white-space: nowrap;
+      }
+      .reservation-count-inline .label{ color:#667085; }
+      .reservation-count-inline .value{ color:#111827; font-weight:700; }
+
+      .detail-toggle-btn{
+        height: 34px;
+        padding: 0 10px;
+        border-radius: 10px;
+        border: 1px solid var(--line-strong);
+        background: #fff;
+        cursor: pointer;
+        font-size: 12px;
+        color:#111827;
+        transition: background-color .15s ease, transform .05s ease;
+        outline: none;
+        white-space: nowrap;
+      }
+      .detail-toggle-btn:hover{ background:#f9fafb; }
+      .detail-toggle-btn:active{ transform: translateY(1px); }
+      .detail-toggle-btn:focus-visible{ box-shadow: var(--focus); }
+
+      .event-detail{
+        border-top: 1px solid var(--line);
+        padding: 14px;
+        display:none;
+        font-size: 13.5px;
+        background: #fff;
+      }
+
+      .detail-grid{
+        display:grid;
+        grid-template-columns: 160px 1fr;
+        gap: 10px 14px;
+        align-items:start;
+      }
+
+      .event-detail-title{
+        font-weight: 700;
+        color:#111827;
+        margin: 0;
+        padding-top: 2px;
+        font-size: 12.5px;
+      }
+
+      .detail-body{
+        color:#344054;
+        word-break: break-word;
+      }
+
+      .detail-link a{
+        color: var(--accent);
+        text-decoration: none;
+        border-bottom: 1px solid rgba(37,99,235,.35);
+      }
+      .detail-link a:hover{ border-bottom-color: rgba(37,99,235,.8); }
+
+      .detail-actions{
+        margin-top: 12px;
+        display:flex;
+        justify-content:flex-end;
+      }
+
+      .reserve-btn{
+        height: 40px;
+        padding: 0 14px;
+        border-radius: 12px;
+        border: 1px solid rgba(37,99,235,.25);
+        background: var(--accent);
+        color:#fff;
+        cursor:pointer;
+        font-size: 13px;
+        font-weight: 600;
+        transition: background-color .15s ease, transform .05s ease, opacity .15s ease;
+        outline: none;
+      }
+      .reserve-btn:hover{ background: var(--accent-2); }
+      .reserve-btn:active{ transform: translateY(1px); }
+      .reserve-btn:focus-visible{ box-shadow: var(--focus); }
+
+      .reserve-btn[disabled]{
+        background: #eef2f6;
+        border-color: var(--line);
+        color: var(--disabled);
+        cursor: not-allowed;
+        opacity: 1;
+      }
+
+      /* ===== Pagination ===== */
+      #pagination{
+        margin-top: 18px;
+        display:flex;
+        justify-content:center;
+        flex-wrap:wrap;
+        gap: 8px;
+      }
+
+      .page-link{
+        min-width: 36px;
+        height: 36px;
+        display:inline-flex;
+        align-items:center;
+        justify-content:center;
+        border-radius: 10px;
+        border: 1px solid var(--line-strong);
+        background:#fff;
+        color:#344054;
+        cursor:pointer;
+        user-select:none;
+        transition: background-color .15s ease, transform .05s ease, border-color .15s ease;
+        font-size: 13px;
+        padding: 0 10px;
+      }
+      .page-link:hover{ background:#f9fafb; }
+      .page-link:active{ transform: translateY(1px); }
+      .page-link.active{
+        background: rgba(37,99,235,.10);
+        border-color: rgba(37,99,235,.35);
+        color: #1d4ed8;
+        font-weight: 700;
+      }
+
+      .message{
+        text-align:center;
+        margin-top: 16px;
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      /* ===== Responsive ===== */
+      @media (max-width: 900px){
+        :root{ --pad: 16px; }
+        .nav{
+          width: 100%;
+          justify-content: center; /* 小さい画面は“中央にまとまりすぎ”ではなく自然に整列 */
+        }
+      }
+      @media (max-width: 760px){
+        #keyword, #fromDt, #toDt{ width: 100%; }
+        .field{ min-width: 100%; }
+        .event-header{ align-items:flex-start; }
+        .event-right{ align-self:stretch; }
+        .detail-grid{ grid-template-columns: 1fr; }
+        .event-detail-title{ font-size: 12px; }
+      }
+    </style>
   </head>
-  <body>
 
+  <body>
     <header>
-      <a href="index.html">説明会一覧</a>
-      <a href="reservations.html">予約確認</a>
-      <a id="loginLink" href="login.html">ログイン</a>
-      <a id="registerLink" href="register.html">新規登録</a>
-      <a href="mypage.html">アカウント</a>
+      <div class="header-inner">
+        <nav class="nav">
+          <a class="is-active" href="index.html">説明会一覧</a>
+          <a href="reservations.html">予約確認</a>
+          <a id="loginLink" href="login.html">ログイン</a>
+          <a id="registerLink" href="register.html">新規登録</a>
+          <a href="mypage.html">アカウント</a>
+        </nav>
+      </div>
     </header>
 
     <main>
-      <!-- 検索フォーム（本当に検索する版） -->
+      <div class="page-title">
+        <h1>説明会一覧</h1>
+        <p class="hint">検索条件を指定して、説明会を絞り込めます。</p>
+      </div>
+
       <div class="search-box">
         <div class="search-row">
-          <input id="keyword" type="text" placeholder="会社名・説明会名で検索">
-          <input id="fromDt" type="datetime-local">
-          <input id="toDt" type="datetime-local">
-          <button id="searchBtn">検索</button>
-          <button id="clearBtn" type="button">クリア</button>
+          <div class="field">
+            <label for="keyword">キーワード</label>
+            <input id="keyword" class="input" type="text"
+              placeholder="会社名・説明会名で検索">
+          </div>
+
+          <div class="field">
+            <label for="fromDt">開始日時</label>
+            <input id="fromDt" class="input" type="datetime-local">
+          </div>
+
+          <div class="field">
+            <label for="toDt">終了日時</label>
+            <input id="toDt" class="input" type="datetime-local">
+          </div>
+
+          <div class="actions">
+            <button id="searchBtn" class="btn btn-primary">検索</button>
+            <button id="clearBtn" class="btn" type="button">クリア</button>
+          </div>
         </div>
-        <div style="font-size:12px;color:#666;">
+
+        <div class="search-note">
           ※ 表示対象は「今年度3月〜次年度3月」の説明会のみ（サーバ側で自動切替）
         </div>
       </div>
@@ -205,383 +482,381 @@
     </main>
 
     <script>
-  const API_BASE = "http://localhost:8080";
-  // const API_BASE = "http://45.76.55.162:8080";
-  const PAGE_SIZE = 10;
+      const API_BASE = "http://localhost:8080";
+      // const API_BASE = "http://45.76.55.162:8080";
+      const PAGE_SIZE = 10;
 
-  let currentPage = 0;
-  let totalPages = 1;
+      let currentPage = 0;
+      let totalPages = 1;
 
-  function getLoginInfo() {
-    const token = localStorage.getItem("token");
-    const roleRaw = localStorage.getItem("role");
-    const role = roleRaw ? roleRaw.toUpperCase() : null;
-    return { token, role };
-  }
-
-  function isDeadlineOver(deadlineStr) {
-    if (!deadlineStr) return false;
-    const d = new Date(deadlineStr);
-    if (Number.isNaN(d.getTime())) return false;
-    const today = new Date();
-    d.setHours(0,0,0,0);
-    today.setHours(0,0,0,0);
-    return d < today;
-  }
-
-  function setupHeaderByLoginStatus() {
-    const loginLink = document.getElementById("loginLink");
-    const registerLink = document.getElementById("registerLink");
-    const { token } = getLoginInfo();
-
-    if (!loginLink) return;
-
-    if (token) {
-      loginLink.textContent = "ログアウト";
-      loginLink.href = "#";
-
-      loginLink.replaceWith(loginLink.cloneNode(true));
-      const newLoginLink = document.getElementById("loginLink");
-
-      newLoginLink.addEventListener("click", (e) => {
-        e.preventDefault();
-        localStorage.removeItem("token");
-        localStorage.removeItem("userId");
-        localStorage.removeItem("email");
-        localStorage.removeItem("name");
-        localStorage.removeItem("role");
-        alert("ログアウトしました。");
-        window.location.href = "index.html";
-      });
-
-      if (registerLink) registerLink.style.display = "none";
-    } else {
-      loginLink.textContent = "ログイン";
-      loginLink.href = "login.html";
-      if (registerLink) registerLink.style.display = "inline";
-    }
-  }
-
-  // datetime-local → "yyyy-MM-dd HH:mm:ss"
-  function toSqlDateTime(dtLocalValue) {
-    if (!dtLocalValue) return "";
-    return dtLocalValue.replace("T", " ") + ":00";
-  }
-
-  function getSearchParamsFromUI() {
-    const q = document.getElementById("keyword").value.trim();
-    const from = toSqlDateTime(document.getElementById("fromDt").value);
-    const to = toSqlDateTime(document.getElementById("toDt").value);
-    return { q, from, to };
-  }
-
-  async function loadEvents(page) {
-    if (page < 0) page = 0;
-
-    const { q, from, to } = getSearchParamsFromUI();
-
-    const params = new URLSearchParams({
-      page: page,
-      size: PAGE_SIZE
-    });
-
-    if (q) params.append("q", q);
-    if (from) params.append("from", from);
-    if (to) params.append("to", to);
-
-    try {
-      const res = await fetch(`${API_BASE}/events?` + params.toString());
-      if (!res.ok) throw new Error("HTTP status " + res.status);
-
-      const data = await res.json();
-      currentPage = data.page;
-      totalPages = data.totalPages;
-
-      renderEvents(data.events);
-      renderPagination();
-      renderMessage(data.totalCount);
-    } catch (err) {
-      console.error(err);
-      document.getElementById("eventList").innerHTML = "";
-      document.getElementById("pagination").innerHTML = "";
-      document.getElementById("message").textContent =
-        "説明会情報の取得に失敗しました。サーバーを確認してください。";
-    }
-  }
-
-  // ★ http(s) が付いてない場合に補正（任意）
-  function normalizeUrl(url) {
-    if (!url) return "";
-    const u = url.trim();
-    if (!u) return "";
-    if (u.startsWith("http://") || u.startsWith("https://")) return u;
-    return "https://" + u;
-  }
-
-  // ★予約人数を取得（トークン不要・人数だけ）
-  async function fetchReservationCount(eventId) {
-    const res = await fetch(`${API_BASE}/events/${eventId}/reservations/count`);
-    if (!res.ok) throw new Error("HTTP " + res.status);
-    return await res.json(); // int
-  }
-
-  function renderEvents(events) {
-    const list = document.getElementById("eventList");
-    list.innerHTML = "";
-
-    const loginInfo = getLoginInfo();
-    const isStudent = loginInfo.role === "STUDENT";
-
-    events.forEach(event => {
-      const card = document.createElement("div");
-      card.className = "event-card";
-
-      // --------------------------
-      // ヘッダー
-      // --------------------------
-      const header = document.createElement("div");
-      header.className = "event-header";
-
-      // 左：会社名/開催日/場所
-      const mainInfo = document.createElement("div");
-      mainInfo.className = "event-main-info";
-
-      const title = document.createElement("div");
-      title.className = "event-title";
-      title.textContent = event.companyName ?? "会社名未設定";
-
-      const sub1 = document.createElement("div");
-      sub1.className = "event-sub";
-      sub1.textContent = `開催日：${event.date ?? "未定"}`;
-
-      const sub2 = document.createElement("div");
-      sub2.className = "event-sub";
-      sub2.textContent = `場所：${event.place ?? "未定"}`;
-
-      mainInfo.appendChild(title);
-      mainInfo.appendChild(sub1);
-      mainInfo.appendChild(sub2);
-
-      // 右：予約人数 + 詳細ボタン
-      const rightWrap = document.createElement("div");
-      rightWrap.className = "event-right";
-
-      const countInline = document.createElement("div");
-      countInline.className = "reservation-count-inline";
-
-      const countLabel = document.createElement("span");
-      countLabel.className = "label";
-      countLabel.textContent = "現在の予約：";
-
-      const countValue = document.createElement("span");
-      countValue.className = "value";
-      countValue.textContent = "取得中…";
-
-      countInline.appendChild(countLabel);
-      countInline.appendChild(countValue);
-
-      const toggleBtn = document.createElement("button");
-      toggleBtn.className = "detail-toggle-btn";
-      toggleBtn.textContent = "▽ 詳細表示";
-
-      rightWrap.appendChild(countInline);
-      rightWrap.appendChild(toggleBtn);
-
-      header.appendChild(mainInfo);
-      header.appendChild(rightWrap);
-
-      // ヘッダー表示時に人数取得
-      (async () => {
-        try {
-          const n = await fetchReservationCount(event.eventId);
-          countValue.textContent = `${n}人`;
-        } catch (e) {
-          console.error(e);
-          countValue.textContent = "取得失敗";
-        }
-      })();
-
-      // --------------------------
-      // アコーディオン詳細
-      // --------------------------
-      const detail = document.createElement("div");
-      detail.className = "event-detail";
-
-      const deadlineTitle = document.createElement("div");
-      deadlineTitle.className = "event-detail-title";
-      deadlineTitle.textContent = "締切";
-
-      const deadlineBody = document.createElement("div");
-      deadlineBody.textContent = event.deadline || "締切は未設定です。";
-
-      const itemTitle = document.createElement("div");
-      itemTitle.className = "event-detail-title";
-      itemTitle.textContent = "持ち物";
-
-      const itemBody = document.createElement("div");
-      itemBody.textContent = event.item || "持ち物情報は未登録です。";
-
-      const noteTitle = document.createElement("div");
-      noteTitle.className = "event-detail-title";
-      noteTitle.textContent = "説明";
-
-      const noteBody = document.createElement("div");
-      noteBody.textContent = event.note || "詳細情報は未登録です。";
-
-      const webTitle = document.createElement("div");
-      webTitle.className = "event-detail-title";
-      webTitle.textContent = "会社Web";
-
-      const webBody = document.createElement("div");
-      webBody.className = "detail-link";
-      if (event.companyWebsite) {
-        const a = document.createElement("a");
-        a.href = normalizeUrl(event.companyWebsite);
-        a.target = "_blank";
-        a.rel = "noopener noreferrer";
-        a.textContent = event.companyWebsite;
-        webBody.appendChild(a);
-      } else {
-        webBody.textContent = "未登録です。";
+      function getLoginInfo() {
+        const token = localStorage.getItem("token");
+        const roleRaw = localStorage.getItem("role");
+        const role = roleRaw ? roleRaw.toUpperCase() : null;
+        return { token, role };
       }
 
-      const reserveBtn = document.createElement("button");
-      reserveBtn.className = "reserve-btn";
-      reserveBtn.textContent = "予約する";
+      function isDeadlineOver(deadlineStr) {
+        if (!deadlineStr) return false;
+        const d = new Date(deadlineStr);
+        if (Number.isNaN(d.getTime())) return false;
+        const today = new Date();
+        d.setHours(0,0,0,0);
+        today.setHours(0,0,0,0);
+        return d < today;
+      }
 
-      const deadlineOver = isDeadlineOver(event.deadline);
+      function setupHeaderByLoginStatus() {
+        const loginLink = document.getElementById("loginLink");
+        const registerLink = document.getElementById("registerLink");
+        const { token } = getLoginInfo();
 
-      if (deadlineOver) {
-        reserveBtn.disabled = true;
-        reserveBtn.style.backgroundColor = "#ccc";
-        reserveBtn.style.cursor = "not-allowed";
-        reserveBtn.textContent = "締切済み";
-      } else if (!isStudent) {
-        reserveBtn.disabled = true;
-        reserveBtn.style.backgroundColor = "#ccc";
-        reserveBtn.style.cursor = "not-allowed";
-        reserveBtn.textContent = "学生のみ予約可";
-      } else {
-        reserveBtn.addEventListener("click", async () => {
-          const ok = window.confirm(
-            `この説明会を予約しますか？\n\n` +
-            `会社名：${event.companyName ?? "会社名未設定"}\n` +
-            `開催日：${event.date ?? "未定"}\n` +
-            `場所：${event.place ?? "未定"}`
-          );
-          if (!ok) return;
+        if (!loginLink) return;
 
-          const token = loginInfo.token;
-          if (!token) {
-            alert("予約にはログインが必要です。ログイン画面から再度ログインしてください。");
-            return;
+        if (token) {
+          loginLink.textContent = "ログアウト";
+          loginLink.href = "#";
+
+          loginLink.replaceWith(loginLink.cloneNode(true));
+          const newLoginLink = document.getElementById("loginLink");
+
+          newLoginLink.addEventListener("click", (e) => {
+            e.preventDefault();
+            localStorage.removeItem("token");
+            localStorage.removeItem("userId");
+            localStorage.removeItem("email");
+            localStorage.removeItem("name");
+            localStorage.removeItem("role");
+            alert("ログアウトしました。");
+            window.location.href = "index.html";
+          });
+
+          if (registerLink) registerLink.style.display = "none";
+        } else {
+          loginLink.textContent = "ログイン";
+          loginLink.href = "login.html";
+          if (registerLink) registerLink.style.display = "inline";
+        }
+      }
+
+      function toSqlDateTime(dtLocalValue) {
+        if (!dtLocalValue) return "";
+        return dtLocalValue.replace("T", " ") + ":00";
+      }
+
+      function getSearchParamsFromUI() {
+        const q = document.getElementById("keyword").value.trim();
+        const from = toSqlDateTime(document.getElementById("fromDt").value);
+        const to = toSqlDateTime(document.getElementById("toDt").value);
+        return { q, from, to };
+      }
+
+      async function loadEvents(page) {
+        if (page < 0) page = 0;
+
+        const { q, from, to } = getSearchParamsFromUI();
+
+        const params = new URLSearchParams({
+          page: page,
+          size: PAGE_SIZE
+        });
+
+        if (q) params.append("q", q);
+        if (from) params.append("from", from);
+        if (to) params.append("to", to);
+
+        try {
+          const res = await fetch(`${API_BASE}/events?` + params.toString());
+          if (!res.ok) throw new Error("HTTP status " + res.status);
+
+          const data = await res.json();
+          currentPage = data.page;
+          totalPages = data.totalPages;
+
+          renderEvents(data.events);
+          renderPagination();
+          renderMessage(data.totalCount);
+        } catch (err) {
+          console.error(err);
+          document.getElementById("eventList").innerHTML = "";
+          document.getElementById("pagination").innerHTML = "";
+          document.getElementById("message").textContent =
+            "説明会情報の取得に失敗しました。サーバーを確認してください。";
+        }
+      }
+
+      function normalizeUrl(url) {
+        if (!url) return "";
+        const u = url.trim();
+        if (!u) return "";
+        if (u.startsWith("http://") || u.startsWith("https://")) return u;
+        return "https://" + u;
+      }
+
+      async function fetchReservationCount(eventId) {
+        const res = await fetch(`${API_BASE}/events/${eventId}/reservations/count`);
+        if (!res.ok) throw new Error("HTTP " + res.status);
+        return await res.json();
+      }
+
+      function renderEvents(events) {
+        const list = document.getElementById("eventList");
+        list.innerHTML = "";
+
+        const loginInfo = getLoginInfo();
+        const isStudent = loginInfo.role === "STUDENT";
+
+        events.forEach(event => {
+          const card = document.createElement("div");
+          card.className = "event-card";
+
+          const header = document.createElement("div");
+          header.className = "event-header";
+
+          const mainInfo = document.createElement("div");
+          mainInfo.className = "event-main-info";
+
+          const title = document.createElement("div");
+          title.className = "event-title";
+          title.textContent = event.companyName ?? "会社名未設定";
+
+          const meta = document.createElement("div");
+          meta.className = "event-meta";
+
+          const chipDate = document.createElement("span");
+          chipDate.className = "chip";
+          chipDate.innerHTML = `<b>開催日</b>：${event.date ?? "未定"}`;
+
+          const chipPlace = document.createElement("span");
+          chipPlace.className = "chip";
+          chipPlace.innerHTML = `<b>場所</b>：${event.place ?? "未定"}`;
+
+          meta.appendChild(chipDate);
+          meta.appendChild(chipPlace);
+
+          mainInfo.appendChild(title);
+          mainInfo.appendChild(meta);
+
+          const rightWrap = document.createElement("div");
+          rightWrap.className = "event-right";
+
+          const countInline = document.createElement("div");
+          countInline.className = "reservation-count-inline";
+
+          const countLabel = document.createElement("span");
+          countLabel.className = "label";
+          countLabel.textContent = "現在の予約";
+
+          const countValue = document.createElement("span");
+          countValue.className = "value";
+          countValue.textContent = "取得中…";
+
+          countInline.appendChild(countLabel);
+          countInline.appendChild(countValue);
+
+          const toggleBtn = document.createElement("button");
+          toggleBtn.className = "detail-toggle-btn";
+          toggleBtn.textContent = "▽ 詳細表示";
+
+          rightWrap.appendChild(countInline);
+          rightWrap.appendChild(toggleBtn);
+
+          header.appendChild(mainInfo);
+          header.appendChild(rightWrap);
+
+          (async () => {
+            try {
+              const n = await fetchReservationCount(event.eventId);
+              countValue.textContent = `${n}人`;
+            } catch (e) {
+              console.error(e);
+              countValue.textContent = "取得失敗";
+            }
+          })();
+
+          const detail = document.createElement("div");
+          detail.className = "event-detail";
+
+          const grid = document.createElement("div");
+          grid.className = "detail-grid";
+
+          const deadlineTitle = document.createElement("div");
+          deadlineTitle.className = "event-detail-title";
+          deadlineTitle.textContent = "締切";
+
+          const deadlineBody = document.createElement("div");
+          deadlineBody.className = "detail-body";
+          deadlineBody.textContent = event.deadline || "締切は未設定です。";
+
+          const webTitle = document.createElement("div");
+          webTitle.className = "event-detail-title";
+          webTitle.textContent = "会社Web";
+
+          const webBody = document.createElement("div");
+          webBody.className = "detail-body detail-link";
+          if (event.companyWebsite) {
+            const a = document.createElement("a");
+            a.href = normalizeUrl(event.companyWebsite);
+            a.target = "_blank";
+            a.rel = "noopener noreferrer";
+            a.textContent = event.companyWebsite;
+            webBody.appendChild(a);
+          } else {
+            webBody.textContent = "未登録です。";
           }
 
-          try {
-            const res = await fetch(`${API_BASE}/events/${event.eventId}/reservations`, {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-                "Authorization": "Bearer " + token
-              }
-            });
+          const itemTitle = document.createElement("div");
+          itemTitle.className = "event-detail-title";
+          itemTitle.textContent = "持ち物";
 
-            if (res.ok) {
-              alert("予約が完了しました。");
-              // ★予約後に人数も更新（右側の表示を更新）
+          const itemBody = document.createElement("div");
+          itemBody.className = "detail-body";
+          itemBody.textContent = event.item || "持ち物情報は未登録です。";
+
+          const noteTitle = document.createElement("div");
+          noteTitle.className = "event-detail-title";
+          noteTitle.textContent = "説明";
+
+          const noteBody = document.createElement("div");
+          noteBody.className = "detail-body";
+          noteBody.textContent = event.note || "詳細情報は未登録です。";
+
+          grid.appendChild(deadlineTitle);
+          grid.appendChild(deadlineBody);
+
+          grid.appendChild(webTitle);
+          grid.appendChild(webBody);
+
+          grid.appendChild(itemTitle);
+          grid.appendChild(itemBody);
+
+          grid.appendChild(noteTitle);
+          grid.appendChild(noteBody);
+
+          const reserveBtn = document.createElement("button");
+          reserveBtn.className = "reserve-btn";
+          reserveBtn.textContent = "予約する";
+
+          const deadlineOver = isDeadlineOver(event.deadline);
+
+          if (deadlineOver) {
+            reserveBtn.disabled = true;
+            reserveBtn.textContent = "締切済み";
+          } else if (!isStudent) {
+            reserveBtn.disabled = true;
+            reserveBtn.textContent = "学生のみ予約可";
+          } else {
+            reserveBtn.addEventListener("click", async () => {
+              const ok = window.confirm(
+                `この説明会を予約しますか？\n\n` +
+                `会社名：${event.companyName ?? "会社名未設定"}\n` +
+                `開催日：${event.date ?? "未定"}\n` +
+                `場所：${event.place ?? "未定"}`
+              );
+              if (!ok) return;
+
+              const token = loginInfo.token;
+              if (!token) {
+                alert("予約にはログインが必要です。ログイン画面から再度ログインしてください。");
+                return;
+              }
+
               try {
-                const n = await fetchReservationCount(event.eventId);
-                countValue.textContent = `${n}人`;
+                const res = await fetch(`${API_BASE}/events/${event.eventId}/reservations`, {
+                  method: "POST",
+                  headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": "Bearer " + token
+                  }
+                });
+
+                if (res.ok) {
+                  alert("予約が完了しました。");
+                  try {
+                    const n = await fetchReservationCount(event.eventId);
+                    countValue.textContent = `${n}人`;
+                  } catch (e) {
+                    console.error(e);
+                  }
+                } else if (res.status === 400 || res.status === 409) {
+                  const msg = await res.text();
+                  alert("予約に失敗しました: " + msg);
+                } else if (res.status === 401 || res.status === 403) {
+                  alert("権限がありません。学生アカウントでログインしてください。");
+                } else {
+                  alert("予期しないエラーが発生しました。");
+                }
               } catch (e) {
                 console.error(e);
+                alert("サーバーとの通信に失敗しました。");
               }
-            } else if (res.status === 400 || res.status === 409) {
-              const msg = await res.text();
-              alert("予約に失敗しました: " + msg);
-            } else if (res.status === 401 || res.status === 403) {
-              alert("権限がありません。学生アカウントでログインしてください。");
-            } else {
-              alert("予期しないエラーが発生しました。");
-            }
-          } catch (e) {
-            console.error(e);
-            alert("サーバーとの通信に失敗しました。");
+            });
           }
+
+          const actions = document.createElement("div");
+          actions.className = "detail-actions";
+          actions.appendChild(reserveBtn);
+
+          detail.appendChild(grid);
+          detail.appendChild(actions);
+
+          toggleBtn.addEventListener("click", () => {
+            const isOpen = detail.style.display === "block";
+            detail.style.display = isOpen ? "none" : "block";
+            toggleBtn.textContent = isOpen ? "▽ 詳細表示" : "△ 閉じる";
+          });
+
+          card.appendChild(header);
+          card.appendChild(detail);
+          list.appendChild(card);
         });
       }
 
-      detail.appendChild(deadlineTitle);
-      detail.appendChild(deadlineBody);
+      function renderPagination() {
+        const container = document.getElementById("pagination");
+        container.innerHTML = "";
 
-      detail.appendChild(webTitle);
-      detail.appendChild(webBody);
+        if (totalPages <= 1) return;
 
-      detail.appendChild(itemTitle);
-      detail.appendChild(itemBody);
+        for (let i = 0; i < totalPages; i++) {
+          const span = document.createElement("span");
+          span.className = "page-link" + (i === currentPage ? " active" : "");
+          span.textContent = (i + 1);
+          span.addEventListener("click", () => loadEvents(i));
+          container.appendChild(span);
+        }
 
-      detail.appendChild(noteTitle);
-      detail.appendChild(noteBody);
+        if (currentPage < totalPages - 1) {
+          const next = document.createElement("span");
+          next.className = "page-link";
+          next.textContent = "next →";
+          next.addEventListener("click", () => loadEvents(currentPage + 1));
+          container.appendChild(next);
+        }
+      }
 
-      detail.appendChild(reserveBtn);
+      function renderMessage(totalCount) {
+        const msg = document.getElementById("message");
+        msg.textContent = (totalCount === 0) ? "条件に一致する説明会がありません。" : "";
+      }
 
-      toggleBtn.addEventListener("click", () => {
-        const isOpen = detail.style.display === "block";
-        detail.style.display = isOpen ? "none" : "block";
-        toggleBtn.textContent = isOpen ? "▽ 詳細表示" : "△ 閉じる";
+      window.addEventListener("load", () => {
+        setupHeaderByLoginStatus();
+        loadEvents(0);
+
+        document.getElementById("searchBtn").addEventListener("click", () => loadEvents(0));
+
+        document.getElementById("clearBtn").addEventListener("click", () => {
+          document.getElementById("keyword").value = "";
+          document.getElementById("fromDt").value = "";
+          document.getElementById("toDt").value = "";
+          loadEvents(0);
+        });
+
+        document.getElementById("keyword").addEventListener("keydown", (e) => {
+          if (e.key === "Enter") loadEvents(0);
+        });
       });
-
-      card.appendChild(header);
-      card.appendChild(detail);
-      list.appendChild(card);
-    });
-  }
-
-  function renderPagination() {
-    const container = document.getElementById("pagination");
-    container.innerHTML = "";
-
-    if (totalPages <= 1) return;
-
-    for (let i = 0; i < totalPages; i++) {
-      const span = document.createElement("span");
-      span.className = "page-link" + (i === currentPage ? " active" : "");
-      span.textContent = (i + 1);
-      span.addEventListener("click", () => loadEvents(i));
-      container.appendChild(span);
-    }
-
-    if (currentPage < totalPages - 1) {
-      const next = document.createElement("span");
-      next.className = "page-link";
-      next.textContent = ">>next";
-      next.addEventListener("click", () => loadEvents(currentPage + 1));
-      container.appendChild(next);
-    }
-  }
-
-  function renderMessage(totalCount) {
-    const msg = document.getElementById("message");
-    msg.textContent = (totalCount === 0) ? "条件に一致する説明会がありません。" : "";
-  }
-
-  window.addEventListener("load", () => {
-    setupHeaderByLoginStatus();
-    loadEvents(0);
-
-    document.getElementById("searchBtn").addEventListener("click", () => loadEvents(0));
-
-    document.getElementById("clearBtn").addEventListener("click", () => {
-      document.getElementById("keyword").value = "";
-      document.getElementById("fromDt").value = "";
-      document.getElementById("toDt").value = "";
-      loadEvents(0);
-    });
-
-    document.getElementById("keyword").addEventListener("keydown", (e) => {
-      if (e.key === "Enter") loadEvents(0);
-    });
-  });
-</script>
-
+    </script>
   </body>
 </html>

@@ -1,82 +1,236 @@
 <!DOCTYPE html>
 <html lang="ja">
-<head>
-  <meta charset="UTF-8">
-  <title>説明会情報管理（管理者）</title>
-  <style>
-    body { font-family: Arial, sans-serif; margin:0; padding:0; background:#fafafa; color:#111; }
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>説明会情報管理（管理者）</title>
 
-    header{
-      border-bottom:1px solid #ccc;
-      padding:16px 40px;
-      display:flex;
-      justify-content:center;
-      gap:80px;
-      font-size:14px;
-      background:#fff;
+    <style>
+    :root{
+      --bg:#f6f7fb;
+      --card:#ffffff;
+      --text:#101828;
+      --muted:#667085;
+      --line:#e4e7ec;
+      --line-strong:#d0d5dd;
+      --shadow: 0 10px 30px rgba(16,24,40,.08);
+      --shadow-sm: 0 6px 16px rgba(16,24,40,.06);
+      --radius:14px;
+      --accent:#2563eb;
+      --accent-2:#1d4ed8;
+      --danger:#b42318;
+      --danger-bg: rgba(180,35,24,.08);
+      --focus: 0 0 0 4px rgba(37,99,235,.18);
+      --container: 1120px;
+      --content: 980px;
+      --pad: 24px;
     }
-    header a{ text-decoration:none; color:#333; cursor:pointer; }
 
-    main{ max-width:900px; margin:30px auto 60px; padding:0 16px; }
+    *{ box-sizing:border-box; }
+    body{
+      margin:0;
+      padding-bottom: 72px;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans JP", "Hiragino Kaku Gothic ProN", Meiryo, sans-serif;
+      color: var(--text);
+      background-color: var(--bg);
+      background-image: radial-gradient(1200px 520px at 50% -180px, rgba(37,99,235,.10), rgba(37,99,235,0));
+      background-repeat: no-repeat;
+      background-attachment: fixed;
+      line-height: 1.55;
+    }
+
+    /* ===== Header（統一） ===== */
+     header{
+        position: sticky;
+        top: 0;
+        z-index: 10;
+        background: rgba(255,255,255,.92);
+        backdrop-filter: blur(10px);
+        border-bottom: 1px solid var(--line);
+      }
+
+      /* “中央らへんでいい感じに分散”：
+         1) nav自体は中央配置
+         2) navの中身は等間隔に分散
+         3) ただし巨大画面でも広がりすぎないよう max-width を持たせる */
+      .header-inner{
+        max-width: var(--container);
+        margin: 0 auto;
+        padding: 14px var(--pad);
+        display:flex;
+        justify-content:center;   /* navを中央に */
+        align-items:center;
+      }
+
+      .nav{
+        width: min(760px, 100%);  /* 広がりすぎ防止（中央らへん） */
+        display:flex;
+        align-items:center;
+        justify-content: space-around; /* 中央付近で“分散” */
+        gap: 10px;
+        flex-wrap:wrap;
+      }
+
+      .nav a{
+        text-decoration:none;
+        color:#344054;
+        font-size: 13px;
+        padding: 8px 12px;
+        border-radius: 999px;
+        transition: background-color .15s ease, color .15s ease, transform .05s ease;
+        outline: none;
+        white-space: nowrap;
+      }
+    .nav a:hover{ background:#f2f4f7; color:#111827; }
+    .nav a:active{ transform: translateY(1px); }
+    .nav a:focus-visible{ box-shadow: var(--focus); }
+    .nav a.is-active{
+      background: rgba(37,99,235,.10);
+      color:#1d4ed8;
+      font-weight: 800;
+      border-color: rgba(37,99,235,.20);
+    }
+    .nav a.danger-link{
+      color:#b42318;
+      border-color: rgba(180,35,24,.18);
+      background: rgba(180,35,24,.06);
+    }
+    .nav a.danger-link:hover{
+      background: rgba(180,35,24,.10);
+      color:#8a1f16;
+    }
+
+    /* ===== Layout ===== */
+    main{
+      max-width: var(--content);
+      margin: 24px auto 0;
+      padding: 0 16px 90px;
+    }
+
+    .page-title{
+      display:flex;
+      align-items:flex-end;
+      justify-content:space-between;
+      gap: 12px;
+      flex-wrap:wrap;
+      margin: 10px 0 12px;
+    }
+    .page-title h1{
+      margin: 0;
+      font-size: 18px;
+      letter-spacing: .02em;
+    }
+    .page-title .hint{
+      margin: 0;
+      font-size: 12px;
+      color: var(--muted);
+    }
 
     .toolbar{
       display:flex;
       align-items:center;
-      justify-content:space-between;
-      gap:12px;
-      margin: 12px 0 10px;
+      justify-content: space-between;
+      gap: 12px;
+      margin: 10px 0 12px;
+      flex-wrap: wrap;
+    }
+
+    /* ===== Cards ===== */
+    .panel{
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow-sm);
+      padding: 14px;
+    }
+
+    .row{
+      display:flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items:center;
+    }
+
+    .input{
+      height: 40px;
+      border: 1px solid var(--line-strong);
+      border-radius: 12px;
+      padding: 0 12px;
+      background: #fff;
+      color: var(--text);
+      outline: none;
+      transition: box-shadow .15s ease, border-color .15s ease;
+      font-size: 14px;
+      font-family: inherit;
+    }
+    .input:focus{
+      border-color: rgba(37,99,235,.55);
+      box-shadow: var(--focus);
     }
 
     .btn{
-      padding:10px 14px;
-      border:1px solid #333;
-      background:#fff;
-      cursor:pointer;
+      height: 40px;
+      padding: 0 14px;
+      border-radius: 12px;
+      border: 1px solid var(--line-strong);
+      background: #fff;
+      color: #111827;
       font-size: 13px;
-    }
-    .btn:disabled { opacity:0.5; cursor:not-allowed; }
-
-    /* ===== 検索フォーム ===== */
-    .search-box {
-      margin: 0 auto 20px;
-      max-width: 760px;
-      border: 1px solid #333;
-      padding: 16px;
-      text-align: center;
-      background-color: #fff;
-    }
-    .search-row{
-      display:flex;
-      gap:10px;
-      justify-content:center;
-      flex-wrap:wrap;
-      margin-bottom:10px;
-    }
-    .search-box input{
-      padding: 6px 8px;
-      box-sizing: border-box;
-      font-family: inherit;
-    }
-    #keyword { width: 320px; }
-    #fromDt, #toDt { width: 210px; }
-
-    .search-box button{
-      padding: 6px 12px;
       cursor: pointer;
+      transition: transform .05s ease, background-color .15s ease, border-color .15s ease;
+      outline: none;
+      white-space: nowrap;
+    }
+    .btn:hover{ background:#f9fafb; }
+    .btn:active{ transform: translateY(1px); }
+    .btn:focus-visible{ box-shadow: var(--focus); }
+    .btn:disabled{ opacity: 0.6; cursor: not-allowed; }
+
+    .btn-primary{
+      background: var(--accent);
+      border-color: rgba(37,99,235,.25);
+      color: #fff;
+      font-weight: 800;
+    }
+    .btn-primary:hover{ background: var(--accent-2); }
+
+    .btn-danger{
+      color:#b42318;
+      border-color: rgba(180,35,24,.25);
+      background: rgba(180,35,24,.06);
+    }
+    .btn-danger:hover{ background: rgba(180,35,24,.10); }
+
+    .tiny{
+      font-size: 12px;
+      height: 32px;
+      padding: 0 10px;
+      border-radius: 10px;
     }
 
-    .hint{ font-size:12px; color:#333; margin: 6px 0 14px; }
+    .muted{
+      color: var(--muted);
+      font-size: 12px;
+      margin-top: 8px;
+    }
 
-    #eventList{ margin-top: 10px; }
-    .event-card{ border:1px solid #333; background:#fff; margin-bottom:12px; }
+    /* ===== Event list cards ===== */
+    #eventList{ margin-top: 12px; }
 
-    /* ヘッダー（左：会社名/開催日/場所、右：予約人数 + 詳細ボタン） */
+    .event-card{
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow-sm);
+      overflow: hidden;
+      margin-bottom: 12px;
+    }
+
     .event-header{
-      padding:10px 16px;
+      padding: 12px 14px;
       display:flex;
       justify-content:space-between;
       align-items:center;
-      cursor: default;
       gap: 12px;
     }
 
@@ -88,10 +242,22 @@
       flex: 1;
     }
 
-    .event-title{ font-weight:bold; }
-    .event-sub{ font-size:13px; }
+    .event-title{
+      font-weight: 900;
+      font-size: 15px;
+      letter-spacing: .01em;
+      overflow:hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .event-sub{
+      font-size: 13px;
+      color:#344054;
+      overflow:hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
 
-    /* ★右側のまとまり（予約人数 + 詳細ボタン） */
     .event-right{
       display:flex;
       align-items:center;
@@ -99,46 +265,40 @@
       flex-shrink:0;
     }
 
-    .detail-toggle-btn{
-      padding:4px 8px;
-      cursor:pointer;
-      font-size:12px;
-      border:1px solid #333;
+    .badge{
+      display:inline-flex;
+      align-items:center;
+      gap: 6px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      border: 1px solid var(--line-strong);
       background:#fff;
+      font-size: 12px;
       white-space: nowrap;
+      color:#344054;
     }
-
-    /* ★予約人数（ヘッダー内・右側・学生用と同じ見た目） */
-    .reservation-count-inline{
-      font-size: 13px;
-      color: #333;
-      white-space: nowrap;
-    }
-    .reservation-count-inline .label{
-      color:#555;
-      margin-right:4px;
-    }
-    .reservation-count-inline .value{
-      font-weight:bold;
-      color:#111;
+    .badge .value{
+      font-weight: 900;
+      color: #111827;
     }
 
     .event-detail{
-      border-top:1px solid #333;
-      padding:10px 16px 14px;
+      border-top: 1px solid var(--line);
+      padding: 12px 14px 14px;
       display:none;
-      font-size:14px;
+      font-size: 14px;
     }
 
     .event-detail-title{
-      font-weight:bold;
-      margin-top:6px;
-      margin-bottom:4px;
+      font-weight: 900;
+      margin-top: 10px;
+      margin-bottom: 4px;
+      font-size: 13px;
+      color:#111827;
     }
 
-    /* ★詳細内のリンク見た目 */
     .detail-link a{
-      color:#0066cc;
+      color: var(--accent);
       text-decoration: underline;
       word-break: break-all;
     }
@@ -146,253 +306,340 @@
     .admin-actions{
       margin-top: 12px;
       display:flex;
-      gap:10px;
+      gap: 10px;
       justify-content:flex-end;
       flex-wrap: wrap;
     }
 
+    /* ===== Pagination & message ===== */
     #pagination{
       text-align:center;
-      margin-top:24px;
-      font-size:14px;
+      margin-top: 18px;
+      font-size: 14px;
     }
     .page-link{
       display:inline-block;
-      margin:0 6px;
+      margin: 0 6px;
       cursor:pointer;
+      padding: 6px 10px;
+      border-radius: 10px;
+      border: 1px solid transparent;
     }
+    .page-link:hover{ background:#f2f4f7; }
     .page-link.active{
-      font-weight:bold;
-      text-decoration:underline;
+      font-weight: 900;
+      border-color: rgba(37,99,235,.25);
+      background: rgba(37,99,235,.08);
     }
 
     .message{
       text-align:center;
-      margin-top:20px;
-      color:#666;
+      margin-top: 16px;
+      color: var(--muted);
+      font-size: 13px;
     }
 
-    /* modal */
-    .backdrop { position:fixed; inset:0; background:rgba(0,0,0,0.35); display:none; }
-    .modal { width:560px; max-width: calc(100vw - 32px); background:#fff; margin: 90px auto; padding:16px; border-radius:8px; border:1px solid #333; }
-    .modal h2 { margin:0 0 12px; font-size: 16px; }
-    .field { margin: 10px 0; }
-    .field label { display:block; font-size:12px; color:#222; margin-bottom:4px; }
-    .field input, .field select, .field textarea {
-      width:100%; padding:10px; border:1px solid #ccc; box-sizing:border-box;
+    /* ===== Modal ===== */
+    .backdrop{
+      position: fixed;
+      inset: 0;
+      display:none;
+      align-items:center;
+      justify-content:center;
+      padding: 18px;
+      background: rgba(16,24,40,.45);
+      z-index: 9999;
+    }
+    .modal{
+      width: 640px;
+      max-width: calc(100vw - 32px);
+      background: var(--card);
+      border-radius: 16px;
+      border: 1px solid var(--line);
+      box-shadow: var(--shadow);
+      padding: 16px 16px 14px;
+    }
+    .modal h2{
+      margin: 4px 0 12px;
+      font-size: 16px;
+      letter-spacing: .02em;
+    }
+
+    .field{ margin: 10px 0; }
+    .field label{
+      display:block;
+      font-size: 12px;
+      color: var(--muted);
+      margin-bottom: 6px;
+      padding-left: 2px;
+    }
+    .field input, .field select, .field textarea{
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid var(--line-strong);
+      border-radius: 12px;
+      box-sizing:border-box;
       font-family: inherit;
+      font-size: 14px;
+      outline: none;
+      transition: box-shadow .15s ease, border-color .15s ease;
+      background: #fff;
     }
-    .field textarea { min-height: 90px; resize: vertical; }
-    .actions { display:flex; gap:10px; justify-content:flex-end; margin-top:12px; }
-    .error { color:#c00; font-size:12px; margin-top:8px; }
-    .muted { color:#666; font-size:12px; margin-top:10px; }
+    .field input:focus, .field select:focus, .field textarea:focus{
+      border-color: rgba(37,99,235,.55);
+      box-shadow: var(--focus);
+    }
+    .field textarea{ min-height: 96px; resize: vertical; }
 
-    .danger { border-color:#c00; }
+    .actions{
+      display:flex;
+      gap: 10px;
+      justify-content:flex-end;
+      margin-top: 12px;
+      flex-wrap: wrap;
+    }
 
-    /* ★追加：入力欄の直下に出すエラーメッセージ */
+    .error{
+      color: var(--danger);
+      font-size: 12px;
+      margin-top: 10px;
+      white-space: pre-wrap;
+    }
+
+    .danger{
+      border-color: rgba(180,35,24,.65) !important;
+      box-shadow: 0 0 0 4px rgba(180,35,24,.10) !important;
+      outline: none;
+    }
     .field-error{
-      color:#c00;
-      font-size:12px;
-      margin-top:6px;
+      color: var(--danger);
+      font-size: 12px;
+      margin-top: 6px;
       line-height:1.4;
+      display:none;
+      white-space: pre-wrap;
     }
 
-    /* ★ 予約者一覧モーダル用 */
+    /* attendees table */
     .table{
       width:100%;
       border-collapse:collapse;
-      margin-top:8px;
-      font-size:14px;
+      margin-top: 10px;
+      font-size: 14px;
+      border-radius: 12px;
+      overflow: hidden;
     }
     .table th,.table td{
-      border:1px solid #ccc;
-      padding:8px;
+      border: 1px solid var(--line);
+      padding: 10px;
       text-align:left;
+      background:#fff;
     }
-    .table th{ background:#f5f5f5; }
-    .small-muted{ color:#666; font-size:12px; margin-top:10px; }
+    .table th{
+      background:#f9fafb;
+      font-size: 12px;
+      color:#344054;
+    }
+    .small-muted{ color: var(--muted); font-size:12px; margin-top: 6px; }
+
+    @media (max-width: 900px){
+      :root{ --pad: 16px; }
+    }
+    @media (max-width: 520px){
+      .event-right{ flex-direction: column; align-items:flex-end; }
+      .btn{ width: 100%; }
+      .btn.tiny{ width: auto; }
+    }
   </style>
-</head>
-<body>
+  </head>
 
-<header>
-  <a href="adminevents.html">説明会情報管理</a>
-  <a href="admincompanies.html">会社情報管理</a>
+  <body>
+    <header>
+      <div class="header-inner">
+        <nav class="nav">
+          <a class="is-active" href="adminevents.html">説明会情報管理</a>
+          <a href="admincompanies.html">会社情報管理</a>
 
-  <!-- ★ super_admin のときだけ表示 -->
-  <a href="super_admin_user_manage.html" id="userManageLink" style="display:none;">ユーザー管理</a>
-  <a href="teacherRegister.html" id="teacherRegisterLink" style="display:none;">新規教師登録</a>
+          <a href="super_admin_user_manage.html" id="userManageLink"
+            style="display:none;">ユーザー管理</a>
+          <a href="teacherRegister.html" id="teacherRegisterLink"
+            style="display:none;">新規教師登録</a>
 
-  <a href="#" id="logoutLink">ログアウト</a>
-  <a href="teacher_mypage.html" id="accountLink">アカウント</a>
-</header>
+          <a href="teacher_mypage.html" id="accountLink">アカウント</a>
+          <a href="#" id="logoutLink" class="danger-link">ログアウト</a>
+        </nav>
+      </div>
+    </header>
 
-<main>
-  <div class="toolbar">
-    <button class="btn" id="openModalBtn">説明会新規登録ボタン</button>
-  </div>
+    <main>
+      <div class="page-title">
+        <h1>説明会情報管理</h1>
+        <p class="hint">登録・閲覧・編集はポップアップで行います（管理者のみ）。</p>
+      </div>
 
-  <!-- ★検索フォーム -->
-  <div class="search-box">
-    <div class="search-row">
-      <input id="keyword" type="text" placeholder="会社名・説明会名で検索">
-      <input id="fromDt" type="datetime-local">
-      <input id="toDt" type="datetime-local">
-      <button id="searchBtn">検索</button>
-      <button id="clearBtn" type="button">クリア</button>
-    </div>
-    <div style="font-size:12px;color:#666;">
-      ※ 表示対象は「今年度3月〜次年度3月」の説明会のみ（サーバ側で自動切替）
-    </div>
-  </div>
+      <div class="toolbar">
+        <div></div>
+        <button class="btn btn-primary" id="openModalBtn">説明会を新規登録</button>
+      </div>
 
-  <div class="hint">＊ 登録・閲覧・編集・画面はポップアップBOXで表示</div>
+      <!-- Search -->
+      <div class="panel">
+        <div class="row">
+          <input id="keyword" class="input" type="text"
+            placeholder="会社名・説明会名で検索" style="width:min(360px,100%);" />
+          <input id="fromDt" class="input" type="datetime-local"
+            style="width:220px;" />
+          <input id="toDt" class="input" type="datetime-local"
+            style="width:220px;" />
+          <button id="searchBtn" class="btn">検索</button>
+          <button id="clearBtn" class="btn">クリア</button>
+        </div>
+        <div class="muted">※ 表示対象は「今年度3月〜次年度3月」の説明会のみ（サーバ側で自動切替）</div>
+      </div>
 
-  <div id="eventList"></div>
-  <div id="message" class="message"></div>
-  <div id="pagination"></div>
-</main>
+      <div id="eventList"></div>
+      <div id="message" class="message"></div>
+      <div id="pagination"></div>
+    </main>
 
-<!-- Modal（新規登録） -->
-<div class="backdrop" id="backdrop">
-  <div class="modal">
-    <h2>説明会新規登録</h2>
+    <!-- Modal（新規登録） -->
+    <div class="backdrop" id="backdrop" aria-hidden="true">
+      <div class="modal" role="dialog" aria-modal="true">
+        <h2>説明会新規登録</h2>
 
-    <div class="field">
-      <label>会社（必須）</label>
-      <select id="m_company">
-        <option value="">読み込み中...</option>
-      </select>
-      <div class="muted">※ 会社情報管理で登録した会社が表示されます</div>
-    </div>
+        <div class="field">
+          <label>会社（必須）</label>
+          <select id="m_company">
+            <option value>読み込み中...</option>
+          </select>
+          <div class="small-muted">※ 会社情報管理で登録した会社が表示されます</div>
+        </div>
 
-    <div class="field" id="m_date_field">
-      <label>開催日（必須）</label>
-      <input id="m_date" type="datetime-local" />
-      <div class="field-error" id="m_date_err" style="display:none;"></div>
-    </div>
+        <div class="field" id="m_date_field">
+          <label>開催日（必須）</label>
+          <input id="m_date" type="datetime-local" />
+          <div class="field-error" id="m_date_err"></div>
+        </div>
 
-    <div class="field" id="m_deadline_field">
-      <label>締切（必須）</label>
-      <input id="m_deadline" type="datetime-local" />
-      <div class="field-error" id="m_deadline_err" style="display:none;"></div>
-    </div>
+        <div class="field" id="m_deadline_field">
+          <label>締切（必須）</label>
+          <input id="m_deadline" type="datetime-local" />
+          <div class="field-error" id="m_deadline_err"></div>
+        </div>
 
-    <div class="field">
-      <label>場所（必須）</label>
-      <input id="m_place" placeholder="例：E2602" />
-    </div>
+        <div class="field">
+          <label>場所（必須）</label>
+          <input id="m_place" placeholder="例：E2602" />
+        </div>
 
-    <div class="field">
-      <label>持ち物</label>
-      <input id="m_item" placeholder="例：履歴書・筆記用具" />
-    </div>
+        <div class="field">
+          <label>持ち物</label>
+          <input id="m_item" placeholder="例：履歴書・筆記用具" />
+        </div>
 
-    <div class="field">
-      <label>説明（備考）</label>
-      <textarea id="m_note" placeholder="例：服装自由、受付開始は30分前など"></textarea>
-    </div>
+        <div class="field">
+          <label>説明（備考）</label>
+          <textarea id="m_note" placeholder="例：服装自由、受付開始は30分前など"></textarea>
+        </div>
 
-    <div class="actions">
-      <button class="btn" id="closeModalBtn">キャンセル</button>
-      <button class="btn" id="saveBtn">登録</button>
-    </div>
+        <div class="actions">
+          <button class="btn" id="closeModalBtn">キャンセル</button>
+          <button class="btn btn-primary" id="saveBtn">登録</button>
+        </div>
 
-    <div class="error" id="modalMsg"></div>
-  </div>
-</div>
-
-<!-- Modal（編集） -->
-<div class="backdrop" id="editBackdrop">
-  <div class="modal">
-    <h2>説明会 編集</h2>
-
-    <div class="field">
-      <label>会社（必須）</label>
-      <select id="e_company">
-        <option value="">読み込み中...</option>
-      </select>
+        <div class="error" id="modalMsg"></div>
+      </div>
     </div>
 
-    <div class="field">
-      <label>開催日（必須）</label>
-      <input id="e_date" type="datetime-local" />
+    <!-- Modal（編集） -->
+    <div class="backdrop" id="editBackdrop" aria-hidden="true">
+      <div class="modal" role="dialog" aria-modal="true">
+        <h2>説明会 編集</h2>
+
+        <div class="field">
+          <label>会社（必須）</label>
+          <select id="e_company">
+            <option value>読み込み中...</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label>開催日（必須）</label>
+          <input id="e_date" type="datetime-local" />
+        </div>
+
+        <div class="field">
+          <label>締切（必須）</label>
+          <input id="e_deadline" type="datetime-local" />
+        </div>
+
+        <div class="field">
+          <label>場所（必須）</label>
+          <input id="e_place" placeholder="例：E2602" />
+        </div>
+
+        <div class="field">
+          <label>持ち物</label>
+          <input id="e_item" placeholder="例：履歴書・筆記用具" />
+        </div>
+
+        <div class="field">
+          <label>説明（備考）</label>
+          <textarea id="e_note" placeholder="例：服装自由、受付開始は30分前など"></textarea>
+        </div>
+
+        <div class="actions">
+          <button class="btn" id="editCancelBtn">キャンセル</button>
+          <button class="btn btn-primary" id="editSaveBtn">更新</button>
+        </div>
+
+        <div class="error" id="editMsg"></div>
+      </div>
     </div>
 
-    <div class="field">
-      <label>締切（必須）</label>
-      <input id="e_deadline" type="datetime-local" />
+    <!-- Modal（削除確認） -->
+    <div class="backdrop" id="deleteBackdrop" aria-hidden="true">
+      <div class="modal" role="dialog" aria-modal="true">
+        <h2>削除確認</h2>
+
+        <div id="deleteText" style="font-size:14px; line-height:1.6;"></div>
+
+        <div class="actions">
+          <button class="btn" id="deleteCancelBtn">キャンセル</button>
+          <button class="btn btn-danger" id="deleteOkBtn">削除する</button>
+        </div>
+
+        <div class="error" id="deleteMsg"></div>
+      </div>
     </div>
 
-    <div class="field">
-      <label>場所（必須）</label>
-      <input id="e_place" placeholder="例：E2602" />
+    <!-- Modal（予約者一覧） -->
+    <div class="backdrop" id="attendeesBackdrop" aria-hidden="true">
+      <div class="modal" role="dialog" aria-modal="true">
+        <h2>予約者一覧</h2>
+
+        <div id="attendeesInfo" class="small-muted"></div>
+        <div id="attendeesBody"></div>
+
+        <div class="actions">
+          <button class="btn" id="attendeesCloseBtn">閉じる</button>
+        </div>
+
+        <div class="error" id="attendeesMsg"></div>
+      </div>
     </div>
 
-    <div class="field">
-      <label>持ち物</label>
-      <input id="e_item" placeholder="例：履歴書・筆記用具" />
-    </div>
-
-    <div class="field">
-      <label>説明（備考）</label>
-      <textarea id="e_note" placeholder="例：服装自由、受付開始は30分前など"></textarea>
-    </div>
-
-    <div class="actions">
-      <button class="btn" id="editCancelBtn">キャンセル</button>
-      <button class="btn" id="editSaveBtn">更新</button>
-    </div>
-
-    <div class="error" id="editMsg"></div>
-  </div>
-</div>
-
-<!-- Modal（削除確認） -->
-<div class="backdrop" id="deleteBackdrop">
-  <div class="modal">
-    <h2>削除確認</h2>
-
-    <div id="deleteText" style="font-size:14px; line-height:1.6;"></div>
-
-    <div class="actions">
-      <button class="btn" id="deleteCancelBtn">キャンセル</button>
-      <button class="btn danger" id="deleteOkBtn">削除する</button>
-    </div>
-
-    <div class="error" id="deleteMsg"></div>
-  </div>
-</div>
-
-<!-- ★ Modal（予約者一覧） -->
-<div class="backdrop" id="attendeesBackdrop">
-  <div class="modal">
-    <h2>予約者一覧</h2>
-
-    <div id="attendeesInfo" class="small-muted"></div>
-    <div id="attendeesBody"></div>
-
-    <div class="actions">
-      <button class="btn" id="attendeesCloseBtn">閉じる</button>
-    </div>
-
-    <div class="error" id="attendeesMsg"></div>
-  </div>
-</div>
-
-<script>
+    <script>
   const API_BASE = "http://localhost:8080";
-  // const API_BASE = "http://45.76.55.162:8080"; //外部公開用
+  // const API_BASE = "http://45.76.55.162:8080";
 
   const token = localStorage.getItem("token");
-  const roleRaw = localStorage.getItem("role"); // "normal_admin" / "super_admin"
+  const roleRaw = localStorage.getItem("role");
   const roleUpper = roleRaw ? roleRaw.toUpperCase() : "";
 
-  // ★ normal_admin / super_admin を「管理者」として扱う
   const isAdmin = (roleUpper === "NORMAL_ADMIN" || roleUpper === "SUPER_ADMIN");
   const isSuperAdmin = (roleUpper === "SUPER_ADMIN");
 
-  // ヘッダー：super_admin のときだけリンク表示
   function setupSuperAdminHeaderLinks() {
     const userManageLink = document.getElementById("userManageLink");
     const teacherRegisterLink = document.getElementById("teacherRegisterLink");
@@ -401,7 +648,6 @@
     if (userManageLink) userManageLink.style.display = isSuperAdmin ? "inline" : "none";
     if (teacherRegisterLink) teacherRegisterLink.style.display = isSuperAdmin ? "inline" : "none";
 
-    // ★ super_admin のときだけ「アカウント」リンク先を差し替え
     if (accountLink) {
       if (isSuperAdmin) {
         accountLink.href = "super_admin_mypage.html";
@@ -416,7 +662,7 @@
   const messageEl = document.getElementById("message");
   const paginationEl = document.getElementById("pagination");
 
-  // 新規登録
+  // new modal
   const backdrop = document.getElementById("backdrop");
   const openModalBtn = document.getElementById("openModalBtn");
   const closeModalBtn = document.getElementById("closeModalBtn");
@@ -424,15 +670,12 @@
   const modalMsg = document.getElementById("modalMsg");
   const companySelect = document.getElementById("m_company");
 
-  // ★ 新規登録：開催日/締切の入力欄・エラー表示要素
   const mDate = document.getElementById("m_date");
   const mDeadline = document.getElementById("m_deadline");
-  const mDateField = document.getElementById("m_date_field");
-  const mDeadlineField = document.getElementById("m_deadline_field");
   const mDateErr = document.getElementById("m_date_err");
   const mDeadlineErr = document.getElementById("m_deadline_err");
 
-  // 編集
+  // edit
   const editBackdrop = document.getElementById("editBackdrop");
   const eCompany = document.getElementById("e_company");
   const eDate = document.getElementById("e_date");
@@ -444,14 +687,14 @@
   const editSaveBtn = document.getElementById("editSaveBtn");
   const editMsg = document.getElementById("editMsg");
 
-  // 削除
+  // delete
   const deleteBackdrop = document.getElementById("deleteBackdrop");
   const deleteText = document.getElementById("deleteText");
   const deleteCancelBtn = document.getElementById("deleteCancelBtn");
   const deleteOkBtn = document.getElementById("deleteOkBtn");
   const deleteMsg = document.getElementById("deleteMsg");
 
-  // ★ 予約者一覧
+  // attendees
   const attendeesBackdrop = document.getElementById("attendeesBackdrop");
   const attendeesBody = document.getElementById("attendeesBody");
   const attendeesMsg = document.getElementById("attendeesMsg");
@@ -468,7 +711,6 @@
   let editingEventId = null;
   let deletingEventId = null;
 
-  // ======== 重要：レスポンス本文を「必ず1回だけ」読む ========
   async function readErrorMessageOnce(res) {
     const raw = await res.text();
     if (!raw) return "";
@@ -480,16 +722,12 @@
     }
   }
 
-  // ★ datetime-local を Date にする（ローカル時刻として解釈）
   function toLocalDate(dtLocalValue) {
     if (!dtLocalValue) return null;
     const d = new Date(dtLocalValue);
     return isNaN(d.getTime()) ? null : d;
   }
 
-  // ★ 追加：新規登録の「開催日/締切」チェックを見える化する
-  // - NGなら: 入力欄を赤枠 + エラーテキスト表示 + 登録ボタン無効
-  // - OKなら: 赤枠解除 + エラー非表示 + 登録ボタン有効（ただし必須未入力の場合はここでは触らない）
   function setFieldError(fieldEl, errEl, message) {
     if (!fieldEl || !errEl) return;
     if (message) {
@@ -504,7 +742,6 @@
   }
 
   function validateNewEventDates({ show = true } = {}) {
-    // まず消す
     if (show) {
       setFieldError(mDate, mDateErr, "");
       setFieldError(mDeadline, mDeadlineErr, "");
@@ -514,9 +751,7 @@
     const dateVal = mDate.value;
     const deadlineVal = mDeadline.value;
 
-    // 片方未入力なら、ここでは「日付順チェック」しない（必須チェックは登録時に別でやる）
     if (!dateVal || !deadlineVal) {
-      // 登録ボタンは一旦有効（必須で止まるので）
       saveBtn.disabled = false;
       return { ok: true, reason: "missing" };
     }
@@ -534,10 +769,8 @@
       return { ok: false, reason: "invalid_format" };
     }
 
-    // 仕様：締切 < 開催日 だけOK
     if (eventDt.getTime() <= deadlineDt.getTime()) {
       if (show) {
-        // どっちが原因か分かるように両方出す
         setFieldError(mDate, mDateErr, "開催日は「締切より後」にしてください。");
         setFieldError(mDeadline, mDeadlineErr, "締切は「開催日より前」にしてください。");
         modalMsg.textContent = "登録できません：締切は開催日より前に設定してください（締切 < 開催日）";
@@ -546,7 +779,6 @@
       return { ok: false, reason: "order" };
     }
 
-    // OK
     if (show) {
       setFieldError(mDate, mDateErr, "");
       setFieldError(mDeadline, mDeadlineErr, "");
@@ -566,7 +798,6 @@
     openModalBtn.title = "管理者のみ操作できます";
   }
 
-  // ログアウト
   document.getElementById("logoutLink").addEventListener("click", (e) => {
     e.preventDefault();
     localStorage.removeItem("token");
@@ -578,7 +809,6 @@
     window.location.href = "index.html";
   });
 
-  // ========= 検索パラメータ =========
   function toSqlDateTime(dtLocalValue) {
     if (!dtLocalValue) return "";
     return dtLocalValue.replace("T", " ") + ":00";
@@ -591,7 +821,6 @@
     return { q, from, to };
   }
 
-  // ★ http(s) が付いてない場合に補正
   function normalizeUrl(url) {
     if (!url) return "";
     const u = String(url).trim();
@@ -600,17 +829,14 @@
     return "https://" + u;
   }
 
-  // ★追加：予約人数を取得（公開 or 管理者でもOKな想定）
   async function fetchReservationCount(eventId) {
     const res = await fetch(`${API_BASE}/events/${eventId}/reservations/count`);
     if (!res.ok) throw new Error("HTTP " + res.status);
-    return await res.json(); // int
+    return await res.json();
   }
 
-  // ========= 会社一覧（selectへ流し込み） =========
   async function loadCompanyOptionsTo(selectEl) {
     selectEl.innerHTML = `<option value="">読み込み中...</option>`;
-
     try {
       const res = await fetch(`${API_BASE}/api/admin/companies?page=1&size=1000`, {
         headers: { "Authorization": `Bearer ${token}` }
@@ -620,13 +846,11 @@
       const data = await res.json();
       const items = data.items ?? data.companies ?? [];
 
-      // ★★★★★ ここが追加：会社名を「あいうえお順」にする（フロントだけで対応） ★★★★★
       items.sort((a, b) => {
         const an = (a.name ?? "").trim();
         const bn = (b.name ?? "").trim();
         return an.localeCompare(bn, "ja", { numeric: true, sensitivity: "base" });
       });
-      // ★★★★★ 追加ここまで ★★★★★
 
       if (!items.length) {
         selectEl.innerHTML = `<option value="">会社がありません（先に会社登録してください）</option>`;
@@ -650,7 +874,15 @@
     return loadCompanyOptionsTo(companySelect);
   }
 
-  // ========= モーダル open/close =========
+  function openBackdrop(bd){
+    bd.style.display = "flex";
+    bd.setAttribute("aria-hidden","false");
+  }
+  function closeBackdrop(bd){
+    bd.style.display = "none";
+    bd.setAttribute("aria-hidden","true");
+  }
+
   openModalBtn.onclick = async () => {
     if (!isAdmin || !token) return;
 
@@ -661,54 +893,47 @@
     document.getElementById("m_item").value = "";
     document.getElementById("m_note").value = "";
 
-    // ★エラー表示も初期化
     setFieldError(mDate, mDateErr, "");
     setFieldError(mDeadline, mDeadlineErr, "");
     saveBtn.disabled = false;
 
-    backdrop.style.display = "block";
+    openBackdrop(backdrop);
     await loadCompanyOptions();
   };
 
-  closeModalBtn.onclick = () => backdrop.style.display = "none";
-  backdrop.addEventListener("click", (e) => {
-    if (e.target === backdrop) backdrop.style.display = "none";
+  closeModalBtn.onclick = () => closeBackdrop(backdrop);
+  backdrop.addEventListener("click", (e) => { if (e.target === backdrop) closeBackdrop(backdrop); });
+
+  editCancelBtn.onclick = () => closeBackdrop(editBackdrop);
+  editBackdrop.addEventListener("click", (e) => { if (e.target === editBackdrop) closeBackdrop(editBackdrop); });
+
+  deleteCancelBtn.onclick = () => closeBackdrop(deleteBackdrop);
+  deleteBackdrop.addEventListener("click", (e) => { if (e.target === deleteBackdrop) closeBackdrop(deleteBackdrop); });
+
+  attendeesCloseBtn.onclick = () => closeBackdrop(attendeesBackdrop);
+  attendeesBackdrop.addEventListener("click", (e) => { if (e.target === attendeesBackdrop) closeBackdrop(attendeesBackdrop); });
+
+  // Escで全部閉じる
+  document.addEventListener("keydown", (e) => {
+    if (e.key !== "Escape") return;
+    [backdrop, editBackdrop, deleteBackdrop, attendeesBackdrop].forEach(bd => {
+      if (bd.style.display === "flex") closeBackdrop(bd);
+    });
   });
 
-  editCancelBtn.onclick = () => editBackdrop.style.display = "none";
-  editBackdrop.addEventListener("click", (e) => {
-    if (e.target === editBackdrop) editBackdrop.style.display = "none";
-  });
-
-  deleteCancelBtn.onclick = () => deleteBackdrop.style.display = "none";
-  deleteBackdrop.addEventListener("click", (e) => {
-    if (e.target === deleteBackdrop) deleteBackdrop.style.display = "none";
-  });
-
-  // ★ 予約者一覧モーダル close
-  attendeesCloseBtn.onclick = () => attendeesBackdrop.style.display = "none";
-  attendeesBackdrop.addEventListener("click", (e) => {
-    if (e.target === attendeesBackdrop) attendeesBackdrop.style.display = "none";
-  });
-
-  // ★リアルタイム検証：入力が変わるたびに分かりやすく表示
   mDate.addEventListener("input", () => validateNewEventDates({ show: true }));
   mDeadline.addEventListener("input", () => validateNewEventDates({ show: true }));
 
-  // ========= datetime-local 変換 =========
   function toDatetimeLocalValue(s) {
     if (!s) return "";
     const t = String(s).trim().replace(" ", "T");
     return t.length >= 16 ? t.slice(0, 16) : t;
   }
 
-  // ========= 新規登録（POST） =========
   saveBtn.onclick = async () => {
     if (!isAdmin || !token) return;
 
     modalMsg.textContent = "";
-
-    // ★最初に一旦有効化（下で止める）
     saveBtn.disabled = true;
 
     const companyId = companySelect.value ? Number(companySelect.value) : 0;
@@ -729,12 +954,8 @@
     if (!payload.deadline)  { modalMsg.textContent = "締切は必須です"; saveBtn.disabled = false; return; }
     if (!payload.place)     { modalMsg.textContent = "場所は必須です"; saveBtn.disabled = false; return; }
 
-    // ★ここで必ずチェック（NGなら赤表示 + メッセージ + 登録中止）
     const v = validateNewEventDates({ show: true });
-    if (!v.ok) {
-      // validate内で saveBtn.disabled=true にしている
-      return;
-    }
+    if (!v.ok) return;
 
     try {
       const res = await fetch(`${API_BASE}/api/admin/events`, {
@@ -754,9 +975,8 @@
       }
 
       alert("説明会を登録しました。");
-      backdrop.style.display = "none";
+      closeBackdrop(backdrop);
       saveBtn.disabled = false;
-
       await loadEvents(0);
 
     } catch (e) {
@@ -766,14 +986,13 @@
     }
   };
 
-  // ========= 編集モーダル open =========
   async function openEditModal(event) {
     if (!isAdmin || !token) return;
 
     editMsg.textContent = "";
     editingEventId = event.eventId;
 
-    editBackdrop.style.display = "block";
+    openBackdrop(editBackdrop);
     await loadCompanyOptionsTo(eCompany);
 
     eCompany.value = String(event.companyId ?? "");
@@ -784,7 +1003,6 @@
     eNote.value = event.note ?? "";
   }
 
-  // ========= 編集（PUT） =========
   editSaveBtn.onclick = async () => {
     if (!isAdmin || !token) return;
 
@@ -823,9 +1041,8 @@
       }
 
       alert("更新しました。");
-      editBackdrop.style.display = "none";
+      closeBackdrop(editBackdrop);
       editSaveBtn.disabled = false;
-
       await loadEvents(currentPage);
 
     } catch (e) {
@@ -835,7 +1052,6 @@
     }
   };
 
-  // ========= 削除モーダル open =========
   function openDeleteModal(event) {
     if (!isAdmin || !token) return;
 
@@ -851,10 +1067,9 @@
       </div>
     `;
 
-    deleteBackdrop.style.display = "block";
+    openBackdrop(deleteBackdrop);
   }
 
-  // ========= 削除（DELETE） =========
   deleteOkBtn.onclick = async () => {
     if (!isAdmin || !token) return;
 
@@ -875,9 +1090,8 @@
       }
 
       alert("削除しました。");
-      deleteBackdrop.style.display = "none";
+      closeBackdrop(deleteBackdrop);
       deleteOkBtn.disabled = false;
-
       await loadEvents(currentPage);
 
     } catch (e) {
@@ -887,14 +1101,13 @@
     }
   };
 
-  // ========= ★ 予約者一覧（GET） =========
   function openAttendeesModal(event) {
     if (!isAdmin || !token) return;
 
     attendeesMsg.textContent = "";
     attendeesBody.innerHTML = "読み込み中...";
     attendeesInfo.textContent = `会社：${event.companyName ?? ""} / 開催日：${event.date ?? ""}`;
-    attendeesBackdrop.style.display = "block";
+    openBackdrop(attendeesBackdrop);
 
     loadAttendees(event.eventId);
   }
@@ -948,7 +1161,6 @@
     }
   }
 
-  // ========= 一覧表示 =========
   async function loadEvents(page) {
     if (page < 0) page = 0;
 
@@ -989,7 +1201,6 @@
       const header = document.createElement("div");
       header.className = "event-header";
 
-      // 左：会社名/開催日/場所
       const mainInfo = document.createElement("div");
       mainInfo.className = "event-main-info";
 
@@ -1009,49 +1220,36 @@
       mainInfo.appendChild(sub1);
       mainInfo.appendChild(sub2);
 
-      // 右：予約人数 + 詳細ボタン
       const rightWrap = document.createElement("div");
       rightWrap.className = "event-right";
 
-      const countInline = document.createElement("div");
-      countInline.className = "reservation-count-inline";
-
-      const countLabel = document.createElement("span");
-      countLabel.className = "label";
-      countLabel.textContent = "現在の予約：";
-
-      const countValue = document.createElement("span");
-      countValue.className = "value";
-      countValue.textContent = "取得中…";
-
-      countInline.appendChild(countLabel);
-      countInline.appendChild(countValue);
+      const badge = document.createElement("div");
+      badge.className = "badge";
+      badge.innerHTML = `<span>現在の予約</span><span class="value">取得中…</span>`;
 
       const toggleBtn = document.createElement("button");
-      toggleBtn.className = "detail-toggle-btn";
+      toggleBtn.className = "btn tiny";
       toggleBtn.textContent = "▽ 詳細表示";
 
-      rightWrap.appendChild(countInline);
+      rightWrap.appendChild(badge);
       rightWrap.appendChild(toggleBtn);
 
       header.appendChild(mainInfo);
       header.appendChild(rightWrap);
 
-      // ★人数取得（ヘッダー右側に表示）
       (async () => {
         try {
           const n = await fetchReservationCount(e.eventId);
-          countValue.textContent = `${n}人`;
+          badge.querySelector(".value").textContent = `${n}人`;
         } catch (err) {
           console.error(err);
-          countValue.textContent = "取得失敗";
+          badge.querySelector(".value").textContent = "取得失敗";
         }
       })();
 
       const detail = document.createElement("div");
       detail.className = "event-detail";
 
-      // ★会社Webをアコーディオン内に追加
       const webUrl = e.companyWebsite ? normalizeUrl(e.companyWebsite) : "";
 
       detail.innerHTML = `
@@ -1095,7 +1293,7 @@
         });
 
         const delBtn = document.createElement("button");
-        delBtn.className = "btn danger";
+        delBtn.className = "btn btn-danger";
         delBtn.textContent = "削除";
         delBtn.addEventListener("click", (ev) => {
           ev.stopPropagation();
@@ -1158,7 +1356,6 @@
       .replaceAll("'", "&#039;");
   }
 
-  // 検索イベント
   searchBtn.addEventListener("click", () => loadEvents(0));
   clearBtn.addEventListener("click", () => {
     document.getElementById("keyword").value = "";
@@ -1175,6 +1372,5 @@
     loadEvents(0);
   });
 </script>
-
-</body>
+  </body>
 </html>

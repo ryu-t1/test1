@@ -2,68 +2,264 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>全ユーザ管理（super_admin）</title>
-  <style>
-    body { font-family: system-ui, -apple-system, "Helvetica Neue", Arial, sans-serif; margin:0; background:#fafafa; color:#111; }
-    header{
-      border-bottom:1px solid #ccc; padding:16px 40px; display:flex; justify-content:center; gap:80px;
-      font-size:14px; background:#fff;
-    }
-    header a{ text-decoration:none; color:#333; cursor:pointer; }
-    main{ max-width:900px; margin:30px auto 70px; padding:0 16px; }
 
-    .panel{ background:#fff; border:1px solid #ddd; border-radius:10px; padding:16px; margin-bottom:14px; }
+  <style>
+    :root{
+      --bg:#f6f7fb;
+      --card:#ffffff;
+      --text:#101828;
+      --muted:#667085;
+      --line:#e4e7ec;
+      --line-strong:#d0d5dd;
+      --shadow: 0 10px 30px rgba(16,24,40,.08);
+      --shadow-sm: 0 6px 16px rgba(16,24,40,.06);
+      --radius:14px;
+      --accent:#2563eb;
+      --accent-2:#1d4ed8;
+      --danger:#b42318;
+      --danger-bg: rgba(180,35,24,.08);
+      --focus: 0 0 0 4px rgba(37,99,235,.18);
+      --container: 1120px;
+      --content: 980px;
+      --pad: 24px;
+    }
+
+    *{ box-sizing:border-box; }
+    body{
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans JP", "Hiragino Kaku Gothic ProN", Meiryo, sans-serif;
+      margin:0;
+      background: var(--bg);
+      background-image: radial-gradient(1200px 520px at 50% -180px, rgba(37,99,235,.10), rgba(37,99,235,0));
+      background-repeat: no-repeat;
+      background-attachment: fixed;
+      color: var(--text);
+      line-height: 1.55;
+      padding-bottom: 72px;
+    }
+
+    /* ===== Header（index.html と同じ統一スタイル） ===== */
+    header{
+        position: sticky;
+        top: 0;
+        z-index: 10;
+        background: rgba(255,255,255,.92);
+        backdrop-filter: blur(10px);
+        border-bottom: 1px solid var(--line);
+      }
+
+      /* “中央らへんでいい感じに分散”：
+         1) nav自体は中央配置
+         2) navの中身は等間隔に分散
+         3) ただし巨大画面でも広がりすぎないよう max-width を持たせる */
+      .header-inner{
+        max-width: var(--container);
+        margin: 0 auto;
+        padding: 14px var(--pad);
+        display:flex;
+        justify-content:center;   /* navを中央に */
+        align-items:center;
+      }
+
+      .nav{
+        width: min(760px, 100%);  /* 広がりすぎ防止（中央らへん） */
+        display:flex;
+        align-items:center;
+        justify-content: space-around; /* 中央付近で“分散” */
+        gap: 10px;
+        flex-wrap:wrap;
+      }
+
+      .nav a{
+        text-decoration:none;
+        color:#344054;
+        font-size: 13px;
+        padding: 8px 12px;
+        border-radius: 999px;
+        transition: background-color .15s ease, color .15s ease, transform .05s ease;
+        outline: none;
+        white-space: nowrap;
+      }
+    .nav a:hover{ background:#f2f4f7; color:#111827; }
+    .nav a:active{ transform: translateY(1px); }
+    .nav a:focus-visible{ box-shadow: var(--focus); }
+    .nav a.is-active{
+      background: rgba(37,99,235,.10);
+      color:#1d4ed8;
+      font-weight: 800;
+      border-color: rgba(37,99,235,.20);
+    }
+    .nav a.danger-link{
+      color:#b42318;
+      border-color: rgba(180,35,24,.18);
+      background: rgba(180,35,24,.06);
+    }
+    .nav a.danger-link:hover{
+      background: rgba(180,35,24,.10);
+      color:#8a1f16;
+    }
+
+    /* ===== Layout ===== */
+    main{
+      max-width: var(--content);
+      margin: 24px auto 70px;
+      padding: 0 16px;
+    }
+
+    .page-title{
+      display:flex;
+      align-items:flex-end;
+      justify-content:space-between;
+      gap: 12px;
+      flex-wrap:wrap;
+      margin: 10px 0 12px;
+    }
+    .page-title h1{
+      margin:0;
+      font-size: 18px;
+      letter-spacing: .02em;
+    }
+    .page-title .hint{
+      margin:0;
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    /* ===== Components ===== */
+    .panel{
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow-sm);
+      padding: 14px;
+      margin-bottom: 14px;
+    }
+
     .row{ display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
     .row > * { margin:4px 0; }
 
-    .input{ padding:10px; border:1px solid #333; border-radius:8px; background:#fff; }
-    .btn{ padding:10px 14px; border:1px solid #333; background:#fff; cursor:pointer; border-radius:8px; }
-    .btn:disabled{ opacity:.5; cursor:not-allowed; }
+    .input{
+      height: 40px;
+      padding: 0 12px;
+      border: 1px solid var(--line-strong);
+      border-radius: 12px;
+      background: #fff;
+      color: var(--text);
+      outline: none;
+      transition: box-shadow .15s ease, border-color .15s ease;
+      font-size: 14px;
+      font-family: inherit;
+    }
+    .input:focus{
+      border-color: rgba(37,99,235,.55);
+      box-shadow: var(--focus);
+    }
 
-    .muted{ color:#666; font-size:13px; }
-    .error{ color:#b00020; font-size:13px; }
-    .ok{ color:#0a7a2f; font-size:13px; }
+    .btn{
+      height: 40px;
+      padding: 0 14px;
+      border-radius: 12px;
+      border: 1px solid var(--line-strong);
+      background: #fff;
+      color: #111827;
+      font-size: 13px;
+      cursor: pointer;
+      transition: transform .05s ease, background-color .15s ease, border-color .15s ease;
+      outline: none;
+      white-space: nowrap;
+    }
+    .btn:hover{ background:#f9fafb; }
+    .btn:active{ transform: translateY(1px); }
+    .btn:focus-visible{ box-shadow: var(--focus); }
+    .btn:disabled{ opacity:.55; cursor:not-allowed; }
 
-    .list{ margin-top:10px; }
+    .muted{ color: var(--muted); font-size: 13px; }
+    .error{ color: #b00020; font-size: 13px; }
+    .ok{ color: #0a7a2f; font-size: 13px; }
+
+    .list{ margin-top: 10px; }
+
     details.user{
-      background:#fff; border:1px solid #ddd; border-radius:10px; margin:10px 0; overflow:hidden;
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      margin: 10px 0;
+      overflow: hidden;
+      box-shadow: var(--shadow-sm);
     }
     details.user summary{
-      list-style:none; cursor:pointer; padding:14px 14px; display:flex; align-items:center; justify-content:space-between;
+      list-style:none;
+      cursor:pointer;
+      padding: 14px 14px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap: 12px;
     }
     details.user summary::-webkit-details-marker{ display:none; }
-    .left{ display:flex; flex-direction:column; gap:4px; }
-    .title{ font-weight:700; }
-    .meta{ font-size:13px; color:#444; }
-    .role{ font-size:12px; padding:4px 8px; border:1px solid #bbb; border-radius:999px; color:#333; background:#fff; }
 
-    .detail{ border-top:1px solid #eee; padding:14px; background:#fcfcfc; }
+    .left{ display:flex; flex-direction:column; gap:4px; min-width:0; }
+    .title{ font-weight: 900; }
+    .meta{ font-size: 13px; color:#475467; overflow:hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 720px; }
+    .role{
+      font-size: 12px;
+      padding: 6px 10px;
+      border: 1px solid var(--line-strong);
+      border-radius: 999px;
+      color:#344054;
+      background:#fff;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+
+    .detail{
+      border-top: 1px solid var(--line);
+      padding: 14px;
+      background: #fbfcfe;
+    }
+
     .grid{ display:grid; grid-template-columns: 1fr 1fr 1fr; gap:10px; }
     @media (max-width: 760px){ .grid{ grid-template-columns: 1fr; } }
 
-    .pager{ display:flex; gap:10px; align-items:center; justify-content:center; margin:16px 0; }
+    .pager{
+      display:flex;
+      gap: 10px;
+      align-items:center;
+      justify-content:center;
+      margin: 16px 0;
+    }
+    @media (max-width: 900px){
+      :root{ --pad: 16px; }
+    }
   </style>
 </head>
+
 <body>
+<header>
+  <div class="header-inner">
+    <nav class="nav">
+      <a href="adminevents.html">説明会情報管理</a>
+      <a href="admincompanies.html">会社情報管理</a>
 
-  <!-- ===== super_admin用ヘッダー（管理画面と統一） ===== -->
-  <header>
-    <a href="adminevents.html">説明会情報管理</a>
-    <a href="admincompanies.html">会社情報管理</a>
+      <a href="super_admin_user_manage.html" class="is-active">ユーザー管理</a>
+      <a href="teacherRegister.html">新規教師登録</a>
 
-    <a href="super_admin_user_manage.html">ユーザ管理</a>
-    <a href="teacherRegister.html">教師新規登録</a>
-
-    <a href="#" id="logoutLink">ログアウト</a>
-    <a href="super_admin_mypage.html">アカウント</a>
-  </header>
+      <a href="super_admin_mypage.html" id="accountLink">アカウント</a>
+      <a href="#" id="logoutLink" class="danger-link">ログアウト</a>
+    </nav>
+  </div>
+</header>
 
 <main>
-  <h2 style="margin:0 0 10px;">全ユーザ管理（super_admin）</h2>
+  <div class="page-title">
+    <h1>全ユーザ管理（super_admin）</h1>
+    <p class="hint">ユーザーの検索・編集、学生の学年一括変更ができます。</p>
+  </div>
 
   <!-- 学年一括変更（仕様変更：全学年を一括で +1 / -1 のみ） -->
   <div class="panel">
-    <div style="font-weight:700; margin-bottom:8px;">学生の学年 一括変更</div>
+    <div style="font-weight:900; margin-bottom:8px;">学生の学年 一括変更</div>
     <div class="row">
       <select id="gradeDelta" class="input" style="min-width:260px;">
         <option value="1">学年を +1 する（進級）</option>
@@ -81,10 +277,8 @@
   <!-- 検索 -->
   <div class="panel">
     <div class="row">
-      <!-- ★qは氏名/メールだけに（権限は選択式にする） -->
       <input id="q" class="input" placeholder="ユーザ検索（氏名 / メール）" style="flex:1; min-width:240px;">
 
-      <!-- ★追加：権限の選択 -->
       <select id="roleFilter" class="input" style="min-width:170px;">
         <option value="">権限（すべて）</option>
         <option value="student">学生</option>
@@ -114,14 +308,13 @@
     <div id="pageInfo" class="muted"></div>
     <button id="nextBtn" class="btn">次へ</button>
   </div>
-
 </main>
 
 <script>
   const API_BASE = "http://localhost:8080";
   // const API_BASE = "http://45.76.55.162:8080";
+  // const API_BASE = "";
 
-  // ★roleFilter追加
   let state = { page: 0, size: 10, q: "", role: "", total: 0, items: [] };
 
   function getLoginInfo() {
@@ -138,11 +331,13 @@
     const { token } = getLoginInfo();
 
     if (!token) {
+      logoutLink.classList.remove("danger-link");
       logoutLink.textContent = "ログイン";
       logoutLink.href = "login.html";
       return;
     }
 
+    logoutLink.classList.add("danger-link");
     logoutLink.textContent = "ログアウト";
     logoutLink.href = "#";
 
@@ -151,13 +346,11 @@
 
     newLogoutLink.addEventListener("click", (e) => {
       e.preventDefault();
-
       localStorage.removeItem("token");
       localStorage.removeItem("userId");
       localStorage.removeItem("email");
       localStorage.removeItem("name");
       localStorage.removeItem("role");
-
       alert("ログアウトしました。");
       window.location.href = "index.html";
     });
@@ -186,7 +379,7 @@
     const r = (roleRaw || "").toLowerCase();
     if (r === "normal_admin") return "教師";
     if (r === "student") return "学生";
-    if (r === "super_admin") return "管理者"; // ★表示名を「管理者」に
+    if (r === "super_admin") return "管理者";
     return roleRaw || "-";
   }
 
@@ -203,14 +396,9 @@
 
   async function load(){
     setMsg("読み込み中…");
-    const qs = new URLSearchParams({
-      page: state.page,
-      size: state.size,
-    });
+    const qs = new URLSearchParams({ page: state.page, size: state.size });
 
     if (state.q && state.q.trim()) qs.set("q", state.q.trim());
-
-    // ★追加：権限フィルタ
     if (state.role && state.role.trim()) qs.set("role", state.role.trim());
 
     const res = await fetch(`${API_BASE}/super-admin/users?${qs.toString()}`, {
@@ -305,13 +493,15 @@
         `;
       }
 
+      const metaLine3 = `学年：${u.grade ?? "-"} ／ クラス：${escapeHtml(u.myClass ?? "-")} ／ 番号：${u.number ?? "-"}`;
+
       return `
         <details class="user">
           <summary>
             <div class="left">
               <div class="title">${name}</div>
               <div class="meta">${email}</div>
-              <div class="meta">学年：${u.grade ?? "-"} ／ クラス：${escapeHtml(u.myClass ?? "-")} ／ 番号：${u.number ?? "-"}</div>
+              <div class="meta">${metaLine3}</div>
             </div>
             <div class="role">${roleLabel}</div>
           </summary>
@@ -400,14 +590,14 @@
 
   document.getElementById("searchBtn").onclick = () => {
     state.q = document.getElementById("q").value || "";
-    state.role = document.getElementById("roleFilter").value || ""; // ★追加
+    state.role = document.getElementById("roleFilter").value || "";
     state.page = 0;
     load();
   };
 
   document.getElementById("clearBtn").onclick = () => {
     document.getElementById("q").value = "";
-    document.getElementById("roleFilter").value = ""; // ★追加
+    document.getElementById("roleFilter").value = "";
     state.q = "";
     state.role = "";
     state.page = 0;
@@ -430,10 +620,9 @@
     load();
   };
 
-  // ★学年一括変更（仕様変更：payloadは { delta: 1 } or { delta: -1 }）
   document.getElementById("batchBtn").onclick = async () => {
     const deltaEl = document.getElementById("gradeDelta");
-    const delta = Number(deltaEl.value); // 1 or -1
+    const delta = Number(deltaEl.value);
 
     const batchMsg = document.getElementById("batchMsg");
     batchMsg.className = "muted";
@@ -457,7 +646,6 @@
 
     const payload = { delta };
 
-    // ★エンドポイントは今のまま（サーバ側を delta 対応に変更する前提）
     const res = await fetch(`${API_BASE}/super-admin/students/grade-batch`, {
       method: "PUT",
       headers: authHeaders(),

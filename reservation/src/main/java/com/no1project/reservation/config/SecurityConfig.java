@@ -94,7 +94,7 @@ public class SecurityConfig {
                     .requestMatchers("/api/admin/**").hasAnyRole("NORMAL_ADMIN","SUPER_ADMIN")
 
                     //フロントエンド
-                    .requestMatchers("/index.html", "admincompanies.html", 
+                    .requestMatchers("/", "/index.html", "admincompanies.html", 
                     "adminevents.html", "login.html", "register.html", "reservations.html", 
                     "teacherRegister.html", "mypage.html", "teacher_mypage.html", "super_admin_mypage.html",
                     "super_admin_user_manage.html").permitAll()

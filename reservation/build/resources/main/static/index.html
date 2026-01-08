@@ -452,7 +452,7 @@
           <div class="field">
             <label for="keyword">キーワード</label>
             <input id="keyword" class="input" type="text"
-              placeholder="会社名・説明会名で検索">
+              placeholder="ワード検索">
           </div>
 
           <div class="field">
@@ -484,6 +484,7 @@
     <script>
       const API_BASE = "http://localhost:8080";
       // const API_BASE = "http://45.76.55.162:8080";
+      // const API_BASE = "";
       const PAGE_SIZE = 10;
 
       let currentPage = 0;
@@ -497,14 +498,16 @@
       }
 
       function isDeadlineOver(deadlineStr) {
-        if (!deadlineStr) return false;
-        const d = new Date(deadlineStr);
-        if (Number.isNaN(d.getTime())) return false;
-        const today = new Date();
-        d.setHours(0,0,0,0);
-        today.setHours(0,0,0,0);
-        return d < today;
-      }
+  if (!deadlineStr) return false;
+
+  // "YYYY-MM-DD HH:mm:ss" を想定（MySQLっぽい形式）
+  const normalized = deadlineStr.replace(" ", "T"); // "YYYY-MM-DDTHH:mm:ss"
+  const d = new Date(normalized);
+
+  if (Number.isNaN(d.getTime())) return false;
+
+  return d.getTime() < Date.now(); // ★時刻まで含めて判定
+}
 
       function setupHeaderByLoginStatus() {
         const loginLink = document.getElementById("loginLink");

@@ -371,6 +371,15 @@
       .btn{ width: 100%; }
       .btn.tiny{ width: auto; }
       .kv{ grid-template-columns: 80px 1fr; }
+      .company-title{
+    white-space: normal;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    line-height: 1.25;
+  }
     }
   </style>
 </head>
@@ -396,7 +405,7 @@
 <main>
   <div class="page-title">
     <h1>会社情報管理</h1>
-    <p class="hint">登録・閲覧・編集はポップアップで行います（管理者のみ）。</p>
+    <p class="hint">会社の新規登録ができます。</p>
   </div>
 
   <div class="toolbar">

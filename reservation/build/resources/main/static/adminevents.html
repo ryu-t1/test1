@@ -340,25 +340,39 @@
     }
 
     /* ===== Modal ===== */
-    .backdrop{
-      position: fixed;
-      inset: 0;
-      display:none;
-      align-items:center;
-      justify-content:center;
-      padding: 18px;
-      background: rgba(16,24,40,.45);
-      z-index: 9999;
-    }
-    .modal{
-      width: 640px;
-      max-width: calc(100vw - 32px);
-      background: var(--card);
-      border-radius: 16px;
-      border: 1px solid var(--line);
-      box-shadow: var(--shadow);
-      padding: 16px 16px 14px;
-    }
+    /* モーダル表示中、背面スクロール防止 */
+body.modal-open{ overflow: hidden; }
+
+/* ===== Modal ===== */
+.backdrop{
+  position: fixed;
+  inset: 0;
+  display:none;
+  align-items:center;
+  justify-content:center;
+  padding: 18px;
+  background: rgba(16,24,40,.45);
+  z-index: 9999;
+
+  /* ★追加：モーダルが高い場合にbackdrop側でもスクロール可能に */
+  overflow-y: auto;
+}
+
+.modal{
+  width: 640px;
+  max-width: calc(100vw - 32px);
+  background: var(--card);
+  border-radius: 16px;
+  border: 1px solid var(--line);
+  box-shadow: var(--shadow);
+  padding: 16px 16px 14px;
+
+  /* ★追加：画面内に収めて中身をスクロール */
+  max-height: calc(100vh - 36px);
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
     .modal h2{
       margin: 4px 0 12px;
       font-size: 16px;
@@ -449,6 +463,15 @@
       .event-right{ flex-direction: column; align-items:flex-end; }
       .btn{ width: 100%; }
       .btn.tiny{ width: auto; }
+      .event-title{
+    white-space: normal;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    line-height: 1.25;
+  }
     }
   </style>
   </head>
@@ -474,7 +497,7 @@
     <main>
       <div class="page-title">
         <h1>説明会情報管理</h1>
-        <p class="hint">登録・閲覧・編集はポップアップで行います（管理者のみ）。</p>
+        <p class="hint">説明会の新規登録、予約者の閲覧ができます。</p>
       </div>
 
       <div class="toolbar">
@@ -875,14 +898,21 @@
     return loadCompanyOptionsTo(companySelect);
   }
 
-  function openBackdrop(bd){
-    bd.style.display = "flex";
-    bd.setAttribute("aria-hidden","false");
-  }
-  function closeBackdrop(bd){
-    bd.style.display = "none";
-    bd.setAttribute("aria-hidden","true");
-  }
+ function anyModalOpen(){
+  return [backdrop, editBackdrop, deleteBackdrop, attendeesBackdrop].some(bd => bd.style.display === "flex");
+}
+
+function openBackdrop(bd){
+  bd.style.display = "flex";
+  bd.setAttribute("aria-hidden","false");
+  document.body.classList.add("modal-open");
+}
+
+function closeBackdrop(bd){
+  bd.style.display = "none";
+  bd.setAttribute("aria-hidden","true");
+  if (!anyModalOpen()) document.body.classList.remove("modal-open");
+}
 
   openModalBtn.onclick = async () => {
     if (!isAdmin || !token) return;

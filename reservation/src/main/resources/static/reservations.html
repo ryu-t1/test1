@@ -350,6 +350,15 @@
       .label{ font-size: 12px; }
       .detail-actions{ justify-content:stretch; }
       .detail-actions .btn{ width: 100%; }
+      .title{
+    white-space: normal;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;       /* 3行まで */
+    -webkit-box-orient: vertical;
+    line-height: 1.25;
+  }
     }
   </style>
 </head>

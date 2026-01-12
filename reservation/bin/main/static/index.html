@@ -21,8 +21,8 @@
         --focus: 0 0 0 4px rgba(37,99,235,.18);
 
         /* layout */
-        --container: 1120px;   /* header max */
-        --content: 980px;      /* main max */
+        --container: 1120px;
+        --content: 980px;
         --pad: 24px;
       }
 
@@ -50,26 +50,23 @@
         border-bottom: 1px solid var(--line);
       }
 
-      /* “中央らへんでいい感じに分散”：
-         1) nav自体は中央配置
-         2) navの中身は等間隔に分散
-         3) ただし巨大画面でも広がりすぎないよう max-width を持たせる */
       .header-inner{
         max-width: var(--container);
         margin: 0 auto;
         padding: 14px var(--pad);
         display:flex;
-        justify-content:center;   /* navを中央に */
+        justify-content:center;
         align-items:center;
       }
 
+      /* ★ヘッダーを元に戻す：折り返しOK（二段表示OK） */
       .nav{
-        width: min(760px, 100%);  /* 広がりすぎ防止（中央らへん） */
+        width: min(760px, 100%);
         display:flex;
         align-items:center;
-        justify-content: space-around; /* 中央付近で“分散” */
+        justify-content: space-around;
         gap: 10px;
-        flex-wrap:wrap;
+        flex-wrap: wrap;            /* ← 元に戻す */
       }
 
       .nav a{
@@ -94,10 +91,10 @@
 
       /* ===== Layout ===== */
       main{
-  max-width: var(--content);
-  margin: 26px auto 0;      /* 下マージンは使わない */
-  padding: 0 16px 90px;     /* ★ここがポイント：ページ番号の下に余白 */
-}
+        max-width: var(--content);
+        margin: 26px auto 0;
+        padding: 0 16px 90px;
+      }
 
       .page-title{
         display:flex;
@@ -238,7 +235,7 @@
         letter-spacing:.01em;
         overflow:hidden;
         text-overflow:ellipsis;
-        white-space:nowrap;
+        white-space:nowrap; /* PCは1行 */
       }
 
       .event-meta{
@@ -253,15 +250,24 @@
       .chip{
         display:inline-flex;
         align-items:center;
-        gap: 6px;
-        padding: 5px 9px;
+        gap: 8px;
+        padding: 6px 10px;
         border-radius: 999px;
         border: 1px solid var(--line);
         background: #f9fafb;
         color:#344054;
-        line-height: 1;
+        line-height: 1.2;
       }
-      .chip b{ color:#111827; font-weight:600; }
+      .chip b{ color:#111827; font-weight:700; }
+
+      .chip .dt{
+        display:inline-flex;
+        gap: 6px;
+        align-items:baseline;
+        font-variant-numeric: tabular-nums;
+      }
+      .chip .dt .d{ color:#344054; }
+      .chip .dt .t{ color:#111827; font-weight:700; }
 
       .event-right{
         display:flex;
@@ -414,14 +420,38 @@
         :root{ --pad: 16px; }
         .nav{
           width: 100%;
-          justify-content: center; /* 小さい画面は“中央にまとまりすぎ”ではなく自然に整列 */
+          justify-content: center;
         }
       }
+
       @media (max-width: 760px){
         #keyword, #fromDt, #toDt{ width: 100%; }
         .field{ min-width: 100%; }
+
         .event-header{ align-items:flex-start; }
-        .event-right{ align-self:stretch; }
+        .event-right{
+          align-self:stretch;
+          gap: 8px;
+        }
+
+        /* ★会社名：スマホでは3行まで表示（省略しすぎない） */
+        .event-title{
+          white-space: normal;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          display: -webkit-box;
+          -webkit-line-clamp: 3;       /* ★ここを3に変更 */
+          -webkit-box-orient: vertical;
+          line-height: 1.25;
+        }
+
+        /* ★開催日：日付と時刻を縦にして見やすく */
+        .chip .dt{
+          flex-direction: column;
+          align-items: flex-start;
+          gap: 2px;
+        }
+
         .detail-grid{ grid-template-columns: 1fr; }
         .event-detail-title{ font-size: 12px; }
       }
@@ -451,8 +481,7 @@
         <div class="search-row">
           <div class="field">
             <label for="keyword">キーワード</label>
-            <input id="keyword" class="input" type="text"
-              placeholder="ワード検索">
+            <input id="keyword" class="input" type="text" placeholder="ワード検索">
           </div>
 
           <div class="field">
@@ -498,16 +527,12 @@
       }
 
       function isDeadlineOver(deadlineStr) {
-  if (!deadlineStr) return false;
-
-  // "YYYY-MM-DD HH:mm:ss" を想定（MySQLっぽい形式）
-  const normalized = deadlineStr.replace(" ", "T"); // "YYYY-MM-DDTHH:mm:ss"
-  const d = new Date(normalized);
-
-  if (Number.isNaN(d.getTime())) return false;
-
-  return d.getTime() < Date.now(); // ★時刻まで含めて判定
-}
+        if (!deadlineStr) return false;
+        const normalized = deadlineStr.replace(" ", "T");
+        const d = new Date(normalized);
+        if (Number.isNaN(d.getTime())) return false;
+        return d.getTime() < Date.now();
+      }
 
       function setupHeaderByLoginStatus() {
         const loginLink = document.getElementById("loginLink");
@@ -552,6 +577,24 @@
         const from = toSqlDateTime(document.getElementById("fromDt").value);
         const to = toSqlDateTime(document.getElementById("toDt").value);
         return { q, from, to };
+      }
+
+      function formatDateTimeParts(str) {
+        if (!str) return { d: "未定", t: "" };
+        const normalized = String(str).replace(" ", "T");
+        const dt = new Date(normalized);
+        if (Number.isNaN(dt.getTime())) {
+          const s = String(str);
+          const d = s.slice(0, 10).replaceAll("-", "/");
+          const t = s.slice(11, 16);
+          return { d: d || "未定", t: t || "" };
+        }
+        const yyyy = dt.getFullYear();
+        const mm = String(dt.getMonth() + 1).padStart(2, "0");
+        const dd = String(dt.getDate()).padStart(2, "0");
+        const hh = String(dt.getHours()).padStart(2, "0");
+        const mi = String(dt.getMinutes()).padStart(2, "0");
+        return { d: `${yyyy}/${mm}/${dd}`, t: `${hh}:${mi}` };
       }
 
       async function loadEvents(page) {
@@ -626,13 +669,15 @@
           const meta = document.createElement("div");
           meta.className = "event-meta";
 
+          const { d, t } = formatDateTimeParts(event.date);
+
           const chipDate = document.createElement("span");
           chipDate.className = "chip";
-          chipDate.innerHTML = `<b>開催日</b>：${event.date ?? "未定"}`;
+          chipDate.innerHTML = `<b>開催日</b><span class="dt"><span class="d">${d}</span>${t ? `<span class="t">${t}</span>` : ""}</span>`;
 
           const chipPlace = document.createElement("span");
           chipPlace.className = "chip";
-          chipPlace.innerHTML = `<b>場所</b>：${event.place ?? "未定"}`;
+          chipPlace.innerHTML = `<b>場所</b><span>${event.place ?? "未定"}</span>`;
 
           meta.appendChild(chipDate);
           meta.appendChild(chipPlace);
@@ -753,7 +798,7 @@
               const ok = window.confirm(
                 `この説明会を予約しますか？\n\n` +
                 `会社名：${event.companyName ?? "会社名未設定"}\n` +
-                `開催日：${event.date ?? "未定"}\n` +
+                `開催日：${d}${t ? " " + t : ""}\n` +
                 `場所：${event.place ?? "未定"}`
               );
               if (!ok) return;

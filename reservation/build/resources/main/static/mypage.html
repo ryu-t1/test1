@@ -564,7 +564,8 @@
         localStorage.removeItem("name");
         localStorage.removeItem("role");
         alert("ログアウトしました。");
-        renderAuthState();
+        
+          window.location.href = "index.html";
       });
 
       if (registerLink) registerLink.style.display = "none";
@@ -784,7 +785,7 @@
         e.textContent = "ログイン情報が無効です。もう一度ログインしてください。";
         show(e);
         localStorage.removeItem("token");
-        renderAuthState();
+       
       } else {
         e.textContent = "更新に失敗しました。\n" + (err.message || "");
         show(e);

@@ -269,10 +269,11 @@
 
 <script>
   const API_BASE = "http://localhost:8080";
-  // const API_BASE = "";
+  // const API_BASE = "http://45.76.55.162:8080";
+
   const token = localStorage.getItem("token");
   const role = (localStorage.getItem("role") || "").toUpperCase();
-  const isSuperAdmin = role === "SUPER_ADMIN";
+  const isSuperAdmin = (role === "SUPER_ADMIN");
 
   const msgEl = document.getElementById("message");
   const registerBtn = document.getElementById("registerBtn");
@@ -282,41 +283,36 @@
     msgEl.className = "message " + (err ? "error" : "success");
   }
 
+  // ===== ログアウト（最新版の挙動：indexへ） =====
   document.getElementById("logoutLink").onclick = e => {
     e.preventDefault();
     ["token","userId","email","name","role"].forEach(k=>localStorage.removeItem(k));
     window.location.href="index.html";
   };
 
+  // ===== super_adminチェック =====
   if(!token || !isSuperAdmin){
     showMessage("super_adminでログインしてください。", true);
     registerBtn.disabled = true;
   }
 
   /* =========================================================
-     ブラウザ標準の 👁（パスワード表示アイコン）を “入力中に出さない”
-     - フォーカス中は type="text" にして、見た目を●にする
-     - ボタン押下時だけ実文字表示
+     パスワード：入力中にブラウザの👁を出さない（最新版の処理を維持）
   ========================================================= */
-
   const pwInput = document.getElementById("password");
   const pwToggle = document.getElementById("pwToggle");
-
-  // 表示モードかどうか（実文字を見せるか）
   let reveal = false;
 
   function applyPwMode() {
+    if (!pwToggle) return; // 旧UIなどでトグルが無い場合にも耐える
+
     if (reveal) {
-      // 実文字表示
       pwInput.type = "text";
       pwInput.classList.remove("masked");
       pwToggle.textContent = "非表示";
     } else {
-      // 実文字は隠す（フォーカス中はtype=text + ●、フォーカス外はtype=password）
       const focused = (document.activeElement === pwInput);
-
       if (focused) {
-        // ★ここが肝：入力中にtype=passwordにしない → ブラウザ👁が出ない
         pwInput.type = "text";
         pwInput.classList.add("masked");
       } else {
@@ -327,19 +323,220 @@
     }
   }
 
-  // 初期状態
-  applyPwMode();
-
-  // 入力欄のフォーカス状態で切り替え
-  pwInput.addEventListener("focus", () => applyPwMode());
-  pwInput.addEventListener("blur",  () => applyPwMode());
-
-  // ボタンで実文字表示/非表示
-  pwToggle.addEventListener("click", () => {
-    reveal = !reveal;
+  if (pwToggle) {
     applyPwMode();
-    pwInput.focus(); // 操作感よくする
-  });
+    pwInput.addEventListener("focus", () => applyPwMode());
+    pwInput.addEventListener("blur",  () => applyPwMode());
+    pwToggle.addEventListener("click", () => {
+      reveal = !reveal;
+      applyPwMode();
+      pwInput.focus();
+    });
+  }
+
+  // ===== 表示ヘルパー =====
+  function show(el){ el.style.display = "block"; }
+  function hide(el){ el.style.display = "none"; }
+
+  // ===== 「触った後だけ」赤文字 =====
+  const touched = { name:false, email:false, password:false, grade:false, myClass:false };
+
+  function setFieldError(inputEl, errEl, message, shouldShow){
+    if(!inputEl || !errEl) return;
+
+    if(!shouldShow){
+      inputEl.classList.remove("danger");
+      errEl.textContent = "";
+      hide(errEl);
+      return;
+    }
+
+    if(message){
+      inputEl.classList.add("danger");
+      errEl.textContent = message;
+      show(errEl);
+    }else{
+      inputEl.classList.remove("danger");
+      errEl.textContent = "";
+      hide(errEl);
+    }
+  }
+
+  const PASS_RULE = /^[A-Za-z0-9]{8,}$/;
+
+  function validateOne(fieldKey, showIfTouchedOnly, forceShowAll){
+    const nameEl  = document.getElementById("name");
+    const emailEl = document.getElementById("email");
+    const pwEl    = document.getElementById("password");
+    const gradeEl = document.getElementById("grade");
+    const classEl = document.getElementById("myClass");
+
+    const name = nameEl.value.trim();
+    const email = emailEl.value.trim();
+    const password = pwEl.value;
+    const grade = gradeEl.value;
+    const myClass = classEl.value;
+
+    const canShow = forceShowAll ? true : (showIfTouchedOnly ? !!touched[fieldKey] : true);
+
+    if(fieldKey === "name"){
+      const msg = !name ? "氏名を入力してください。" : "";
+      setFieldError(nameEl, document.getElementById("nameErr"), msg, canShow);
+      return !msg;
+    }
+
+    if(fieldKey === "email"){
+      let msg = "";
+      if(!email) msg = "メールアドレスを入力してください。";
+      else if(!email.includes("@")) msg = "メールアドレスは「@」を含めてください。";
+      setFieldError(emailEl, document.getElementById("emailErr"), msg, canShow);
+      return !msg;
+    }
+
+    if(fieldKey === "password"){
+      let msg = "";
+      if(!password) msg = "パスワードを入力してください。";
+      else if(!PASS_RULE.test(password)) msg = "パスワードは英数字8文字以上にしてください。";
+      setFieldError(pwEl, document.getElementById("passwordErr"), msg, canShow);
+      return !msg;
+    }
+
+    if(fieldKey === "grade"){
+      const msg = !grade ? "担当学年を選択してください。" : "";
+      setFieldError(gradeEl, document.getElementById("gradeErr"), msg, canShow);
+      return !msg;
+    }
+
+    if(fieldKey === "myClass"){
+      const msg = !myClass ? "クラスを選択してください。" : "";
+      setFieldError(classEl, document.getElementById("classErr"), msg, canShow);
+      return !msg;
+    }
+
+    return true;
+  }
+
+  function validateAll({ showTouchedOnly = true, forceShowAll = false } = {}){
+    const ok =
+      validateOne("name", showTouchedOnly, forceShowAll) &&
+      validateOne("email", showTouchedOnly, forceShowAll) &&
+      validateOne("password", showTouchedOnly, forceShowAll) &&
+      validateOne("grade", showTouchedOnly, forceShowAll) &&
+      validateOne("myClass", showTouchedOnly, forceShowAll);
+
+    const authOk = !!token && isSuperAdmin;
+    registerBtn.disabled = !(ok && authOk);
+    return ok && authOk;
+  }
+
+  function attachTouchedValidation(id, key){
+    const el = document.getElementById(id);
+    if(!el) return;
+
+    el.addEventListener("input", () => {
+      validateAll({ showTouchedOnly: true, forceShowAll: false });
+    });
+
+    const mark = () => {
+      touched[key] = true;
+      validateAll({ showTouchedOnly: true, forceShowAll: false });
+    };
+    el.addEventListener("blur", mark);
+    el.addEventListener("change", mark);
+  }
+
+  attachTouchedValidation("name","name");
+  attachTouchedValidation("email","email");
+  attachTouchedValidation("password","password");
+  attachTouchedValidation("grade","grade");
+  attachTouchedValidation("myClass","myClass");
+
+  async function readError(res){
+    const raw = await res.text().catch(()=> "");
+    if(!raw) return "";
+    try{
+      const obj = JSON.parse(raw);
+      return obj.message ?? JSON.stringify(obj);
+    }catch{
+      return raw;
+    }
+  }
+
+  async function registerTeacher(){
+    if(!token || !isSuperAdmin) return;
+
+    // 送信時は全項目エラー強制表示
+    const ok = validateAll({ showTouchedOnly: false, forceShowAll: true });
+    if(!ok){
+      showMessage("入力内容を確認してください。", true);
+      return;
+    }
+
+    const payload = {
+      name: document.getElementById("name").value.trim(),
+      email: document.getElementById("email").value.trim(),
+      password: document.getElementById("password").value,
+      grade: parseInt(document.getElementById("grade").value, 10),
+      myClass: document.getElementById("myClass").value
+    };
+
+    registerBtn.disabled = true;
+    showMessage("", false);
+
+    try{
+      const res = await fetch(`${API_BASE}/auth/register/teacher`, {
+        method:"POST",
+        headers:{
+          "Content-Type":"application/json",
+          "Authorization": `Bearer ${token}`
+        },
+        body: JSON.stringify(payload)
+      });
+
+      if(!res.ok){
+        const errMsg = await readError(res);
+        showMessage(`登録に失敗しました。\n${errMsg || "メール重複などを確認してください。"}`, true);
+        validateAll({ showTouchedOnly:true, forceShowAll:false });
+        return;
+      }
+
+      showMessage("教師アカウントの登録が完了しました。", false);
+
+      // 入力欄クリア
+      ["name","email","password","grade","myClass"].forEach(id => {
+        const el = document.getElementById(id);
+        el.value = "";
+        el.classList.remove("danger");
+      });
+
+      // touched / エラー表示を初期化
+      Object.keys(touched).forEach(k => touched[k] = false);
+      ["nameErr","emailErr","passwordErr","gradeErr","classErr"].forEach(id => {
+        const el = document.getElementById(id);
+        if(el){ el.textContent=""; hide(el); }
+      });
+
+      // パスワード表示状態も初期に
+      if (pwToggle) {
+        reveal = false;
+        applyPwMode();
+      }
+
+      validateAll({ showTouchedOnly:true, forceShowAll:false });
+
+    }catch(e){
+      console.error(e);
+      showMessage("サーバーへの接続に失敗しました。バックエンドを確認してください。", true);
+      validateAll({ showTouchedOnly:true, forceShowAll:false });
+    }
+  }
+
+  // ★これが最新版で消えてた本体
+  registerBtn.addEventListener("click", registerTeacher);
+
+  // 初期状態：赤文字は出さずに、ボタンだけ状態更新
+  validateAll({ showTouchedOnly:true, forceShowAll:false });
 </script>
+
 </body>
 </html>

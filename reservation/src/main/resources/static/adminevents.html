@@ -6,41 +6,41 @@
     <title>説明会情報管理（管理者）</title>
 
     <style>
-    :root{
-      --bg:#f6f7fb;
-      --card:#ffffff;
-      --text:#101828;
-      --muted:#667085;
-      --line:#e4e7ec;
-      --line-strong:#d0d5dd;
-      --shadow: 0 10px 30px rgba(16,24,40,.08);
-      --shadow-sm: 0 6px 16px rgba(16,24,40,.06);
-      --radius:14px;
-      --accent:#2563eb;
-      --accent-2:#1d4ed8;
-      --danger:#b42318;
-      --danger-bg: rgba(180,35,24,.08);
-      --focus: 0 0 0 4px rgba(37,99,235,.18);
-      --container: 1120px;
-      --content: 980px;
-      --pad: 24px;
-    }
+      :root{
+        --bg:#f6f7fb;
+        --card:#ffffff;
+        --text:#101828;
+        --muted:#667085;
+        --line:#e4e7ec;
+        --line-strong:#d0d5dd;
+        --shadow: 0 10px 30px rgba(16,24,40,.08);
+        --shadow-sm: 0 6px 16px rgba(16,24,40,.06);
+        --radius:14px;
+        --accent:#2563eb;
+        --accent-2:#1d4ed8;
+        --danger:#b42318;
+        --danger-bg: rgba(180,35,24,.08);
+        --focus: 0 0 0 4px rgba(37,99,235,.18);
+        --container: 1120px;
+        --content: 980px;
+        --pad: 24px;
+      }
 
-    *{ box-sizing:border-box; }
-    body{
-      margin:0;
-      padding-bottom: 72px;
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans JP", "Hiragino Kaku Gothic ProN", Meiryo, sans-serif;
-      color: var(--text);
-      background-color: var(--bg);
-      background-image: radial-gradient(1200px 520px at 50% -180px, rgba(37,99,235,.10), rgba(37,99,235,0));
-      background-repeat: no-repeat;
-      background-attachment: fixed;
-      line-height: 1.55;
-    }
+      *{ box-sizing:border-box; }
+      body{
+        margin:0;
+        padding-bottom: 72px;
+        font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans JP", "Hiragino Kaku Gothic ProN", Meiryo, sans-serif;
+        color: var(--text);
+        background-color: var(--bg);
+        background-image: radial-gradient(1200px 520px at 50% -180px, rgba(37,99,235,.10), rgba(37,99,235,0));
+        background-repeat: no-repeat;
+        background-attachment: fixed;
+        line-height: 1.55;
+      }
 
-    /* ===== Header（統一） ===== */
-     header{
+      /* ===== Header（統一） ===== */
+      header{
         position: sticky;
         top: 0;
         z-index: 10;
@@ -49,24 +49,20 @@
         border-bottom: 1px solid var(--line);
       }
 
-      /* “中央らへんでいい感じに分散”：
-         1) nav自体は中央配置
-         2) navの中身は等間隔に分散
-         3) ただし巨大画面でも広がりすぎないよう max-width を持たせる */
       .header-inner{
         max-width: var(--container);
         margin: 0 auto;
         padding: 14px var(--pad);
         display:flex;
-        justify-content:center;   /* navを中央に */
+        justify-content:center;
         align-items:center;
       }
 
       .nav{
-        width: min(760px, 100%);  /* 広がりすぎ防止（中央らへん） */
+        width: min(760px, 100%);
         display:flex;
         align-items:center;
-        justify-content: space-around; /* 中央付近で“分散” */
+        justify-content: space-around;
         gap: 10px;
         flex-wrap:wrap;
       }
@@ -81,399 +77,417 @@
         outline: none;
         white-space: nowrap;
       }
-    .nav a:hover{ background:#f2f4f7; color:#111827; }
-    .nav a:active{ transform: translateY(1px); }
-    .nav a:focus-visible{ box-shadow: var(--focus); }
-    .nav a.is-active{
-      background: rgba(37,99,235,.10);
-      color:#1d4ed8;
-      font-weight: 800;
-      border-color: rgba(37,99,235,.20);
-    }
-    .nav a.danger-link{
-      color:#b42318;
-      border-color: rgba(180,35,24,.18);
-      background: rgba(180,35,24,.06);
-    }
-    .nav a.danger-link:hover{
-      background: rgba(180,35,24,.10);
-      color:#8a1f16;
-    }
+      .nav a:hover{ background:#f2f4f7; color:#111827; }
+      .nav a:active{ transform: translateY(1px); }
+      .nav a:focus-visible{ box-shadow: var(--focus); }
+      .nav a.is-active{
+        background: rgba(37,99,235,.10);
+        color:#1d4ed8;
+        font-weight: 800;
+        border-color: rgba(37,99,235,.20);
+      }
+      .nav a.danger-link{
+        color:#b42318;
+        border-color: rgba(180,35,24,.18);
+        background: rgba(180,35,24,.06);
+      }
+      .nav a.danger-link:hover{
+        background: rgba(180,35,24,.10);
+        color:#8a1f16;
+      }
 
-    /* ===== Layout ===== */
-    main{
-      max-width: var(--content);
-      margin: 24px auto 0;
-      padding: 0 16px 90px;
-    }
+      /* ===== Layout ===== */
+      main{
+        max-width: var(--content);
+        margin: 24px auto 0;
+        padding: 0 16px 90px;
+      }
 
-    .page-title{
-      display:flex;
-      align-items:flex-end;
-      justify-content:space-between;
-      gap: 12px;
-      flex-wrap:wrap;
-      margin: 10px 0 12px;
-    }
-    .page-title h1{
-      margin: 0;
-      font-size: 18px;
-      letter-spacing: .02em;
-    }
-    .page-title .hint{
-      margin: 0;
-      font-size: 12px;
-      color: var(--muted);
-    }
+      .page-title{
+        display:flex;
+        align-items:flex-end;
+        justify-content:space-between;
+        gap: 12px;
+        flex-wrap:wrap;
+        margin: 10px 0 12px;
+      }
+      .page-title h1{
+        margin: 0;
+        font-size: 18px;
+        letter-spacing: .02em;
+      }
+      .page-title .hint{
+        margin: 0;
+        font-size: 12px;
+        color: var(--muted);
+      }
 
-    .toolbar{
-      display:flex;
-      align-items:center;
-      justify-content: space-between;
-      gap: 12px;
-      margin: 10px 0 12px;
-      flex-wrap: wrap;
-    }
+      .toolbar{
+        display:flex;
+        align-items:center;
+        justify-content: space-between;
+        gap: 12px;
+        margin: 10px 0 12px;
+        flex-wrap: wrap;
+      }
 
-    /* ===== Cards ===== */
-    .panel{
-      background: var(--card);
-      border: 1px solid var(--line);
-      border-radius: var(--radius);
-      box-shadow: var(--shadow-sm);
-      padding: 14px;
-    }
+      /* ===== Cards ===== */
+      .panel{
+        background: var(--card);
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+        box-shadow: var(--shadow-sm);
+        padding: 14px;
+      }
 
-    .row{
-      display:flex;
-      gap: 10px;
-      flex-wrap: wrap;
-      align-items:center;
-    }
+      .row{
+        display:flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        align-items:center;
+      }
 
-    .input{
-      height: 40px;
-      border: 1px solid var(--line-strong);
-      border-radius: 12px;
-      padding: 0 12px;
-      background: #fff;
-      color: var(--text);
-      outline: none;
-      transition: box-shadow .15s ease, border-color .15s ease;
-      font-size: 14px;
-      font-family: inherit;
-    }
-    .input:focus{
-      border-color: rgba(37,99,235,.55);
-      box-shadow: var(--focus);
-    }
+      .input{
+        height: 40px;
+        border: 1px solid var(--line-strong);
+        border-radius: 12px;
+        padding: 0 12px;
+        background: #fff;
+        color: var(--text);
+        outline: none;
+        transition: box-shadow .15s ease, border-color .15s ease;
+        font-size: 14px;
+        font-family: inherit;
+      }
+      .input:focus{
+        border-color: rgba(37,99,235,.55);
+        box-shadow: var(--focus);
+      }
 
-    .btn{
-      height: 40px;
-      padding: 0 14px;
-      border-radius: 12px;
-      border: 1px solid var(--line-strong);
-      background: #fff;
-      color: #111827;
-      font-size: 13px;
-      cursor: pointer;
-      transition: transform .05s ease, background-color .15s ease, border-color .15s ease;
-      outline: none;
-      white-space: nowrap;
-    }
-    .btn:hover{ background:#f9fafb; }
-    .btn:active{ transform: translateY(1px); }
-    .btn:focus-visible{ box-shadow: var(--focus); }
-    .btn:disabled{ opacity: 0.6; cursor: not-allowed; }
+      .btn{
+        height: 40px;
+        padding: 0 14px;
+        border-radius: 12px;
+        border: 1px solid var(--line-strong);
+        background: #fff;
+        color: #111827;
+        font-size: 13px;
+        cursor: pointer;
+        transition: transform .05s ease, background-color .15s ease, border-color .15s ease;
+        outline: none;
+        white-space: nowrap;
+      }
+      .btn:hover{ background:#f9fafb; }
+      .btn:active{ transform: translateY(1px); }
+      .btn:focus-visible{ box-shadow: var(--focus); }
+      .btn:disabled{ opacity: 0.6; cursor: not-allowed; }
 
-    .btn-primary{
-      background: var(--accent);
-      border-color: rgba(37,99,235,.25);
-      color: #fff;
-      font-weight: 800;
-    }
-    .btn-primary:hover{ background: var(--accent-2); }
+      .btn-primary{
+        background: var(--accent);
+        border-color: rgba(37,99,235,.25);
+        color: #fff;
+        font-weight: 800;
+      }
+      .btn-primary:hover{ background: var(--accent-2); }
 
-    .btn-danger{
-      color:#b42318;
-      border-color: rgba(180,35,24,.25);
-      background: rgba(180,35,24,.06);
-    }
-    .btn-danger:hover{ background: rgba(180,35,24,.10); }
+      .btn-danger{
+        color:#b42318;
+        border-color: rgba(180,35,24,.25);
+        background: rgba(180,35,24,.06);
+      }
+      .btn-danger:hover{ background: rgba(180,35,24,.10); }
 
-    .tiny{
-      font-size: 12px;
-      height: 32px;
-      padding: 0 10px;
-      border-radius: 10px;
-    }
+      .tiny{
+        font-size: 12px;
+        height: 32px;
+        padding: 0 10px;
+        border-radius: 10px;
+      }
 
-    .muted{
-      color: var(--muted);
-      font-size: 12px;
-      margin-top: 8px;
-    }
+      .muted{
+        color: var(--muted);
+        font-size: 12px;
+        margin-top: 8px;
+      }
 
-    /* ===== Event list cards ===== */
-    #eventList{ margin-top: 12px; }
+      /* ===== Event list cards ===== */
+      #eventList{ margin-top: 12px; }
 
-    .event-card{
-      background: var(--card);
-      border: 1px solid var(--line);
-      border-radius: var(--radius);
-      box-shadow: var(--shadow-sm);
-      overflow: hidden;
-      margin-bottom: 12px;
-    }
+      .event-card{
+        background: var(--card);
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+        box-shadow: var(--shadow-sm);
+        overflow: hidden;
+        margin-bottom: 12px;
+      }
 
-    .event-header{
-      padding: 12px 14px;
-      display:flex;
-      justify-content:space-between;
-      align-items:center;
-      gap: 12px;
-    }
+      .event-header{
+        padding: 12px 14px;
+        display:flex;
+        justify-content:space-between;
+        align-items:center;
+        gap: 12px;
+      }
 
-    .event-main-info{
-      display:flex;
-      flex-direction:column;
-      gap:4px;
-      min-width: 0;
-      flex: 1;
-    }
+      .event-main-info{
+        display:flex;
+        flex-direction:column;
+        gap:4px;
+        min-width: 0;
+        flex: 1;
+      }
 
-    .event-title{
-      font-weight: 900;
-      font-size: 15px;
-      letter-spacing: .01em;
-      overflow:hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-    }
-    .event-sub{
-      font-size: 13px;
-      color:#344054;
-      overflow:hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-    }
-
-    .event-right{
-      display:flex;
-      align-items:center;
-      gap:10px;
-      flex-shrink:0;
-    }
-
-    .badge{
-      display:inline-flex;
-      align-items:center;
-      gap: 6px;
-      padding: 6px 10px;
-      border-radius: 999px;
-      border: 1px solid var(--line-strong);
-      background:#fff;
-      font-size: 12px;
-      white-space: nowrap;
-      color:#344054;
-    }
-    .badge .value{
-      font-weight: 900;
-      color: #111827;
-    }
-
-    .event-detail{
-      border-top: 1px solid var(--line);
-      padding: 12px 14px 14px;
-      display:none;
-      font-size: 14px;
-    }
-
-    .event-detail-title{
-      font-weight: 900;
-      margin-top: 10px;
-      margin-bottom: 4px;
-      font-size: 13px;
-      color:#111827;
-    }
-
-    .detail-link a{
-      color: var(--accent);
-      text-decoration: underline;
-      word-break: break-all;
-    }
-
-    .admin-actions{
-      margin-top: 12px;
-      display:flex;
-      gap: 10px;
-      justify-content:flex-end;
-      flex-wrap: wrap;
-    }
-
-    /* ===== Pagination & message ===== */
-    #pagination{
-      text-align:center;
-      margin-top: 18px;
-      font-size: 14px;
-    }
-    .page-link{
-      display:inline-block;
-      margin: 0 6px;
-      cursor:pointer;
-      padding: 6px 10px;
-      border-radius: 10px;
-      border: 1px solid transparent;
-    }
-    .page-link:hover{ background:#f2f4f7; }
-    .page-link.active{
-      font-weight: 900;
-      border-color: rgba(37,99,235,.25);
-      background: rgba(37,99,235,.08);
-    }
-
-    .message{
-      text-align:center;
-      margin-top: 16px;
-      color: var(--muted);
-      font-size: 13px;
-    }
-
-    /* ===== Modal ===== */
-    /* モーダル表示中、背面スクロール防止 */
-body.modal-open{ overflow: hidden; }
-
-/* ===== Modal ===== */
-.backdrop{
-  position: fixed;
-  inset: 0;
-  display:none;
-  align-items:center;
-  justify-content:center;
-  padding: 18px;
-  background: rgba(16,24,40,.45);
-  z-index: 9999;
-
-  /* ★追加：モーダルが高い場合にbackdrop側でもスクロール可能に */
-  overflow-y: auto;
-}
-
-.modal{
-  width: 640px;
-  max-width: calc(100vw - 32px);
-  background: var(--card);
-  border-radius: 16px;
-  border: 1px solid var(--line);
-  box-shadow: var(--shadow);
-  padding: 16px 16px 14px;
-
-  /* ★追加：画面内に収めて中身をスクロール */
-  max-height: calc(100vh - 36px);
-  overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
-}
-
-    .modal h2{
-      margin: 4px 0 12px;
-      font-size: 16px;
-      letter-spacing: .02em;
-    }
-
-    .field{ margin: 10px 0; }
-    .field label{
-      display:block;
-      font-size: 12px;
-      color: var(--muted);
-      margin-bottom: 6px;
-      padding-left: 2px;
-    }
-    .field input, .field select, .field textarea{
-      width: 100%;
-      padding: 10px 12px;
-      border: 1px solid var(--line-strong);
-      border-radius: 12px;
-      box-sizing:border-box;
-      font-family: inherit;
-      font-size: 14px;
-      outline: none;
-      transition: box-shadow .15s ease, border-color .15s ease;
-      background: #fff;
-    }
-    .field input:focus, .field select:focus, .field textarea:focus{
-      border-color: rgba(37,99,235,.55);
-      box-shadow: var(--focus);
-    }
-    .field textarea{ min-height: 96px; resize: vertical; }
-
-    .actions{
-      display:flex;
-      gap: 10px;
-      justify-content:flex-end;
-      margin-top: 12px;
-      flex-wrap: wrap;
-    }
-
-    .error{
-      color: var(--danger);
-      font-size: 12px;
-      margin-top: 10px;
-      white-space: pre-wrap;
-    }
-
-    .danger{
-      border-color: rgba(180,35,24,.65) !important;
-      box-shadow: 0 0 0 4px rgba(180,35,24,.10) !important;
-      outline: none;
-    }
-    .field-error{
-      color: var(--danger);
-      font-size: 12px;
-      margin-top: 6px;
-      line-height:1.4;
-      display:none;
-      white-space: pre-wrap;
-    }
-
-    /* attendees table */
-    .table{
-      width:100%;
-      border-collapse:collapse;
-      margin-top: 10px;
-      font-size: 14px;
-      border-radius: 12px;
-      overflow: hidden;
-    }
-    .table th,.table td{
-      border: 1px solid var(--line);
-      padding: 10px;
-      text-align:left;
-      background:#fff;
-    }
-    .table th{
-      background:#f9fafb;
-      font-size: 12px;
-      color:#344054;
-    }
-    .small-muted{ color: var(--muted); font-size:12px; margin-top: 6px; }
-
-    @media (max-width: 900px){
-      :root{ --pad: 16px; }
-    }
-    @media (max-width: 520px){
-      .event-right{ flex-direction: column; align-items:flex-end; }
-      .btn{ width: 100%; }
-      .btn.tiny{ width: auto; }
       .event-title{
-    white-space: normal;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    display: -webkit-box;
-    -webkit-line-clamp: 3;
-    -webkit-box-orient: vertical;
-    line-height: 1.25;
-  }
-    }
-  </style>
+        font-weight: 900;
+        font-size: 15px;
+        letter-spacing: .01em;
+        overflow:hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+      .event-sub{
+        font-size: 13px;
+        color:#344054;
+        overflow:hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .event-right{
+        display:flex;
+        align-items:center;
+        gap:10px;
+        flex-shrink:0;
+      }
+
+      .badge{
+        display:inline-flex;
+        align-items:center;
+        gap: 6px;
+        padding: 6px 10px;
+        border-radius: 999px;
+        border: 1px solid var(--line-strong);
+        background:#fff;
+        font-size: 12px;
+        white-space: nowrap;
+        color:#344054;
+      }
+      .badge .value{
+        font-weight: 900;
+        color: #111827;
+      }
+
+      .event-detail{
+        border-top: 1px solid var(--line);
+        padding: 12px 14px 14px;
+        display:none;
+        font-size: 14px;
+      }
+
+      .event-detail-title{
+        font-weight: 900;
+        margin-top: 10px;
+        margin-bottom: 4px;
+        font-size: 13px;
+        color:#111827;
+      }
+
+      .detail-link a{
+        color: var(--accent);
+        text-decoration: underline;
+        word-break: break-all;
+      }
+
+      .admin-actions{
+        margin-top: 12px;
+        display:flex;
+        gap: 10px;
+        justify-content:flex-end;
+        flex-wrap: wrap;
+      }
+
+      /* ===== Pagination & message ===== */
+      #pagination{
+        text-align:center;
+        margin-top: 18px;
+        font-size: 14px;
+      }
+      .page-link{
+        display:inline-block;
+        margin: 0 6px;
+        cursor:pointer;
+        padding: 6px 10px;
+        border-radius: 10px;
+        border: 1px solid transparent;
+      }
+      .page-link:hover{ background:#f2f4f7; }
+      .page-link.active{
+        font-weight: 900;
+        border-color: rgba(37,99,235,.25);
+        background: rgba(37,99,235,.08);
+      }
+
+      .message{
+        text-align:center;
+        margin-top: 16px;
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      /* モーダル表示中、背面スクロール防止 */
+      body.modal-open{ overflow: hidden; }
+
+      /* ===== Modal ===== */
+      .backdrop{
+        position: fixed;
+        inset: 0;
+        display:none;
+        align-items:center;
+        justify-content:center;
+        padding: 18px;
+        background: rgba(16,24,40,.45);
+        z-index: 9999;
+        overflow-y: auto;
+      }
+
+      .item-preset{
+        display:flex;
+        flex-wrap:wrap;
+        gap:10px 12px;
+        padding: 10px 12px;
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        background: #f9fafb;
+      }
+      .item-preset label{
+        display:flex;
+        align-items:center;
+        gap:8px;
+        font-size: 13px;
+        color:#344054;
+        cursor:pointer;
+        user-select:none;
+      }
+      .item-preset input[type="checkbox"]{
+        width: 16px;
+        height: 16px;
+        accent-color: var(--accent);
+      }
+
+      .modal{
+        width: 640px;
+        max-width: calc(100vw - 32px);
+        background: var(--card);
+        border-radius: 16px;
+        border: 1px solid var(--line);
+        box-shadow: var(--shadow);
+        padding: 16px 16px 14px;
+        max-height: calc(100vh - 36px);
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+      }
+
+      .modal h2{
+        margin: 4px 0 12px;
+        font-size: 16px;
+        letter-spacing: .02em;
+      }
+
+      .field{ margin: 10px 0; }
+      .field label{
+        display:block;
+        font-size: 12px;
+        color: var(--muted);
+        margin-bottom: 6px;
+        padding-left: 2px;
+      }
+      .field input, .field select, .field textarea{
+        width: 100%;
+        padding: 10px 12px;
+        border: 1px solid var(--line-strong);
+        border-radius: 12px;
+        box-sizing:border-box;
+        font-family: inherit;
+        font-size: 14px;
+        outline: none;
+        transition: box-shadow .15s ease, border-color .15s ease;
+        background: #fff;
+      }
+      .field input:focus, .field select:focus, .field textarea:focus{
+        border-color: rgba(37,99,235,.55);
+        box-shadow: var(--focus);
+      }
+      .field textarea{ min-height: 96px; resize: vertical; }
+
+      .actions{
+        display:flex;
+        gap: 10px;
+        justify-content:flex-end;
+        margin-top: 12px;
+        flex-wrap: wrap;
+      }
+
+      .error{
+        color: var(--danger);
+        font-size: 12px;
+        margin-top: 10px;
+        white-space: pre-wrap;
+      }
+
+      .danger{
+        border-color: rgba(180,35,24,.65) !important;
+        box-shadow: 0 0 0 4px rgba(180,35,24,.10) !important;
+        outline: none;
+      }
+      .field-error{
+        color: var(--danger);
+        font-size: 12px;
+        margin-top: 6px;
+        line-height:1.4;
+        display:none;
+        white-space: pre-wrap;
+      }
+
+      .table{
+        width:100%;
+        border-collapse:collapse;
+        margin-top: 10px;
+        font-size: 14px;
+        border-radius: 12px;
+        overflow: hidden;
+      }
+      .table th,.table td{
+        border: 1px solid var(--line);
+        padding: 10px;
+        text-align:left;
+        background:#fff;
+      }
+      .table th{
+        background:#f9fafb;
+        font-size: 12px;
+        color:#344054;
+      }
+      .small-muted{ color: var(--muted); font-size:12px; margin-top: 6px; }
+
+      @media (max-width: 900px){
+        :root{ --pad: 16px; }
+      }
+      @media (max-width: 520px){
+        .event-right{ flex-direction: column; align-items:flex-end; }
+        .btn{ width: 100%; }
+        .btn.tiny{ width: auto; }
+        .event-title{
+          white-space: normal;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          display: -webkit-box;
+          -webkit-line-clamp: 3;
+          -webkit-box-orient: vertical;
+          line-height: 1.25;
+        }
+      }
+    </style>
   </head>
 
   <body>
@@ -483,10 +497,8 @@ body.modal-open{ overflow: hidden; }
           <a class="is-active" href="adminevents.html">説明会情報管理</a>
           <a href="admincompanies.html">会社情報管理</a>
 
-          <a href="super_admin_user_manage.html" id="userManageLink"
-            style="display:none;">ユーザー管理</a>
-          <a href="teacherRegister.html" id="teacherRegisterLink"
-            style="display:none;">新規教師登録</a>
+          <a href="super_admin_user_manage.html" id="userManageLink" style="display:none;">ユーザー管理</a>
+          <a href="teacherRegister.html" id="teacherRegisterLink" style="display:none;">新規教師登録</a>
 
           <a href="teacher_mypage.html" id="accountLink">アカウント</a>
           <a href="#" id="logoutLink" class="danger-link">ログアウト</a>
@@ -508,12 +520,9 @@ body.modal-open{ overflow: hidden; }
       <!-- Search -->
       <div class="panel">
         <div class="row">
-          <input id="keyword" class="input" type="text"
-            placeholder="ワード検索" style="width:min(360px,100%);" />
-          <input id="fromDt" class="input" type="datetime-local"
-            style="width:220px;" />
-          <input id="toDt" class="input" type="datetime-local"
-            style="width:220px;" />
+          <input id="keyword" class="input" type="text" placeholder="ワード検索" style="width:min(360px,100%);" />
+          <input id="fromDt" class="input" type="datetime-local" style="width:220px;" />
+          <input id="toDt" class="input" type="datetime-local" style="width:220px;" />
           <button id="searchBtn" class="btn">検索</button>
           <button id="clearBtn" class="btn">クリア</button>
         </div>
@@ -552,12 +561,21 @@ body.modal-open{ overflow: hidden; }
 
         <div class="field">
           <label>場所（必須）</label>
-          <input id="m_place" placeholder="例：E2602" />
+          <input id="m_place" placeholder="例：2602教室" />
         </div>
 
         <div class="field">
           <label>持ち物</label>
-          <input id="m_item" placeholder="例：履歴書・筆記用具" />
+
+          <div class="item-preset" id="m_item_preset">
+            <label><input type="checkbox" class="item-cb" value="履歴書">履歴書</label>
+            <label><input type="checkbox" class="item-cb" value="筆記用具">筆記用具</label>
+            <label><input type="checkbox" class="item-cb" value="成績証明書">成績証明書</label>
+            <label><input type="checkbox" class="item-cb" value="健康診断書">健康診断書</label>
+          </div>
+
+          <div class="small-muted">※ その他があれば下に入力</div>
+          <input id="m_item" placeholder="その他（任意）" />
         </div>
 
         <div class="field">
@@ -598,12 +616,21 @@ body.modal-open{ overflow: hidden; }
 
         <div class="field">
           <label>場所（必須）</label>
-          <input id="e_place" placeholder="例：E2602" />
+          <input id="e_place" placeholder="例：2602教室" />
         </div>
 
         <div class="field">
           <label>持ち物</label>
-          <input id="e_item" placeholder="例：履歴書・筆記用具" />
+
+          <div class="item-preset" id="e_item_preset">
+            <label><input type="checkbox" class="item-cb" value="履歴書">履歴書</label>
+            <label><input type="checkbox" class="item-cb" value="筆記用具">筆記用具</label>
+            <label><input type="checkbox" class="item-cb" value="成績証明書">成績証明書</label>
+            <label><input type="checkbox" class="item-cb" value="健康診断書">健康診断書</label>
+          </div>
+
+          <div class="small-muted">※ その他があれば下に入力</div>
+          <input id="e_item" placeholder="その他（任意）" />
         </div>
 
         <div class="field">
@@ -653,755 +680,801 @@ body.modal-open{ overflow: hidden; }
     </div>
 
     <script>
-  const API_BASE = "http://localhost:8080";
-  // const API_BASE = "http://45.76.55.162:8080";
-  // const API_BASE = "";
+      const API_BASE = "http://localhost:8080";
+      // const API_BASE = "http://45.76.55.162:8080";
+      // const API_BASE = "";
 
-  const token = localStorage.getItem("token");
-  const roleRaw = localStorage.getItem("role");
-  const roleUpper = roleRaw ? roleRaw.toUpperCase() : "";
+      const token = localStorage.getItem("token");
+      const roleRaw = localStorage.getItem("role");
+      const roleUpper = roleRaw ? roleRaw.toUpperCase() : "";
 
-  const isAdmin = (roleUpper === "NORMAL_ADMIN" || roleUpper === "SUPER_ADMIN");
-  const isSuperAdmin = (roleUpper === "SUPER_ADMIN");
+      const isAdmin = (roleUpper === "NORMAL_ADMIN" || roleUpper === "SUPER_ADMIN");
+      const isSuperAdmin = (roleUpper === "SUPER_ADMIN");
 
-  function setupSuperAdminHeaderLinks() {
-    const userManageLink = document.getElementById("userManageLink");
-    const teacherRegisterLink = document.getElementById("teacherRegisterLink");
-    const accountLink = document.getElementById("accountLink");
+      function setupSuperAdminHeaderLinks() {
+        const userManageLink = document.getElementById("userManageLink");
+        const teacherRegisterLink = document.getElementById("teacherRegisterLink");
+        const accountLink = document.getElementById("accountLink");
 
-    if (userManageLink) userManageLink.style.display = isSuperAdmin ? "inline" : "none";
-    if (teacherRegisterLink) teacherRegisterLink.style.display = isSuperAdmin ? "inline" : "none";
+        if (userManageLink) userManageLink.style.display = isSuperAdmin ? "inline" : "none";
+        if (teacherRegisterLink) teacherRegisterLink.style.display = isSuperAdmin ? "inline" : "none";
 
-    if (accountLink) {
-      if (isSuperAdmin) {
-        accountLink.href = "super_admin_mypage.html";
-      } else {
-        accountLink.href = "teacher_mypage.html";
-        accountLink.textContent = "アカウント";
-      }
-    }
-  }
-
-  const eventListEl = document.getElementById("eventList");
-  const messageEl = document.getElementById("message");
-  const paginationEl = document.getElementById("pagination");
-
-  // new modal
-  const backdrop = document.getElementById("backdrop");
-  const openModalBtn = document.getElementById("openModalBtn");
-  const closeModalBtn = document.getElementById("closeModalBtn");
-  const saveBtn = document.getElementById("saveBtn");
-  const modalMsg = document.getElementById("modalMsg");
-  const companySelect = document.getElementById("m_company");
-
-  const mDate = document.getElementById("m_date");
-  const mDeadline = document.getElementById("m_deadline");
-  const mDateErr = document.getElementById("m_date_err");
-  const mDeadlineErr = document.getElementById("m_deadline_err");
-
-  // edit
-  const editBackdrop = document.getElementById("editBackdrop");
-  const eCompany = document.getElementById("e_company");
-  const eDate = document.getElementById("e_date");
-  const eDeadline = document.getElementById("e_deadline");
-  const ePlace = document.getElementById("e_place");
-  const eItem = document.getElementById("e_item");
-  const eNote = document.getElementById("e_note");
-  const editCancelBtn = document.getElementById("editCancelBtn");
-  const editSaveBtn = document.getElementById("editSaveBtn");
-  const editMsg = document.getElementById("editMsg");
-
-  // delete
-  const deleteBackdrop = document.getElementById("deleteBackdrop");
-  const deleteText = document.getElementById("deleteText");
-  const deleteCancelBtn = document.getElementById("deleteCancelBtn");
-  const deleteOkBtn = document.getElementById("deleteOkBtn");
-  const deleteMsg = document.getElementById("deleteMsg");
-
-  // attendees
-  const attendeesBackdrop = document.getElementById("attendeesBackdrop");
-  const attendeesBody = document.getElementById("attendeesBody");
-  const attendeesMsg = document.getElementById("attendeesMsg");
-  const attendeesInfo = document.getElementById("attendeesInfo");
-  const attendeesCloseBtn = document.getElementById("attendeesCloseBtn");
-
-  const searchBtn = document.getElementById("searchBtn");
-  const clearBtn = document.getElementById("clearBtn");
-
-  const PAGE_SIZE = 10;
-  let currentPage = 0;
-  let totalPages = 1;
-
-  let editingEventId = null;
-  let deletingEventId = null;
-
-  async function readErrorMessageOnce(res) {
-    const raw = await res.text();
-    if (!raw) return "";
-    try {
-      const obj = JSON.parse(raw);
-      return obj.message ?? JSON.stringify(obj);
-    } catch {
-      return raw;
-    }
-  }
-
-  function toLocalDate(dtLocalValue) {
-    if (!dtLocalValue) return null;
-    const d = new Date(dtLocalValue);
-    return isNaN(d.getTime()) ? null : d;
-  }
-
-  function setFieldError(fieldEl, errEl, message) {
-    if (!fieldEl || !errEl) return;
-    if (message) {
-      fieldEl.classList.add("danger");
-      errEl.textContent = message;
-      errEl.style.display = "block";
-    } else {
-      fieldEl.classList.remove("danger");
-      errEl.textContent = "";
-      errEl.style.display = "none";
-    }
-  }
-
-  function validateNewEventDates({ show = true } = {}) {
-    if (show) {
-      setFieldError(mDate, mDateErr, "");
-      setFieldError(mDeadline, mDeadlineErr, "");
-      modalMsg.textContent = "";
-    }
-
-    const dateVal = mDate.value;
-    const deadlineVal = mDeadline.value;
-
-    if (!dateVal || !deadlineVal) {
-      saveBtn.disabled = false;
-      return { ok: true, reason: "missing" };
-    }
-
-    const eventDt = toLocalDate(dateVal);
-    const deadlineDt = toLocalDate(deadlineVal);
-
-    if (!eventDt || !deadlineDt) {
-      if (show) {
-        setFieldError(mDate, mDateErr, "日付の形式が正しくありません。入れ直してください。");
-        setFieldError(mDeadline, mDeadlineErr, "日付の形式が正しくありません。入れ直してください。");
-        modalMsg.textContent = "日付の形式が正しくありません（開催日/締切を入れ直してください）";
-      }
-      saveBtn.disabled = true;
-      return { ok: false, reason: "invalid_format" };
-    }
-
-    if (eventDt.getTime() <= deadlineDt.getTime()) {
-      if (show) {
-        setFieldError(mDate, mDateErr, "開催日は「締切より後」にしてください。");
-        setFieldError(mDeadline, mDeadlineErr, "締切は「開催日より前」にしてください。");
-        modalMsg.textContent = "登録できません：締切は開催日より前に設定してください（締切 < 開催日）";
-      }
-      saveBtn.disabled = true;
-      return { ok: false, reason: "order" };
-    }
-
-    if (show) {
-      setFieldError(mDate, mDateErr, "");
-      setFieldError(mDeadline, mDeadlineErr, "");
-      modalMsg.textContent = "";
-    }
-    saveBtn.disabled = false;
-    return { ok: true, reason: "ok" };
-  }
-
-  if (!token) {
-    messageEl.textContent = "JWTトークンがありません。先に管理者でログインしてください。";
-    openModalBtn.disabled = true;
-    openModalBtn.title = "ログインが必要です";
-  }
-  if (!isAdmin) {
-    openModalBtn.disabled = true;
-    openModalBtn.title = "管理者のみ操作できます";
-  }
-
-  document.getElementById("logoutLink").addEventListener("click", (e) => {
-    e.preventDefault();
-    localStorage.removeItem("token");
-    localStorage.removeItem("userId");
-    localStorage.removeItem("email");
-    localStorage.removeItem("name");
-    localStorage.removeItem("role");
-    alert("ログアウトしました。");
-    window.location.href = "index.html";
-  });
-
-  function toSqlDateTime(dtLocalValue) {
-    if (!dtLocalValue) return "";
-    return dtLocalValue.replace("T", " ") + ":00";
-  }
-
-  function getSearchParamsFromUI() {
-    const q = document.getElementById("keyword").value.trim();
-    const from = toSqlDateTime(document.getElementById("fromDt").value);
-    const to = toSqlDateTime(document.getElementById("toDt").value);
-    return { q, from, to };
-  }
-
-  function normalizeUrl(url) {
-    if (!url) return "";
-    const u = String(url).trim();
-    if (!u) return "";
-    if (u.startsWith("http://") || u.startsWith("https://")) return u;
-    return "https://" + u;
-  }
-
-  async function fetchReservationCount(eventId) {
-    const res = await fetch(`${API_BASE}/events/${eventId}/reservations/count`);
-    if (!res.ok) throw new Error("HTTP " + res.status);
-    return await res.json();
-  }
-
-  async function loadCompanyOptionsTo(selectEl) {
-    selectEl.innerHTML = `<option value="">読み込み中...</option>`;
-    try {
-      const res = await fetch(`${API_BASE}/api/admin/companies?page=1&size=1000`, {
-        headers: { "Authorization": `Bearer ${token}` }
-      });
-      if (!res.ok) throw new Error("HTTP status " + res.status);
-
-      const data = await res.json();
-      const items = data.items ?? data.companies ?? [];
-
-      items.sort((a, b) => {
-        const an = (a.name ?? "").trim();
-        const bn = (b.name ?? "").trim();
-        return an.localeCompare(bn, "ja", { numeric: true, sensitivity: "base" });
-      });
-
-      if (!items.length) {
-        selectEl.innerHTML = `<option value="">会社がありません（先に会社登録してください）</option>`;
-        return;
+        if (accountLink) {
+          if (isSuperAdmin) {
+            accountLink.href = "super_admin_mypage.html";
+          } else {
+            accountLink.href = "teacher_mypage.html";
+            accountLink.textContent = "アカウント";
+          }
+        }
       }
 
-      selectEl.innerHTML = `<option value="">会社を選択してください</option>`;
-      for (const c of items) {
-        const opt = document.createElement("option");
-        opt.value = String(c.companyId);
-        opt.textContent = c.name ?? `(ID:${c.companyId})`;
-        selectEl.appendChild(opt);
-      }
-    } catch (e) {
-      console.error(e);
-      selectEl.innerHTML = `<option value="">会社の取得に失敗（サーバ確認）</option>`;
-    }
-  }
-
-  async function loadCompanyOptions() {
-    return loadCompanyOptionsTo(companySelect);
-  }
-
- function anyModalOpen(){
-  return [backdrop, editBackdrop, deleteBackdrop, attendeesBackdrop].some(bd => bd.style.display === "flex");
-}
-
-function openBackdrop(bd){
-  bd.style.display = "flex";
-  bd.setAttribute("aria-hidden","false");
-  document.body.classList.add("modal-open");
-}
-
-function closeBackdrop(bd){
-  bd.style.display = "none";
-  bd.setAttribute("aria-hidden","true");
-  if (!anyModalOpen()) document.body.classList.remove("modal-open");
-}
-
-  openModalBtn.onclick = async () => {
-    if (!isAdmin || !token) return;
-
-    modalMsg.textContent = "";
-    document.getElementById("m_date").value = "";
-    document.getElementById("m_deadline").value = "";
-    document.getElementById("m_place").value = "";
-    document.getElementById("m_item").value = "";
-    document.getElementById("m_note").value = "";
-
-    setFieldError(mDate, mDateErr, "");
-    setFieldError(mDeadline, mDeadlineErr, "");
-    saveBtn.disabled = false;
-
-    openBackdrop(backdrop);
-    await loadCompanyOptions();
-  };
-
-  closeModalBtn.onclick = () => closeBackdrop(backdrop);
-  backdrop.addEventListener("click", (e) => { if (e.target === backdrop) closeBackdrop(backdrop); });
-
-  editCancelBtn.onclick = () => closeBackdrop(editBackdrop);
-  editBackdrop.addEventListener("click", (e) => { if (e.target === editBackdrop) closeBackdrop(editBackdrop); });
-
-  deleteCancelBtn.onclick = () => closeBackdrop(deleteBackdrop);
-  deleteBackdrop.addEventListener("click", (e) => { if (e.target === deleteBackdrop) closeBackdrop(deleteBackdrop); });
-
-  attendeesCloseBtn.onclick = () => closeBackdrop(attendeesBackdrop);
-  attendeesBackdrop.addEventListener("click", (e) => { if (e.target === attendeesBackdrop) closeBackdrop(attendeesBackdrop); });
-
-  // Escで全部閉じる
-  document.addEventListener("keydown", (e) => {
-    if (e.key !== "Escape") return;
-    [backdrop, editBackdrop, deleteBackdrop, attendeesBackdrop].forEach(bd => {
-      if (bd.style.display === "flex") closeBackdrop(bd);
-    });
-  });
-
-  mDate.addEventListener("input", () => validateNewEventDates({ show: true }));
-  mDeadline.addEventListener("input", () => validateNewEventDates({ show: true }));
-
-  function toDatetimeLocalValue(s) {
-    if (!s) return "";
-    const t = String(s).trim().replace(" ", "T");
-    return t.length >= 16 ? t.slice(0, 16) : t;
-  }
-
-  saveBtn.onclick = async () => {
-    if (!isAdmin || !token) return;
-
-    modalMsg.textContent = "";
-    saveBtn.disabled = true;
-
-    const companyId = companySelect.value ? Number(companySelect.value) : 0;
-    const dateLocal = document.getElementById("m_date").value;
-    const deadlineLocal = document.getElementById("m_deadline").value;
-
-    const payload = {
-      companyId: companyId,
-      date: dateLocal,
-      deadline: deadlineLocal,
-      place: document.getElementById("m_place").value.trim(),
-      item: document.getElementById("m_item").value.trim(),
-      note: document.getElementById("m_note").value.trim()
-    };
-
-    if (!payload.companyId) { modalMsg.textContent = "会社を選択してください"; saveBtn.disabled = false; return; }
-    if (!payload.date)      { modalMsg.textContent = "開催日は必須です"; saveBtn.disabled = false; return; }
-    if (!payload.deadline)  { modalMsg.textContent = "締切は必須です"; saveBtn.disabled = false; return; }
-    if (!payload.place)     { modalMsg.textContent = "場所は必須です"; saveBtn.disabled = false; return; }
-
-    const v = validateNewEventDates({ show: true });
-    if (!v.ok) return;
-
-    try {
-      const res = await fetch(`${API_BASE}/api/admin/events`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${token}`
-        },
-        body: JSON.stringify(payload)
-      });
-
-      if (!res.ok) {
-        const msg = await readErrorMessageOnce(res);
-        modalMsg.textContent = `登録失敗: ${res.status} ${msg}`;
-        saveBtn.disabled = false;
-        return;
-      }
-
-      alert("説明会を登録しました。");
-      closeBackdrop(backdrop);
-      saveBtn.disabled = false;
-      await loadEvents(0);
-
-    } catch (e) {
-      console.error(e);
-      modalMsg.textContent = "通信に失敗しました。サーバーを確認してください。";
-      saveBtn.disabled = false;
-    }
-  };
-
-  async function openEditModal(event) {
-    if (!isAdmin || !token) return;
-
-    editMsg.textContent = "";
-    editingEventId = event.eventId;
-
-    openBackdrop(editBackdrop);
-    await loadCompanyOptionsTo(eCompany);
-
-    eCompany.value = String(event.companyId ?? "");
-    eDate.value = toDatetimeLocalValue(event.date);
-    eDeadline.value = toDatetimeLocalValue(event.deadline);
-    ePlace.value = event.place ?? "";
-    eItem.value = event.item ?? "";
-    eNote.value = event.note ?? "";
-  }
-
-  editSaveBtn.onclick = async () => {
-    if (!isAdmin || !token) return;
-
-    editMsg.textContent = "";
-    editSaveBtn.disabled = true;
-
-    const payload = {
-      companyId: eCompany.value ? Number(eCompany.value) : 0,
-      date: eDate.value,
-      deadline: eDeadline.value,
-      place: ePlace.value.trim(),
-      item: eItem.value.trim(),
-      note: eNote.value.trim()
-    };
-
-    if (!payload.companyId) { editMsg.textContent = "会社を選択してください"; editSaveBtn.disabled = false; return; }
-    if (!payload.date)      { editMsg.textContent = "開催日は必須です"; editSaveBtn.disabled = false; return; }
-    if (!payload.deadline)  { editMsg.textContent = "締切は必須です"; editSaveBtn.disabled = false; return; }
-    if (!payload.place)     { editMsg.textContent = "場所は必須です"; editSaveBtn.disabled = false; return; }
-
-    try {
-      const res = await fetch(`${API_BASE}/api/admin/events/${editingEventId}`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${token}`
-        },
-        body: JSON.stringify(payload)
-      });
-
-      if (!res.ok) {
-        const msg = await readErrorMessageOnce(res);
-        editMsg.textContent = `更新失敗: ${res.status} ${msg}`;
-        editSaveBtn.disabled = false;
-        return;
-      }
-
-      alert("更新しました。");
-      closeBackdrop(editBackdrop);
-      editSaveBtn.disabled = false;
-      await loadEvents(currentPage);
-
-    } catch (e) {
-      console.error(e);
-      editMsg.textContent = "通信に失敗しました。サーバーを確認してください。";
-      editSaveBtn.disabled = false;
-    }
-  };
-
-  function openDeleteModal(event) {
-    if (!isAdmin || !token) return;
-
-    deleteMsg.textContent = "";
-    deletingEventId = event.eventId;
-
-    deleteText.innerHTML = `
-      <div>この説明会を削除します。よろしいですか？</div>
-      <div style="margin-top:10px;">
-        <div><b>会社：</b>${escapeHtml(event.companyName ?? "")}</div>
-        <div><b>開催日：</b>${escapeHtml(event.date ?? "")}</div>
-        <div><b>場所：</b>${escapeHtml(event.place ?? "")}</div>
-      </div>
-    `;
-
-    openBackdrop(deleteBackdrop);
-  }
-
-  deleteOkBtn.onclick = async () => {
-    if (!isAdmin || !token) return;
-
-    deleteMsg.textContent = "";
-    deleteOkBtn.disabled = true;
-
-    try {
-      const res = await fetch(`${API_BASE}/api/admin/events/${deletingEventId}`, {
-        method: "DELETE",
-        headers: { "Authorization": `Bearer ${token}` }
-      });
-
-      if (!res.ok) {
-        const msg = await readErrorMessageOnce(res);
-        deleteMsg.textContent = `削除失敗: ${res.status} ${msg}`;
-        deleteOkBtn.disabled = false;
-        return;
-      }
-
-      alert("削除しました。");
-      closeBackdrop(deleteBackdrop);
-      deleteOkBtn.disabled = false;
-      await loadEvents(currentPage);
-
-    } catch (e) {
-      console.error(e);
-      deleteMsg.textContent = "通信に失敗しました。サーバーを確認してください。";
-      deleteOkBtn.disabled = false;
-    }
-  };
-
-  function openAttendeesModal(event) {
-    if (!isAdmin || !token) return;
-
-    attendeesMsg.textContent = "";
-    attendeesBody.innerHTML = "読み込み中...";
-    attendeesInfo.textContent = `会社：${event.companyName ?? ""} / 開催日：${event.date ?? ""}`;
-    openBackdrop(attendeesBackdrop);
-
-    loadAttendees(event.eventId);
-  }
-
-  async function loadAttendees(eventId) {
-    try {
-      const res = await fetch(`${API_BASE}/events/${eventId}/reservations/attendees`, {
-        headers: { "Authorization": `Bearer ${token}` }
-      });
-
-      if (!res.ok) {
-        const msg = await readErrorMessageOnce(res);
-        attendeesBody.innerHTML = "";
-        attendeesMsg.textContent = `取得失敗: ${res.status} ${msg}`;
-        return;
-      }
-
-      const list = await res.json();
-
-      if (!Array.isArray(list) || list.length === 0) {
-        attendeesBody.innerHTML = `<div>予約者はいません。</div>`;
-        return;
-      }
-
-      const rows = list.map(a => `
-        <tr>
-          <td>${escapeHtml(a.name)}</td>
-          <td>${escapeHtml(a.grade)}</td>
-          <td>${escapeHtml(a.myClass)}</td>
-          <td>${escapeHtml(a.number)}</td>
-        </tr>
-      `).join("");
-
-      attendeesBody.innerHTML = `
-        <table class="table">
-          <thead>
-            <tr>
-              <th>名前</th>
-              <th>学年</th>
-              <th>クラス</th>
-              <th>番号</th>
-            </tr>
-          </thead>
-          <tbody>${rows}</tbody>
-        </table>
-      `;
-    } catch (e) {
-      console.error(e);
-      attendeesBody.innerHTML = "";
-      attendeesMsg.textContent = "通信に失敗しました。サーバーを確認してください。";
-    }
-  }
-
-  async function loadEvents(page) {
-    if (page < 0) page = 0;
-
-    const { q, from, to } = getSearchParamsFromUI();
-
-    const params = new URLSearchParams({ page: page, size: PAGE_SIZE });
-    if (q) params.append("q", q);
-    if (from) params.append("from", from);
-    if (to) params.append("to", to);
-
-    try {
-      const res = await fetch(`${API_BASE}/events?` + params.toString());
-      if (!res.ok) throw new Error("HTTP status " + res.status);
-
-      const data = await res.json();
-      currentPage = data.page;
-      totalPages = data.totalPages;
-
-      renderEvents(data.events ?? []);
-      renderPagination();
-      renderMessage(data.totalCount ?? 0);
-    } catch (err) {
-      console.error(err);
-      eventListEl.innerHTML = "";
-      paginationEl.innerHTML = "";
-      messageEl.textContent = "説明会情報の取得に失敗しました。サーバーを確認してください。";
-    }
-  }
-
-  function renderEvents(events) {
-    eventListEl.innerHTML = "";
-    if (!events.length) return;
-
-    for (const e of events) {
-      const card = document.createElement("div");
-      card.className = "event-card";
-
-      const header = document.createElement("div");
-      header.className = "event-header";
-
-      const mainInfo = document.createElement("div");
-      mainInfo.className = "event-main-info";
-
-      const title = document.createElement("div");
-      title.className = "event-title";
-      title.textContent = e.companyName ?? "会社名未設定";
-
-      const sub1 = document.createElement("div");
-      sub1.className = "event-sub";
-      sub1.textContent = `開催日：${e.date ?? "未定"}`;
-
-      const sub2 = document.createElement("div");
-      sub2.className = "event-sub";
-      sub2.textContent = `場所：${e.place ?? "未定"}`;
-
-      mainInfo.appendChild(title);
-      mainInfo.appendChild(sub1);
-      mainInfo.appendChild(sub2);
-
-      const rightWrap = document.createElement("div");
-      rightWrap.className = "event-right";
-
-      const badge = document.createElement("div");
-      badge.className = "badge";
-      badge.innerHTML = `<span>現在の予約</span><span class="value">取得中…</span>`;
-
-      const toggleBtn = document.createElement("button");
-      toggleBtn.className = "btn tiny";
-      toggleBtn.textContent = "▽ 詳細表示";
-
-      rightWrap.appendChild(badge);
-      rightWrap.appendChild(toggleBtn);
-
-      header.appendChild(mainInfo);
-      header.appendChild(rightWrap);
-
-      (async () => {
+      const eventListEl = document.getElementById("eventList");
+      const messageEl = document.getElementById("message");
+      const paginationEl = document.getElementById("pagination");
+
+      // new modal
+      const backdrop = document.getElementById("backdrop");
+      const openModalBtn = document.getElementById("openModalBtn");
+      const closeModalBtn = document.getElementById("closeModalBtn");
+      const saveBtn = document.getElementById("saveBtn");
+      const modalMsg = document.getElementById("modalMsg");
+      const companySelect = document.getElementById("m_company");
+
+      const mDate = document.getElementById("m_date");
+      const mDeadline = document.getElementById("m_deadline");
+      const mDateErr = document.getElementById("m_date_err");
+      const mDeadlineErr = document.getElementById("m_deadline_err");
+
+      // edit
+      const editBackdrop = document.getElementById("editBackdrop");
+      const eCompany = document.getElementById("e_company");
+      const eDate = document.getElementById("e_date");
+      const eDeadline = document.getElementById("e_deadline");
+      const ePlace = document.getElementById("e_place");
+      const eItem = document.getElementById("e_item");
+      const eNote = document.getElementById("e_note");
+      const editCancelBtn = document.getElementById("editCancelBtn");
+      const editSaveBtn = document.getElementById("editSaveBtn");
+      const editMsg = document.getElementById("editMsg");
+
+      // delete
+      const deleteBackdrop = document.getElementById("deleteBackdrop");
+      const deleteText = document.getElementById("deleteText");
+      const deleteCancelBtn = document.getElementById("deleteCancelBtn");
+      const deleteOkBtn = document.getElementById("deleteOkBtn");
+      const deleteMsg = document.getElementById("deleteMsg");
+
+      // attendees
+      const attendeesBackdrop = document.getElementById("attendeesBackdrop");
+      const attendeesBody = document.getElementById("attendeesBody");
+      const attendeesMsg = document.getElementById("attendeesMsg");
+      const attendeesInfo = document.getElementById("attendeesInfo");
+      const attendeesCloseBtn = document.getElementById("attendeesCloseBtn");
+
+      const searchBtn = document.getElementById("searchBtn");
+      const clearBtn = document.getElementById("clearBtn");
+
+      const PAGE_SIZE = 10;
+      let currentPage = 0;
+      let totalPages = 1;
+
+      let editingEventId = null;
+      let deletingEventId = null;
+
+      async function readErrorMessageOnce(res) {
+        const raw = await res.text();
+        if (!raw) return "";
         try {
-          const n = await fetchReservationCount(e.eventId);
-          badge.querySelector(".value").textContent = `${n}人`;
+          const obj = JSON.parse(raw);
+          return obj.message ?? JSON.stringify(obj);
+        } catch {
+          return raw;
+        }
+      }
+
+      function toLocalDate(dtLocalValue) {
+        if (!dtLocalValue) return null;
+        const d = new Date(dtLocalValue);
+        return isNaN(d.getTime()) ? null : d;
+      }
+
+      function setFieldError(fieldEl, errEl, message) {
+        if (!fieldEl || !errEl) return;
+        if (message) {
+          fieldEl.classList.add("danger");
+          errEl.textContent = message;
+          errEl.style.display = "block";
+        } else {
+          fieldEl.classList.remove("danger");
+          errEl.textContent = "";
+          errEl.style.display = "none";
+        }
+      }
+
+      function validateNewEventDates({ show = true } = {}) {
+        if (show) {
+          setFieldError(mDate, mDateErr, "");
+          setFieldError(mDeadline, mDeadlineErr, "");
+          modalMsg.textContent = "";
+        }
+
+        const dateVal = mDate.value;
+        const deadlineVal = mDeadline.value;
+
+        if (!dateVal || !deadlineVal) {
+          saveBtn.disabled = false;
+          return { ok: true, reason: "missing" };
+        }
+
+        const eventDt = toLocalDate(dateVal);
+        const deadlineDt = toLocalDate(deadlineVal);
+
+        if (!eventDt || !deadlineDt) {
+          if (show) {
+            setFieldError(mDate, mDateErr, "日付の形式が正しくありません。入れ直してください。");
+            setFieldError(mDeadline, mDeadlineErr, "日付の形式が正しくありません。入れ直してください。");
+            modalMsg.textContent = "日付の形式が正しくありません（開催日/締切を入れ直してください）";
+          }
+          saveBtn.disabled = true;
+          return { ok: false, reason: "invalid_format" };
+        }
+
+        if (eventDt.getTime() <= deadlineDt.getTime()) {
+          if (show) {
+            setFieldError(mDate, mDateErr, "開催日は「締切より後」にしてください。");
+            setFieldError(mDeadline, mDeadlineErr, "締切は「開催日より前」にしてください。");
+            modalMsg.textContent = "登録できません：締切は開催日より前に設定してください（締切 < 開催日）";
+          }
+          saveBtn.disabled = true;
+          return { ok: false, reason: "order" };
+        }
+
+        if (show) {
+          setFieldError(mDate, mDateErr, "");
+          setFieldError(mDeadline, mDeadlineErr, "");
+          modalMsg.textContent = "";
+        }
+        saveBtn.disabled = false;
+        return { ok: true, reason: "ok" };
+      }
+
+      if (!token) {
+        messageEl.textContent = "JWTトークンがありません。先に管理者でログインしてください。";
+        openModalBtn.disabled = true;
+        openModalBtn.title = "ログインが必要です";
+      }
+      if (!isAdmin) {
+        openModalBtn.disabled = true;
+        openModalBtn.title = "管理者のみ操作できます";
+      }
+
+      document.getElementById("logoutLink").addEventListener("click", (e) => {
+        e.preventDefault();
+        localStorage.removeItem("token");
+        localStorage.removeItem("userId");
+        localStorage.removeItem("email");
+        localStorage.removeItem("name");
+        localStorage.removeItem("role");
+        alert("ログアウトしました。");
+        window.location.href = "index.html";
+      });
+
+      function toSqlDateTime(dtLocalValue) {
+        if (!dtLocalValue) return "";
+        return dtLocalValue.replace("T", " ") + ":00";
+      }
+
+      function getSearchParamsFromUI() {
+        const q = document.getElementById("keyword").value.trim();
+        const from = toSqlDateTime(document.getElementById("fromDt").value);
+        const to = toSqlDateTime(document.getElementById("toDt").value);
+        return { q, from, to };
+      }
+
+      function normalizeUrl(url) {
+        if (!url) return "";
+        const u = String(url).trim();
+        if (!u) return "";
+        if (u.startsWith("http://") || u.startsWith("https://")) return u;
+        return "https://" + u;
+      }
+
+      async function fetchReservationCount(eventId) {
+        const res = await fetch(`${API_BASE}/events/${eventId}/reservations/count`);
+        if (!res.ok) throw new Error("HTTP " + res.status);
+        return await res.json();
+      }
+
+      async function loadCompanyOptionsTo(selectEl) {
+        selectEl.innerHTML = `<option value="">読み込み中...</option>`;
+        try {
+          const res = await fetch(`${API_BASE}/api/admin/companies?page=1&size=1000`, {
+            headers: { "Authorization": `Bearer ${token}` }
+          });
+          if (!res.ok) throw new Error("HTTP status " + res.status);
+
+          const data = await res.json();
+          const items = data.items ?? data.companies ?? [];
+
+          items.sort((a, b) => {
+            const an = (a.name ?? "").trim();
+            const bn = (b.name ?? "").trim();
+            return an.localeCompare(bn, "ja", { numeric: true, sensitivity: "base" });
+          });
+
+          if (!items.length) {
+            selectEl.innerHTML = `<option value="">会社がありません（先に会社登録してください）</option>`;
+            return;
+          }
+
+          selectEl.innerHTML = `<option value="">会社を選択してください</option>`;
+          for (const c of items) {
+            const opt = document.createElement("option");
+            opt.value = String(c.companyId);
+            opt.textContent = c.name ?? `(ID:${c.companyId})`;
+            selectEl.appendChild(opt);
+          }
+        } catch (e) {
+          console.error(e);
+          selectEl.innerHTML = `<option value="">会社の取得に失敗（サーバ確認）</option>`;
+        }
+      }
+
+      async function loadCompanyOptions() {
+        return loadCompanyOptionsTo(companySelect);
+      }
+
+      function anyModalOpen(){
+        return [backdrop, editBackdrop, deleteBackdrop, attendeesBackdrop].some(bd => bd.style.display === "flex");
+      }
+
+      function openBackdrop(bd){
+        bd.style.display = "flex";
+        bd.setAttribute("aria-hidden","false");
+        document.body.classList.add("modal-open");
+      }
+
+      function closeBackdrop(bd){
+        bd.style.display = "none";
+        bd.setAttribute("aria-hidden","true");
+        if (!anyModalOpen()) document.body.classList.remove("modal-open");
+      }
+
+      openModalBtn.onclick = async () => {
+        if (!isAdmin || !token) return;
+
+        modalMsg.textContent = "";
+        document.getElementById("m_date").value = "";
+        document.getElementById("m_deadline").value = "";
+        document.getElementById("m_place").value = "";
+        document.getElementById("m_item").value = "";
+        document.querySelectorAll("#m_item_preset input.item-cb").forEach(cb => cb.checked = false);
+        document.getElementById("m_note").value = "";
+
+        setFieldError(mDate, mDateErr, "");
+        setFieldError(mDeadline, mDeadlineErr, "");
+        saveBtn.disabled = false;
+
+        openBackdrop(backdrop);
+        await loadCompanyOptions();
+      };
+
+      closeModalBtn.onclick = () => closeBackdrop(backdrop);
+      backdrop.addEventListener("click", (e) => { if (e.target === backdrop) closeBackdrop(backdrop); });
+
+      editCancelBtn.onclick = () => closeBackdrop(editBackdrop);
+      editBackdrop.addEventListener("click", (e) => { if (e.target === editBackdrop) closeBackdrop(editBackdrop); });
+
+      deleteCancelBtn.onclick = () => closeBackdrop(deleteBackdrop);
+      deleteBackdrop.addEventListener("click", (e) => { if (e.target === deleteBackdrop) closeBackdrop(deleteBackdrop); });
+
+      attendeesCloseBtn.onclick = () => closeBackdrop(attendeesBackdrop);
+      attendeesBackdrop.addEventListener("click", (e) => { if (e.target === attendeesBackdrop) closeBackdrop(attendeesBackdrop); });
+
+      // Escで全部閉じる
+      document.addEventListener("keydown", (e) => {
+        if (e.key !== "Escape") return;
+        [backdrop, editBackdrop, deleteBackdrop, attendeesBackdrop].forEach(bd => {
+          if (bd.style.display === "flex") closeBackdrop(bd);
+        });
+      });
+
+      mDate.addEventListener("input", () => validateNewEventDates({ show: true }));
+      mDeadline.addEventListener("input", () => validateNewEventDates({ show: true }));
+
+      function toDatetimeLocalValue(s) {
+        if (!s) return "";
+        const t = String(s).trim().replace(" ", "T");
+        return t.length >= 16 ? t.slice(0, 16) : t;
+      }
+
+      function joinItems(presetContainerId, freeTextInputId){
+        const box = document.getElementById(presetContainerId);
+        const freeEl = document.getElementById(freeTextInputId);
+
+        const selected = box
+          ? Array.from(box.querySelectorAll('input.item-cb:checked')).map(cb => cb.value.trim()).filter(Boolean)
+          : [];
+
+        const free = freeEl ? freeEl.value.trim() : "";
+
+        const parts = [];
+        if (selected.length) parts.push(selected.join("・"));
+        if (free) parts.push(free);
+
+        return parts.join("・").replace(/・{2,}/g, "・").trim();
+      }
+
+      saveBtn.onclick = async () => {
+        if (!isAdmin || !token) return;
+
+        modalMsg.textContent = "";
+        saveBtn.disabled = true;
+
+        const companyId = companySelect.value ? Number(companySelect.value) : 0;
+        const dateLocal = document.getElementById("m_date").value;
+        const deadlineLocal = document.getElementById("m_deadline").value;
+
+        const payload = {
+          companyId: companyId,
+          date: dateLocal,
+          deadline: deadlineLocal,
+          place: document.getElementById("m_place").value.trim(),
+          item: joinItems("m_item_preset", "m_item"),
+          note: document.getElementById("m_note").value.trim()
+        };
+
+        if (!payload.companyId) { modalMsg.textContent = "会社を選択してください"; saveBtn.disabled = false; return; }
+        if (!payload.date)      { modalMsg.textContent = "開催日は必須です"; saveBtn.disabled = false; return; }
+        if (!payload.deadline)  { modalMsg.textContent = "締切は必須です"; saveBtn.disabled = false; return; }
+        if (!payload.place)     { modalMsg.textContent = "場所は必須です"; saveBtn.disabled = false; return; }
+
+        const v = validateNewEventDates({ show: true });
+        if (!v.ok) { saveBtn.disabled = false; return; }
+
+        try {
+          const res = await fetch(`${API_BASE}/api/admin/events`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "Authorization": `Bearer ${token}`
+            },
+            body: JSON.stringify(payload)
+          });
+
+          if (!res.ok) {
+            const msg = await readErrorMessageOnce(res);
+            modalMsg.textContent = `登録失敗: ${res.status} ${msg}`;
+            saveBtn.disabled = false;
+            return;
+          }
+
+          alert("説明会を登録しました。");
+          closeBackdrop(backdrop);
+          saveBtn.disabled = false;
+          await loadEvents(0);
+
+        } catch (e) {
+          console.error(e);
+          modalMsg.textContent = "通信に失敗しました。サーバーを確認してください。";
+          saveBtn.disabled = false;
+        }
+      };
+
+      async function openEditModal(event) {
+        if (!isAdmin || !token) return;
+
+        try {
+          editMsg.textContent = "";
+          editingEventId = event.eventId;
+
+          openBackdrop(editBackdrop);
+          await loadCompanyOptionsTo(eCompany);
+
+          eCompany.value = String(event.companyId ?? "");
+          eDate.value = toDatetimeLocalValue(event.date);
+          eDeadline.value = toDatetimeLocalValue(event.deadline);
+          ePlace.value = event.place ?? "";
+
+          const preset = document.getElementById("e_item_preset");
+          const itemText = (event.item ?? "");
+
+          if (preset) {
+            preset.querySelectorAll("input.item-cb").forEach(cb => cb.checked = false);
+            preset.querySelectorAll("input.item-cb").forEach(cb => {
+              if (itemText.includes(cb.value)) cb.checked = true;
+            });
+          }
+
+          let free = itemText;
+          if (preset) {
+            preset.querySelectorAll("input.item-cb").forEach(cb => free = free.replaceAll(cb.value, ""));
+            free = free.replace(/[・、,\s]+/g, " ").trim();
+          }
+          eItem.value = free;
+
+          eNote.value = event.note ?? "";
         } catch (err) {
           console.error(err);
-          badge.querySelector(".value").textContent = "取得失敗";
+          editMsg.textContent = "編集モーダルの表示でエラーが発生しました（Consoleを確認）";
+          closeBackdrop(editBackdrop);
         }
-      })();
-
-      const detail = document.createElement("div");
-      detail.className = "event-detail";
-
-      const webUrl = e.companyWebsite ? normalizeUrl(e.companyWebsite) : "";
-
-      detail.innerHTML = `
-        <div class="event-detail-title">締切</div>
-        <div>${escapeHtml(e.deadline ?? "未設定")}</div>
-
-        <div class="event-detail-title">会社Web</div>
-        <div class="detail-link">
-          ${
-            webUrl
-              ? `<a href="${escapeHtml(webUrl)}" target="_blank" rel="noopener noreferrer">${escapeHtml(e.companyWebsite)}</a>`
-              : `未登録です。`
-          }
-        </div>
-
-        <div class="event-detail-title">持ち物</div>
-        <div>${escapeHtml(e.item ?? "未設定")}</div>
-
-        <div class="event-detail-title">説明</div>
-        <div>${escapeHtml(e.note ?? "未設定")}</div>
-      `;
-
-      if (isAdmin && token) {
-        const actions = document.createElement("div");
-        actions.className = "admin-actions";
-
-        const attendeesBtn = document.createElement("button");
-        attendeesBtn.className = "btn";
-        attendeesBtn.textContent = "予約者確認";
-        attendeesBtn.addEventListener("click", (ev) => {
-          ev.stopPropagation();
-          openAttendeesModal(e);
-        });
-
-        const editBtn = document.createElement("button");
-        editBtn.className = "btn";
-        editBtn.textContent = "編集";
-        editBtn.addEventListener("click", async (ev) => {
-          ev.stopPropagation();
-          await openEditModal(e);
-        });
-
-        const delBtn = document.createElement("button");
-        delBtn.className = "btn btn-danger";
-        delBtn.textContent = "削除";
-        delBtn.addEventListener("click", (ev) => {
-          ev.stopPropagation();
-          openDeleteModal(e);
-        });
-
-        actions.appendChild(attendeesBtn);
-        actions.appendChild(editBtn);
-        actions.appendChild(delBtn);
-        detail.appendChild(actions);
       }
 
-      toggleBtn.addEventListener("click", () => {
-        const isOpen = detail.style.display === "block";
-        detail.style.display = isOpen ? "none" : "block";
-        toggleBtn.textContent = isOpen ? "▽ 詳細表示" : "△ 閉じる";
+      editSaveBtn.onclick = async () => {
+        if (!isAdmin || !token) return;
+
+        editMsg.textContent = "";
+        editSaveBtn.disabled = true;
+
+        const payload = {
+          companyId: eCompany.value ? Number(eCompany.value) : 0,
+          date: eDate.value,
+          deadline: eDeadline.value,
+          place: ePlace.value.trim(),
+          item: joinItems("e_item_preset", "e_item"),
+          note: eNote.value.trim()
+        };
+
+        if (!payload.companyId) { editMsg.textContent = "会社を選択してください"; editSaveBtn.disabled = false; return; }
+        if (!payload.date)      { editMsg.textContent = "開催日は必須です"; editSaveBtn.disabled = false; return; }
+        if (!payload.deadline)  { editMsg.textContent = "締切は必須です"; editSaveBtn.disabled = false; return; }
+        if (!payload.place)     { editMsg.textContent = "場所は必須です"; editSaveBtn.disabled = false; return; }
+
+        try {
+          const res = await fetch(`${API_BASE}/api/admin/events/${editingEventId}`, {
+            method: "PUT",
+            headers: {
+              "Content-Type": "application/json",
+              "Authorization": `Bearer ${token}`
+            },
+            body: JSON.stringify(payload)
+          });
+
+          if (!res.ok) {
+            const msg = await readErrorMessageOnce(res);
+            editMsg.textContent = `更新失敗: ${res.status} ${msg}`;
+            editSaveBtn.disabled = false;
+            return;
+          }
+
+          alert("更新しました。");
+          closeBackdrop(editBackdrop);
+          editSaveBtn.disabled = false;
+          await loadEvents(currentPage);
+
+        } catch (e) {
+          console.error(e);
+          editMsg.textContent = "通信に失敗しました。サーバーを確認してください。";
+          editSaveBtn.disabled = false;
+        }
+      };
+
+      function openDeleteModal(event) {
+        if (!isAdmin || !token) return;
+
+        deleteMsg.textContent = "";
+        deletingEventId = event.eventId;
+
+        deleteText.innerHTML = `
+          <div>この説明会を削除します。よろしいですか？</div>
+          <div style="margin-top:10px;">
+            <div><b>会社：</b>${escapeHtml(event.companyName ?? "")}</div>
+            <div><b>開催日：</b>${escapeHtml(event.date ?? "")}</div>
+            <div><b>場所：</b>${escapeHtml(event.place ?? "")}</div>
+          </div>
+        `;
+
+        openBackdrop(deleteBackdrop);
+      }
+
+      deleteOkBtn.onclick = async () => {
+        if (!isAdmin || !token) return;
+
+        deleteMsg.textContent = "";
+        deleteOkBtn.disabled = true;
+
+        try {
+          const res = await fetch(`${API_BASE}/api/admin/events/${deletingEventId}`, {
+            method: "DELETE",
+            headers: { "Authorization": `Bearer ${token}` }
+          });
+
+          if (!res.ok) {
+            const msg = await readErrorMessageOnce(res);
+            deleteMsg.textContent = `削除失敗: ${res.status} ${msg}`;
+            deleteOkBtn.disabled = false;
+            return;
+          }
+
+          alert("削除しました。");
+          closeBackdrop(deleteBackdrop);
+          deleteOkBtn.disabled = false;
+          await loadEvents(currentPage);
+
+        } catch (e) {
+          console.error(e);
+          deleteMsg.textContent = "通信に失敗しました。サーバーを確認してください。";
+          deleteOkBtn.disabled = false;
+        }
+      };
+
+      function openAttendeesModal(event) {
+        if (!isAdmin || !token) return;
+
+        try {
+          attendeesMsg.textContent = "";
+          attendeesBody.innerHTML = "読み込み中...";
+          attendeesInfo.textContent = `会社：${event.companyName ?? ""} / 開催日：${event.date ?? ""}`;
+          openBackdrop(attendeesBackdrop);
+          loadAttendees(event.eventId);
+        } catch (err) {
+          console.error(err);
+          attendeesMsg.textContent = "予約者モーダルの表示でエラーが発生しました（Consoleを確認）";
+          closeBackdrop(attendeesBackdrop);
+        }
+      }
+
+      async function loadAttendees(eventId) {
+        try {
+          const res = await fetch(`${API_BASE}/events/${eventId}/reservations/attendees`, {
+            headers: { "Authorization": `Bearer ${token}` }
+          });
+
+          if (!res.ok) {
+            const msg = await readErrorMessageOnce(res);
+            attendeesBody.innerHTML = "";
+            attendeesMsg.textContent = `取得失敗: ${res.status} ${msg}`;
+            return;
+          }
+
+          const list = await res.json();
+
+          if (!Array.isArray(list) || list.length === 0) {
+            attendeesBody.innerHTML = `<div>予約者はいません。</div>`;
+            return;
+          }
+
+          const rows = list.map(a => `
+            <tr>
+              <td>${escapeHtml(a.name)}</td>
+              <td>${escapeHtml(a.grade)}</td>
+              <td>${escapeHtml(a.myClass)}</td>
+              <td>${escapeHtml(a.number)}</td>
+            </tr>
+          `).join("");
+
+          attendeesBody.innerHTML = `
+            <table class="table">
+              <thead>
+                <tr>
+                  <th>名前</th>
+                  <th>学年</th>
+                  <th>クラス</th>
+                  <th>番号</th>
+                </tr>
+              </thead>
+              <tbody>${rows}</tbody>
+            </table>
+          `;
+        } catch (e) {
+          console.error(e);
+          attendeesBody.innerHTML = "";
+          attendeesMsg.textContent = "通信に失敗しました。サーバーを確認してください。";
+        }
+      }
+
+      async function loadEvents(page) {
+        if (page < 0) page = 0;
+
+        const { q, from, to } = getSearchParamsFromUI();
+
+        const params = new URLSearchParams({ page: page, size: PAGE_SIZE });
+        if (q) params.append("q", q);
+        if (from) params.append("from", from);
+        if (to) params.append("to", to);
+
+        try {
+          const res = await fetch(`${API_BASE}/events?` + params.toString());
+          if (!res.ok) throw new Error("HTTP status " + res.status);
+
+          const data = await res.json();
+          currentPage = data.page;
+          totalPages = data.totalPages;
+
+          renderEvents(data.events ?? []);
+          renderPagination();
+          renderMessage(data.totalCount ?? 0);
+        } catch (err) {
+          console.error(err);
+          eventListEl.innerHTML = "";
+          paginationEl.innerHTML = "";
+          messageEl.textContent = "説明会情報の取得に失敗しました。サーバーを確認してください。";
+        }
+      }
+
+      function renderEvents(events) {
+        eventListEl.innerHTML = "";
+        if (!events.length) return;
+
+        for (const e of events) {
+          const card = document.createElement("div");
+          card.className = "event-card";
+
+          const header = document.createElement("div");
+          header.className = "event-header";
+
+          const mainInfo = document.createElement("div");
+          mainInfo.className = "event-main-info";
+
+          const title = document.createElement("div");
+          title.className = "event-title";
+          title.textContent = e.companyName ?? "会社名未設定";
+
+          const sub1 = document.createElement("div");
+          sub1.className = "event-sub";
+          sub1.textContent = `開催日：${e.date ?? "未定"}`;
+
+          const sub2 = document.createElement("div");
+          sub2.className = "event-sub";
+          sub2.textContent = `場所：${e.place ?? "未定"}`;
+
+          mainInfo.appendChild(title);
+          mainInfo.appendChild(sub1);
+          mainInfo.appendChild(sub2);
+
+          const rightWrap = document.createElement("div");
+          rightWrap.className = "event-right";
+
+          const badge = document.createElement("div");
+          badge.className = "badge";
+          badge.innerHTML = `<span>現在の予約</span><span class="value">取得中…</span>`;
+
+          const toggleBtn = document.createElement("button");
+          toggleBtn.className = "btn tiny";
+          toggleBtn.textContent = "▽ 詳細表示";
+
+          rightWrap.appendChild(badge);
+          rightWrap.appendChild(toggleBtn);
+
+          header.appendChild(mainInfo);
+          header.appendChild(rightWrap);
+
+          (async () => {
+            try {
+              const n = await fetchReservationCount(e.eventId);
+              badge.querySelector(".value").textContent = `${n}人`;
+            } catch (err) {
+              console.error(err);
+              badge.querySelector(".value").textContent = "取得失敗";
+            }
+          })();
+
+          const detail = document.createElement("div");
+          detail.className = "event-detail";
+
+          const webUrl = e.companyWebsite ? normalizeUrl(e.companyWebsite) : "";
+
+          detail.innerHTML = `
+            <div class="event-detail-title">締切</div>
+            <div>${escapeHtml(e.deadline ?? "未設定")}</div>
+
+            <div class="event-detail-title">会社Web</div>
+            <div class="detail-link">
+              ${
+                webUrl
+                  ? `<a href="${escapeHtml(webUrl)}" target="_blank" rel="noopener noreferrer">${escapeHtml(e.companyWebsite)}</a>`
+                  : `未登録です。`
+              }
+            </div>
+
+            <div class="event-detail-title">持ち物</div>
+            <div>${escapeHtml(e.item ?? "未設定")}</div>
+
+            <div class="event-detail-title">説明</div>
+            <div>${escapeHtml(e.note ?? "未設定")}</div>
+          `;
+
+          if (isAdmin && token) {
+            const actions = document.createElement("div");
+            actions.className = "admin-actions";
+
+            const attendeesBtn = document.createElement("button");
+            attendeesBtn.className = "btn";
+            attendeesBtn.textContent = "予約者確認";
+            attendeesBtn.addEventListener("click", (ev) => {
+              ev.stopPropagation();
+              openAttendeesModal(e);
+            });
+
+            const editBtn = document.createElement("button");
+            editBtn.className = "btn";
+            editBtn.textContent = "編集";
+            editBtn.addEventListener("click", async (ev) => {
+              ev.stopPropagation();
+              await openEditModal(e);
+            });
+
+            const delBtn = document.createElement("button");
+            delBtn.className = "btn btn-danger";
+            delBtn.textContent = "削除";
+            delBtn.addEventListener("click", (ev) => {
+              ev.stopPropagation();
+              openDeleteModal(e);
+            });
+
+            actions.appendChild(attendeesBtn);
+            actions.appendChild(editBtn);
+            actions.appendChild(delBtn);
+            detail.appendChild(actions);
+          }
+
+          toggleBtn.addEventListener("click", () => {
+            const isOpen = detail.style.display === "block";
+            detail.style.display = isOpen ? "none" : "block";
+            toggleBtn.textContent = isOpen ? "▽ 詳細表示" : "△ 閉じる";
+          });
+
+          card.appendChild(header);
+          card.appendChild(detail);
+          eventListEl.appendChild(card);
+        }
+      }
+
+      function renderPagination() {
+        paginationEl.innerHTML = "";
+        if (totalPages <= 1) return;
+
+        for (let i = 0; i < totalPages; i++) {
+          const span = document.createElement("span");
+          span.className = "page-link" + (i === currentPage ? " active" : "");
+          span.textContent = String(i + 1);
+          span.addEventListener("click", () => loadEvents(i));
+          paginationEl.appendChild(span);
+        }
+
+        if (currentPage < totalPages - 1) {
+          const next = document.createElement("span");
+          next.className = "page-link";
+          next.textContent = ">>next";
+          next.addEventListener("click", () => loadEvents(currentPage + 1));
+          paginationEl.appendChild(next);
+        }
+      }
+
+      function renderMessage(totalCount) {
+        if (!totalCount) {
+          messageEl.textContent = "現在、表示できる説明会がありません。";
+        } else {
+          messageEl.textContent = "";
+        }
+      }
+
+      function escapeHtml(str) {
+        return String(str ?? "")
+          .replaceAll("&", "&amp;")
+          .replaceAll("<", "&lt;")
+          .replaceAll(">", "&gt;")
+          .replaceAll('"', "&quot;")
+          .replaceAll("'", "&#039;");
+      }
+
+      searchBtn.addEventListener("click", () => loadEvents(0));
+      clearBtn.addEventListener("click", () => {
+        document.getElementById("keyword").value = "";
+        document.getElementById("fromDt").value = "";
+        document.getElementById("toDt").value = "";
+        loadEvents(0);
+      });
+      document.getElementById("keyword").addEventListener("keydown", (e) => {
+        if (e.key === "Enter") loadEvents(0);
       });
 
-      card.appendChild(header);
-      card.appendChild(detail);
-      eventListEl.appendChild(card);
-    }
-  }
-
-  function renderPagination() {
-    paginationEl.innerHTML = "";
-    if (totalPages <= 1) return;
-
-    for (let i = 0; i < totalPages; i++) {
-      const span = document.createElement("span");
-      span.className = "page-link" + (i === currentPage ? " active" : "");
-      span.textContent = String(i + 1);
-      span.addEventListener("click", () => loadEvents(i));
-      paginationEl.appendChild(span);
-    }
-
-    if (currentPage < totalPages - 1) {
-      const next = document.createElement("span");
-      next.className = "page-link";
-      next.textContent = ">>next";
-      next.addEventListener("click", () => loadEvents(currentPage + 1));
-      paginationEl.appendChild(next);
-    }
-  }
-
-  function renderMessage(totalCount) {
-    if (!totalCount) {
-      messageEl.textContent = "現在、表示できる説明会がありません。";
-    } else {
-      messageEl.textContent = "";
-    }
-  }
-
-  function escapeHtml(str) {
-    return String(str ?? "")
-      .replaceAll("&", "&amp;")
-      .replaceAll("<", "&lt;")
-      .replaceAll(">", "&gt;")
-      .replaceAll('"', "&quot;")
-      .replaceAll("'", "&#039;");
-  }
-
-  searchBtn.addEventListener("click", () => loadEvents(0));
-  clearBtn.addEventListener("click", () => {
-    document.getElementById("keyword").value = "";
-    document.getElementById("fromDt").value = "";
-    document.getElementById("toDt").value = "";
-    loadEvents(0);
-  });
-  document.getElementById("keyword").addEventListener("keydown", (e) => {
-    if (e.key === "Enter") loadEvents(0);
-  });
-
-  window.addEventListener("load", () => {
-    setupSuperAdminHeaderLinks();
-    loadEvents(0);
-  });
-</script>
+      window.addEventListener("load", () => {
+        setupSuperAdminHeaderLinks();
+        loadEvents(0);
+      });
+    </script>
   </body>
 </html>
